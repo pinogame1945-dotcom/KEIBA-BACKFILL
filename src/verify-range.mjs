@@ -13,14 +13,24 @@ const payoutArity={
   WIN:1,PLACE:1,BRACKET_QUINELLA:2,QUINELLA:2,WIDE:2,EXACTA:2,TRIO:3,TRIFECTA:3
 };
 const horseIds=new Set();
+const horseIdsByParserVersion=new Map();
 let successfulHorsePacks=0;
 for(const [packName,pack] of Object.entries(manifest.horse_packs??{})){
   if(pack.status!=="SUCCESS")continue;
   successfulHorsePacks++;
   if((pack.request_delay_ms??0)<1500)throw new Error(`unsafe request delay in ${packName}: ${pack.request_delay_ms}`);
+  const parserVersion=Number(pack.pedigree_parser_version??1);
+  let sameVersion=horseIdsByParserVersion.get(parserVersion);
+  if(!sameVersion){
+    sameVersion=new Set();
+    horseIdsByParserVersion.set(parserVersion,sameVersion);
+  }
   for(const raw of pack.source_horse_ids??[]){
     const id=String(raw);
-    if(horseIds.has(id))throw new Error(`duplicate horse across packs: ${id}`);
+    if(sameVersion.has(id)){
+      throw new Error(`duplicate horse in pedigree parser v${parserVersion}: ${id}`);
+    }
+    sameVersion.add(id);
     horseIds.add(id);
   }
 }
