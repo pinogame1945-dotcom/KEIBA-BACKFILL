@@ -282,7 +282,20 @@ for(let i=0;i<selected.length;i+=1){
     const pedigreeHtml=await politeFetch(pedigreeUrl);
     const pedigreeFetchedAt=Date.now();
     const pedigree=parsePedigree(pedigreeHtml);
-    if(!pedigree.length)throw new Error("pedigree empty");
+    if(pedigree.length!==62){
+      throw new Error(`incomplete 5-generation pedigree nodes=${pedigree.length}`);
+    }
+    const pedigreePositions=new Set(pedigree.map(node=>`${node.generation}:${node.slot}`));
+    if(pedigreePositions.size!==62){
+      throw new Error("duplicate pedigree positions");
+    }
+    for(let generation=1;generation<=5;generation+=1){
+      for(let slot=0;slot<2**generation;slot+=1){
+        if(!pedigreePositions.has(`${generation}:${slot}`)){
+          throw new Error(`missing pedigree position ${generation}:${slot}`);
+        }
+      }
+    }
     if(!pedigree.some(node=>node.generation===1&&node.slot===0)){
       throw new Error("sire missing");
     }
