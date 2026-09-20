@@ -253,15 +253,22 @@ console.log(JSON.stringify({
 
 const records=[];
 const failures=[];
+const timings=[];
+const packStartedAt=Date.now();
 for(let i=0;i<selected.length;i+=1){
   const hid=selected[i];
   const profileUrl=`${DB_BASE}/horse/${hid}/`;
   const pedigreeUrl=`${DB_BASE}/horse/ped/${hid}/`;
   console.log(`[horse ${i+1}/${selected.length}] ${hid}`);
   try{
+    const horseStartedAt=Date.now();
+    const profileStartedAt=Date.now();
     const profileHtml=await politeFetch(profileUrl);
+    const profileFetchedAt=Date.now();
     const profile=parseHorseProfile(profileHtml,hid,profileUrl);
+    const pedigreeStartedAt=Date.now();
     const pedigreeHtml=await politeFetch(pedigreeUrl);
+    const pedigreeFetchedAt=Date.now();
     const pedigree=parsePedigree(pedigreeHtml);
     if(!pedigree.length)throw new Error("pedigree empty");
     if(!pedigree.some(node=>node.generation===1&&node.slot===0)){
@@ -277,6 +284,15 @@ for(let i=0;i<selected.length;i+=1){
       profile,
       pedigree
     });
+    const horseFinishedAt=Date.now();
+    const timing={
+      horse_id:hid,
+      profile_fetch_ms:profileFetchedAt-profileStartedAt,
+      pedigree_fetch_ms:pedigreeFetchedAt-pedigreeStartedAt,
+      total_ms:horseFinishedAt-horseStartedAt
+    };
+    timings.push(timing);
+    console.log(`[timing] ${hid} total=${timing.total_ms}ms profile=${timing.profile_fetch_ms}ms pedigree=${timing.pedigree_fetch_ms}ms`);
   }catch(error){
     failures.push({
       horse_id:hid,
@@ -290,7 +306,7 @@ await mkdir(path.join("data","debug"),{recursive:true});
 if(failures.length){
   await writeFile(
     path.join("data","debug",`${finalPackName}-error.json`),
-    JSON.stringify({sourceDate,selected,records:records.length,failures},null,2)+"\n"
+    JSON.stringify({sourceDate,selected,records:records.length,failures,timings},null,2)+"\n"
   );
   throw new Error("horse pack failed at "+failures[0].horse_id+": "+failures[0].error);
 }
@@ -310,13 +326,32 @@ manifest.schema_version=1;
 manifest.days=manifest.days??{};
 manifest.horse_packs=manifest.horse_packs??{};
 manifest.updated_at=new Date().toISOString();
+const sortedDurations=timings.map(t=>t.total_ms).sort((a,b)=>a-b);
+const average=value=>Math.round(value.reduce((sum,n)=>sum+n,0)/Math.max(1,value.length));
+const median=value=>{
+  if(!value.length)return 0;
+  const middle=Math.floor(value.length/2);
+  return value.length%2?value[middle]:Math.round((value[middle-1]+value[middle])/2);
+};
+const packFinishedAt=Date.now();
+const timingSummary={
+  total_ms:packFinishedAt-packStartedAt,
+  average_ms_per_horse:average(sortedDurations),
+  median_ms_per_horse:median(sortedDurations),
+  min_ms_per_horse:sortedDurations[0]??0,
+  max_ms_per_horse:sortedDurations.at(-1)??0,
+  average_profile_fetch_ms:average(timings.map(t=>t.profile_fetch_ms)),
+  average_pedigree_fetch_ms:average(timings.map(t=>t.pedigree_fetch_ms)),
+  measured_horses:timings.length
+};
 manifest.horse_packs[finalPackName]={
   status:"SUCCESS",
   records:records.length,
   file:outPath.replaceAll("\\","/"),
   source_dates:[sourceDate],
   source_horse_ids:selected,
-  request_delay_ms:delayMs
+  request_delay_ms:delayMs,
+  timing:timingSummary
 };
 await saveManifest(manifest);
 
@@ -326,5 +361,6 @@ console.log(JSON.stringify({
   records:records.length,
   firstHorse:records[0]?.profile?.horse_name??null,
   pedigreeNodes:records.reduce((sum,row)=>sum+row.pedigree.length,0),
+  timing:timingSummary,
   output:outPath
 },null,2));
