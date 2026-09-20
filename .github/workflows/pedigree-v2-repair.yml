@@ -8,7 +8,7 @@ on:
         required: true
         default: "2026-09-20"
       batches:
-        description: "50-horse repair batches in this run (1-4)"
+        description: "100-horse pedigree-only repair batches in this run (1-4)"
         required: true
         default: "1"
 
@@ -49,7 +49,7 @@ jobs:
           fi
           for i in $(seq 1 "$BATCHES"); do
             echo "pedigree v2 repair batch $i/$BATCHES for $DATE"
-            node src/collect-horses.mjs --source-date "$DATE" --limit 50 --skip-existing 1
+            node src/repair-pedigree-v2.mjs --source-date "$DATE" --limit 100
           done
       - name: Validate repaired date
         shell: bash
