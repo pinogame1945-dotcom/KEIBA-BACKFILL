@@ -1,0 +1,111 @@
+name: Horse pack smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_date:
+        description: "Existing race pack date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-20"
+      limit:
+        description: "Horse count"
+        required: true
+        default: "10"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/horse-pack-smoke.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-horse-pack-smoke
+  cancel-in-progress: false
+
+jobs:
+  build-horse-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REQUEST_DELAY_MS: "1500"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve inputs
+        id: input
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "date=${{ inputs.source_date }}" >> "$GITHUB_OUTPUT"
+            echo "limit=${{ inputs.limit }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "date=2026-09-20" >> "$GITHUB_OUTPUT"
+            echo "limit=10" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build real horse pack
+        run: |
+          node src/collect-horses.mjs \
+            --source-date "${{ steps.input.outputs.date }}" \
+            --limit "${{ steps.input.outputs.limit }}" \
+            --pack-name "smoke-${{ steps.input.outputs.date }}-001"
+
+      - name: Validate horse pack
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const date="${{ steps.input.outputs.date }}";
+          const packName=`smoke-${date}-001`;
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const entry=manifest.horse_packs?.[packName];
+          if(!entry||entry.status!=="SUCCESS")throw new Error("horse manifest entry missing");
+          const buf=await readFile(entry.file);
+          const text=gunzipSync(buf).toString("utf8").trim();
+          const rows=text?text.split("\n").map(JSON.parse):[];
+          if(rows.length!==entry.records)throw new Error("horse record count mismatch");
+          for(const row of rows){
+            if(row.schema_version!==1||row.kind!=="horse"||!row.horse_id){
+              throw new Error("invalid horse record");
+            }
+            if(!row.profile?.horse_name)throw new Error("horse profile name missing: "+row.horse_id);
+            if(!Array.isArray(row.pedigree)||row.pedigree.length===0){
+              throw new Error("pedigree missing: "+row.horse_id);
+            }
+            const sire=row.pedigree.find(n=>n.generation===1&&n.slot===0);
+            const dam=row.pedigree.find(n=>n.generation===1&&n.slot===1);
+            if(!sire||!dam)throw new Error("parent pair missing: "+row.horse_id);
+          }
+          console.log({
+            packName,
+            records:rows.length,
+            horses:rows.map(r=>r.profile.horse_name),
+            pedigreeNodes:rows.reduce((n,r)=>n+r.pedigree.length,0)
+          });
+          NODE
+
+      - name: Commit pack or diagnostics
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manifest.json data/horses/ data/debug/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git commit -m "data: add real horse pedigree smoke pack"
+          git push
