@@ -1,0 +1,151 @@
+name: Historical day production
+# trigger-historical-001
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Historical JRA date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-19"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/historical-day-production.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-historical-day-production
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SKIP_EMPTY: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve date
+        id: input
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "date=${{ inputs.date }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "date=2026-09-19" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect race day
+        run: |
+          node src/collect-day.mjs "${{ steps.input.outputs.date }}"
+
+      - name: Collect only new horses
+        shell: bash
+        run: |
+          DATE="${{ steps.input.outputs.date }}"
+          if [ ! -f "data/daily/$DATE.jsonl.gz" ]; then
+            echo "No JRA daily pack for $DATE; skip horse enrichment."
+            exit 0
+          fi
+
+          for i in $(seq 1 20); do
+            BEFORE=$(node --input-type=module - "$DATE" <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const date=process.argv[2];
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const completed=new Set();
+          for(const p of Object.values(manifest.horse_packs??{})){
+            if(p.status!=="SUCCESS")continue;
+            for(const id of p.source_horse_ids??[])completed.add(String(id));
+          }
+          const text=gunzipSync(await readFile(`data/daily/${date}.jsonl.gz`)).toString("utf8").trim();
+          const day=new Set();
+          for(const line of text.split("\n").filter(Boolean)){
+            const row=JSON.parse(line);
+            for(const e of row.entries??[])if(e.horse_id)day.add(String(e.horse_id));
+          }
+          console.log([...day].filter(id=>!completed.has(id)).length);
+          NODE
+          )
+            echo "Pending before batch $i: $BEFORE"
+            if [ "$BEFORE" = "0" ]; then
+              break
+            fi
+            node src/collect-horses.mjs --source-date "$DATE" --limit 50 --skip-existing 1
+          done
+
+      - name: Validate historical day and horse coverage
+        shell: bash
+        run: |
+          DATE="${{ steps.input.outputs.date }}"
+          node --input-type=module - "$DATE" <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const date=process.argv[2];
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const dayEntry=manifest.days?.[date];
+          if(!dayEntry){
+            console.log({date,meeting:false});
+            process.exit(0);
+          }
+          if(dayEntry.status!=="SUCCESS")throw new Error("day is not SUCCESS");
+
+          const text=gunzipSync(await readFile(dayEntry.file)).toString("utf8").trim();
+          const dayRows=text?text.split("\n").map(JSON.parse):[];
+          if(dayRows.length!==dayEntry.races_parsed)throw new Error("daily race count mismatch");
+
+          const dayHorseIds=new Set();
+          for(const row of dayRows){
+            for(const e of row.entries??[])if(e.horse_id)dayHorseIds.add(String(e.horse_id));
+          }
+
+          const allHorseIds=new Set();
+          for(const [name,p] of Object.entries(manifest.horse_packs??{})){
+            if(p.status!=="SUCCESS")continue;
+            for(const id of p.source_horse_ids??[]){
+              if(allHorseIds.has(String(id)))throw new Error("duplicate horse across packs: "+id);
+              allHorseIds.add(String(id));
+            }
+          }
+
+          const missing=[...dayHorseIds].filter(id=>!allHorseIds.has(id));
+          if(missing.length)throw new Error("historical day horses remain missing: "+missing.length);
+
+          console.log({
+            date,
+            races:dayRows.length,
+            dayUniqueHorses:dayHorseIds.size,
+            totalHorseMaster:allHorseIds.size,
+            missing:missing.length
+          });
+          NODE
+
+      - name: Commit historical data
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manifest.json data/daily/ data/horses/ data/debug/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git commit -m "data: backfill historical day ${{ steps.input.outputs.date }}"
+          git push
