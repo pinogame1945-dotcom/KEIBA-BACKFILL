@@ -1,5 +1,5 @@
 name: Historical week production
-# trigger-week-003
+# trigger-week-004
 
 on:
   workflow_dispatch:
@@ -7,11 +7,11 @@ on:
       start_date:
         description: "Newest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-18"
+        default: "2026-09-04"
       end_date:
         description: "Oldest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-05"
+        default: "2026-08-22"
   push:
     branches: [main]
     paths:
@@ -52,8 +52,8 @@ jobs:
             echo "start=${{ inputs.start_date }}" >> "$GITHUB_OUTPUT"
             echo "end=${{ inputs.end_date }}" >> "$GITHUB_OUTPUT"
           else
-            echo "start=2026-09-18" >> "$GITHUB_OUTPUT"
-            echo "end=2026-09-05" >> "$GITHUB_OUTPUT"
+            echo "start=2026-09-04" >> "$GITHUB_OUTPUT"
+            echo "end=2026-08-22" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Backfill dates newest to oldest
@@ -146,6 +146,7 @@ jobs:
             git add data/manifest.json data/daily/ data/horses/ data/debug/ 2>/dev/null || true
             if ! git diff --cached --quiet; then
               git commit -m "data: backfill historical day $DATE"
+              git pull --rebase origin main
               git push
             else
               echo "No data changes for $DATE."
