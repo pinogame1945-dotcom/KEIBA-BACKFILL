@@ -1,0 +1,44 @@
+name: Verify historical odds phase2
+
+on:
+  push:
+    branches:
+      - historical-odds-phase2
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REQUEST_DELAY_MS: "1500"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - run: npm run smoke:odds
+      - name: Real one-day odds collection
+        run: node src/collect-historical-odds.mjs "2026-09-20"
+      - name: Report pack
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const manifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
+          const day=manifest.days?.["2026-09-20"];
+          if(!day||day.status!=="SUCCESS")throw new Error("test day odds pack missing");
+          const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+          const rows=text?text.split("\n").map(JSON.parse):[];
+          console.log("ODDS_PHASE2_VERIFY_START");
+          console.log(JSON.stringify({day,races:rows.length,first:rows[0]?{
+            race_id:rows[0].race_id,
+            groups:Object.keys(rows[0].odds??{}).sort(),
+            group_summary:rows[0].group_summary
+          }:null},null,2));
+          console.log("ODDS_PHASE2_VERIFY_END");
+          NODE
