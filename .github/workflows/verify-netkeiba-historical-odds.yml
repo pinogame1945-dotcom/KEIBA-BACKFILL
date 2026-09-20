@@ -10,16 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Validate final odds against payout
+      - name: Map historical odds payload shapes
         shell: bash
         run: |
           node <<'NODE'
-          const raceId="201005050810";
-          const combo="061602";
-          const expected=251.1; // JRA 3連単払戻25,110円 / 100円
-          async function fetchMap(sort){
+          const tests=[
+            ["2007","200702020512"],
+            ["2008","200805050810"],
+            ["2009","200905050810"],
+            ["2010","201005050810"],
+            ["2011","201105050810"],
+            ["2012","201205050811"],
+            ["2013","201305050811"],
+            ["2014","201405050911"],
+            ["2015","201505021201"],
+          ];
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          async function probe(year,raceId){
             const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
-            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",sort,compress:"0",output:"json"};
+            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",sort:"odds",compress:"0",output:"json"};
             for(const [k,v] of Object.entries(p))u.searchParams.set(k,v);
             const res=await fetch(u,{headers:{
               "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -30,21 +39,39 @@ jobs:
             let json;
             try{json=JSON.parse(text);}catch{
               const m=text.match(/^[^(]+\((.*)\)\s*;?\s*$/s);
+              if(!m)throw new Error("non-json "+text.slice(0,120));
               json=JSON.parse(m[1]);
             }
-            return json?.data?.odds?.["8"]??{};
+            const map=json?.data?.odds?.["8"]??{};
+            const entries=Object.entries(map);
+            const lengths={};
+            let firstPriced=0,secondPriced=0,bothPriced=0,secondOnly=0;
+            for(const [,v] of entries){
+              if(!Array.isArray(v))continue;
+              lengths[v.length]=(lengths[v.length]??0)+1;
+              const a=Number(String(v[0]??"").replace(/,/g,""));
+              const b=Number(String(v[3]??"").replace(/,/g,""));
+              const ap=Number.isFinite(a)&&a>0;
+              const bp=Number.isFinite(b)&&b>0;
+              if(ap)firstPriced++;
+              if(bp)secondPriced++;
+              if(ap&&bp)bothPriced++;
+              if(!ap&&bp)secondOnly++;
+            }
+            return {
+              year,raceId,status:json?.status??null,
+              official_datetime:json?.data?.official_datetime??null,
+              total:entries.length,lengths,firstPriced,secondPriced,bothPriced,secondOnly,
+              sample:entries[0]??null
+            };
           }
-          const oddsMap=await fetchMap("odds");
-          await new Promise(r=>setTimeout(r,2000));
-          const ninkiMap=await fetchMap("ninki");
-          const ninkiHit=Object.entries(ninkiMap).find(([,v])=>Array.isArray(v)&&v[3]===combo)??null;
-          console.log("FINAL_ODDS_CROSSCHECK_START");
-          console.log(JSON.stringify({
-            raceId,combo,expectedFromPayout:expected,
-            oddsSortValue:oddsMap[combo]??null,
-            ninkiSortHit:ninkiHit,
-            matchOddsSort:Array.isArray(oddsMap[combo]) ? oddsMap[combo].map(x=>Number(String(x).replace(/,/g,""))).filter(x=>Number.isFinite(x)&&Math.abs(x-expected)<1e-9) : [],
-            matchNinki:ninkiHit&&Array.isArray(ninkiHit[1]) ? ninkiHit[1].map(x=>Number(String(x).replace(/,/g,""))).filter(x=>Number.isFinite(x)&&Math.abs(x-expected)<1e-9) : []
-          },null,2));
-          console.log("FINAL_ODDS_CROSSCHECK_END");
+          const out=[];
+          for(const t of tests){
+            try{out.push(await probe(...t));}
+            catch(e){out.push({year:t[0],raceId:t[1],error:String(e?.message??e)});}
+            await sleep(2000);
+          }
+          console.log("ODDS_SHAPE_MAP_START");
+          console.log(JSON.stringify(out,null,2));
+          console.log("ODDS_SHAPE_MAP_END");
           NODE
