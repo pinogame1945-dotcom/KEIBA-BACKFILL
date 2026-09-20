@@ -1,6 +1,6 @@
 import { load } from "cheerio";
 import Encoding from "encoding-japanese";
-import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
+import { mkdir, writeFile, readFile, unlink, access } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 import path from "node:path";
 
@@ -378,6 +378,30 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
   throw new Error("Usage: node src/collect-day.mjs YYYY-MM-DD");
 }
 
+const manifestAtStart = await loadManifest();
+const dailyPath = path.join("data", "daily", `${date}.jsonl.gz`);
+const existingDay = manifestAtStart.days?.[date];
+let dailyFileExists = false;
+try {
+  await access(dailyPath);
+  dailyFileExists = true;
+} catch {}
+
+if (existingDay?.status === "SUCCESS") {
+  const existingFile = existingDay.file || dailyPath;
+  try {
+    await access(existingFile);
+  } catch {
+    throw new Error(`manifest marks ${date} SUCCESS but file is missing: ${existingFile}`);
+  }
+  console.log(`[skip] existing SUCCESS daily pack for ${date}: ${existingFile}`);
+  process.exit(0);
+}
+
+if (dailyFileExists) {
+  throw new Error(`daily pack already exists without SUCCESS manifest; refusing to overwrite: ${dailyPath}`);
+}
+
 const compact = date.replace(/-/g, "");
 const [yearText, monthText] = date.split("-");
 const year = Number(yearText);
@@ -525,7 +549,7 @@ if (raceIds.length > 0 && records.length !== raceIds.length) {
 const lines = records.map(r => JSON.stringify(r)).join("\n") + (records.length ? "\n" : "");
 const outDir = path.join("data", "daily");
 await mkdir(outDir, { recursive: true });
-const outPath = path.join(outDir, `${date}.jsonl.gz`);
+const outPath = dailyPath;
 await writeFile(outPath, gzipSync(Buffer.from(lines, "utf8"), { level: 9 }));
 
 const manifest = await loadManifest();
