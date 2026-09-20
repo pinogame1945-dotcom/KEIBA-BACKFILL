@@ -10,7 +10,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0920.html"
     }
   },
-  "updated_at": "2026-09-20T14:13:53.847Z",
+  "updated_at": "2026-09-20T14:16:47.687Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -447,6 +447,51 @@
         "average_profile_fetch_ms": 1850,
         "average_pedigree_fetch_ms": 2112,
         "measured_horses": 50
+      }
+    },
+    "horse-2026-09-20-007": {
+      "status": "SUCCESS",
+      "records": 24,
+      "file": "data/horses/horse-2026-09-20-007.jsonl.gz",
+      "source_dates": [
+        "2026-09-20"
+      ],
+      "source_horse_ids": [
+        "2024106492",
+        "2024106589",
+        "2024106698",
+        "2024106763",
+        "2024106768",
+        "2024106770",
+        "2024106840",
+        "2024106865",
+        "2024106885",
+        "2024106908",
+        "2024107039",
+        "2024107047",
+        "2024107177",
+        "2024107256",
+        "2024107272",
+        "2024107292",
+        "2024107330",
+        "2024107358",
+        "2024107390",
+        "2024108019",
+        "2024108317",
+        "2024108319",
+        "2024108326",
+        "2024109052"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 103973,
+        "average_ms_per_horse": 4332,
+        "median_ms_per_horse": 4461,
+        "min_ms_per_horse": 2568,
+        "max_ms_per_horse": 4972,
+        "average_profile_fetch_ms": 1953,
+        "average_pedigree_fetch_ms": 2360,
+        "measured_horses": 24
       }
     }
   }
