@@ -1,5 +1,4 @@
 name: Horse pack smoke
-# trigger-v2
 
 on:
   workflow_dispatch:
@@ -12,12 +11,6 @@ on:
         description: "Horse count"
         required: true
         default: "10"
-  push:
-    branches: [main]
-    paths:
-      - "src/collect-horses.mjs"
-      - ".github/workflows/horse-pack-smoke.yml"
-
 permissions:
   contents: write
 
