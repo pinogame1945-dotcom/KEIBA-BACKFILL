@@ -469,8 +469,24 @@ for (let i = 0; i < raceIds.length; i++) {
   const raceId = raceIds[i];
   const raceUrl = `${DB_BASE}/race/${raceId}/`;
   console.log(`[race ${i + 1}/${raceIds.length}] ${raceId}`);
-  const html = await politeFetch(raceUrl);
-  records.push(parseRaceResult(html, raceId, date, raceUrl));
+  try {
+    const html = await politeFetch(raceUrl);
+    records.push(parseRaceResult(html, raceId, date, raceUrl));
+  } catch (error) {
+    await mkdir(path.join("data","debug"), { recursive: true });
+    await writeFile(
+      path.join("data","debug",`${date}-error.json`),
+      JSON.stringify({
+        date,
+        race_id: raceId,
+        race_index: i + 1,
+        race_count: raceIds.length,
+        parsed_before_error: records.length,
+        error: error instanceof Error ? error.message : String(error)
+      }, null, 2) + "\n"
+    );
+    throw error;
+  }
 }
 
 if (raceIds.length > 0 && records.length !== raceIds.length) {
