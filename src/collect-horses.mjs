@@ -66,7 +66,16 @@ async function politeFetch(url){
 
 function parseHorseProfile(html,hid,sourceUrl){
   const $=load(html);
-  const name=clean($("h1").first().text())||null;
+  const titleName=clean($("title").first().text())
+    .split(/[｜|]/)[0]
+    ?.replace(/\s*\([^)]*\)\s*$/,"")
+    .trim()||null;
+  const name=
+    clean($("h1").first().text())||
+    clean($(".horse_title h1").first().text())||
+    clean($(".HorseName").first().text())||
+    titleName||
+    null;
   const pageText=clean($.root().text());
 
   const birthMatch=pageText.match(/生年月日\s*[:：]?\s*((?:19|20)\d{2})年(\d{1,2})月(\d{1,2})日/);
