@@ -104,3 +104,17 @@ The Android app must:
 8. never require raw HTML to reconstruct canonical data.
 
 This contract is append-only within schema v1. Breaking changes require a new schema version.
+
+
+## App database independence
+
+This pack schema is a logical interchange contract, not a mirror of the Android SQLite schema.
+
+The Android app owns a canonical ingestion adapter that maps pack v1 into its current database layout. Therefore:
+
+- app DB migrations do not require changing BACKFILL when the logical fields are unchanged;
+- analysis/projection changes stay inside the app ingestion layer;
+- physical table splits or renames stay inside the app;
+- BACKFILL changes only when the logical data being transported changes.
+
+A new app DB schema version and a new pack schema version are independent decisions.
