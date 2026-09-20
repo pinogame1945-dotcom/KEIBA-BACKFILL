@@ -1,0 +1,76 @@
+name: Repair payout v1 race packs
+
+on:
+  push:
+    branches:
+      - repair/payout-v2-race-packs
+    paths:
+      - ".github/workflows/repair-payout-v2-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-payout-v2-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      REQUEST_DELAY_MS: "1500"
+      REBUILD_LEGACY_PAYOUT_V1: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Regression gate
+        run: |
+          node --check src/collect-day.mjs
+          npm run smoke:payout
+
+      - name: Rebuild affected race packs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for DATE in 2026-09-20 2026-09-19 2026-09-13 2026-09-12 2026-09-06 2026-09-05; do
+            echo "========================================"
+            echo "REPAIR PAYOUT V2 $DATE"
+            echo "========================================"
+            node src/collect-day.mjs "$DATE"
+
+            git add "data/daily/$DATE.jsonl.gz" data/manifest.json
+            if ! git diff --cached --quiet; then
+              git commit -m "data: rebuild payout-v2 race pack $DATE"
+              git push origin HEAD:repair/payout-v2-race-packs
+            fi
+          done
+
+      - name: Verify every affected day is payout v2
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          const m=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const dates=["2026-09-20","2026-09-19","2026-09-13","2026-09-12","2026-09-06","2026-09-05"];
+          for(const date of dates){
+            const day=m.days?.[date];
+            if(!day)throw new Error("missing manifest day "+date);
+            if(day.status!=="SUCCESS")throw new Error("day not SUCCESS "+date);
+            if(Number(day.race_pack_version)!==2)throw new Error("race pack not v2 "+date);
+            if(Number(day.payout_parser_version)!==2)throw new Error("payout parser not v2 "+date);
+          }
+          console.log(JSON.stringify({ok:true,dates},null,2));
+          NODE
