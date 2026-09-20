@@ -6,6 +6,10 @@ import path from "node:path";
 
 const DB_BASE = "https://db.netkeiba.com";
 const JRA_VENUES = new Set(["01","02","03","04","05","06","07","08","09","10"]);
+const JRA_VENUE_CODES = {
+  "札幌":"01","函館":"02","福島":"03","新潟":"04","東京":"05",
+  "中山":"06","中京":"07","京都":"08","阪神":"09","小倉":"10"
+};
 const USER_AGENT = "KEIBA-BACKFILL/0.1 (+https://github.com/pinogame1945-dotcom/KEIBA-BACKFILL)";
 const MIN_DELAY_MS = 1000;
 const delayMs = Math.max(MIN_DELAY_MS, Number(process.env.REQUEST_DELAY_MS || 1500));
@@ -124,6 +128,49 @@ function parseRaceList(html) {
     if (JRA_VENUES.has(id.slice(4, 6))) ids.add(id);
   }
   return [...ids].sort();
+}
+
+function parseJraSchedule(html, year) {
+  const $ = load(html);
+  const text = clean($.root().text());
+  const headingRe = /(\d+)回(札幌|函館|福島|新潟|東京|中山|中京|京都|阪神|小倉)(\d+)日/g;
+  const matches = [...text.matchAll(headingRe)];
+  const seenMeetings = new Set();
+  const meetings = [];
+  const raceIds = [];
+
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const meetingNo = Number(m[1]);
+    const venueName = m[2];
+    const dayNo = Number(m[3]);
+    const venueCode = JRA_VENUE_CODES[venueName];
+    const key = `${venueCode}-${meetingNo}-${dayNo}`;
+    if (!venueCode || seenMeetings.has(key)) continue;
+    seenMeetings.add(key);
+
+    const start = m.index ?? 0;
+    const end = i + 1 < matches.length ? (matches[i + 1].index ?? text.length) : text.length;
+    const chunk = text.slice(start, end);
+    const raceNos = [...chunk.matchAll(/(?:^|\D)(\d{1,2})レース/g)]
+      .map(x => Number(x[1]))
+      .filter(n => n >= 1 && n <= 12);
+    const uniqueRaceNos = [...new Set(raceNos)].sort((a,b)=>a-b);
+    const finalRaceNos = uniqueRaceNos.length ? uniqueRaceNos : Array.from({length:12},(_,n)=>n+1);
+
+    for (const raceNo of finalRaceNos) {
+      raceIds.push(
+        String(year) +
+        venueCode +
+        String(meetingNo).padStart(2,"0") +
+        String(dayNo).padStart(2,"0") +
+        String(raceNo).padStart(2,"0")
+      );
+    }
+    meetings.push({ venue_name: venueName, venue_code: venueCode, meeting_no: meetingNo, day_no: dayNo, race_nos: finalRaceNos });
+  }
+
+  return { raceIds: [...new Set(raceIds)].sort(), meetings };
 }
 
 function parseVenueSummaryUrls(html, compactDate) {
@@ -325,62 +372,86 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 }
 
 const compact = date.replace(/-/g, "");
-const discoveryUrls = [
-  `${DB_BASE}/race/list/${compact}/`,
-  `https://race.netkeiba.com/top/race_list.html?kaisai_date=${compact}`
-];
-let listUrl = discoveryUrls[0];
+const [yearText, monthText] = date.split("-");
+const year = Number(yearText);
+const month = String(Number(monthText));
+const mmdd = compact.slice(4);
+const jraScheduleUrl = `https://www.jra.go.jp/keiba/calendar${year}/${year}/${month}/${mmdd}.html`;
+
+let listUrl = jraScheduleUrl;
 let raceIds = [];
 const discoveryDiagnostics = [];
-for (const candidate of discoveryUrls) {
-  console.log(`[discover] ${date} ${candidate}`);
-  const listHtml = await politeFetch(candidate);
-  let ids = parseRaceList(listHtml);
-  const $diag = load(listHtml);
-  const hrefs = [];
-  $diag("a[href]").each((_, el) => {
-    const href = $diag(el).attr("href") ?? "";
-    if (/race|kaisai/.test(href) && hrefs.length < 50) hrefs.push(href);
-  });
-  const venueSummaryUrls = parseVenueSummaryUrls(listHtml, compact);
-  const venueDiagnostics = [];
-  if (ids.length === 0 && venueSummaryUrls.length > 0) {
-    const nestedIds = new Set();
-    for (const summaryUrl of venueSummaryUrls) {
-      console.log(`[discover:venue] ${summaryUrl}`);
-      const summaryHtml = await politeFetch(summaryUrl);
-      const summaryIds = parseRaceList(summaryHtml);
-      summaryIds.forEach(id => nestedIds.add(id));
-      const $summary = load(summaryHtml);
-      const summaryHrefs = [];
-      $summary("a[href]").each((_, el) => {
-        const href = $summary(el).attr("href") ?? "";
-        if (/race/.test(href) && summaryHrefs.length < 30) summaryHrefs.push(href);
-      });
-      venueDiagnostics.push({
-        url: summaryUrl,
-        title: clean($summary("title").first().text()),
-        html_length: summaryHtml.length,
-        race_ids_found: summaryIds.length,
-        href_samples: summaryHrefs
-      });
-    }
-    ids = [...nestedIds].sort();
-  }
+
+try {
+  console.log(`[discover:jra] ${date} ${jraScheduleUrl}`);
+  const jraHtml = await politeFetch(jraScheduleUrl);
+  const parsedJra = parseJraSchedule(jraHtml, year);
+  raceIds = parsedJra.raceIds;
+  const $jra = load(jraHtml);
   discoveryDiagnostics.push({
-    url: candidate,
-    title: clean($diag("title").first().text()),
-    html_length: listHtml.length,
-    race_ids_found: ids.length,
-    venue_summary_urls: venueSummaryUrls,
-    venue_diagnostics: venueDiagnostics,
-    href_samples: hrefs
+    url: jraScheduleUrl,
+    source: "JRA_SCHEDULE",
+    title: clean($jra("title").first().text()),
+    html_length: jraHtml.length,
+    race_ids_found: raceIds.length,
+    meetings: parsedJra.meetings
   });
-  console.log(`[discover] candidate found ${ids.length} JRA races`);
-  if (ids.length > 0) {
-    listUrl = candidate;
-    raceIds = ids;
-    break;
+  console.log(`[discover:jra] found ${raceIds.length} race ids`);
+} catch (error) {
+  discoveryDiagnostics.push({
+    url: jraScheduleUrl,
+    source: "JRA_SCHEDULE",
+    error: error instanceof Error ? error.message : String(error)
+  });
+}
+
+if (raceIds.length === 0) {
+  const discoveryUrls = [
+    `${DB_BASE}/race/list/${compact}/`,
+    `https://race.netkeiba.com/top/race_list.html?kaisai_date=${compact}`
+  ];
+  for (const candidate of discoveryUrls) {
+    console.log(`[discover] ${date} ${candidate}`);
+    const listHtml = await politeFetch(candidate);
+    let ids = parseRaceList(listHtml);
+    const $diag = load(listHtml);
+    const hrefs = [];
+    $diag("a[href]").each((_, el) => {
+      const href = $diag(el).attr("href") ?? "";
+      if (/race|kaisai/.test(href) && hrefs.length < 50) hrefs.push(href);
+    });
+    const venueSummaryUrls = parseVenueSummaryUrls(listHtml, compact);
+    const venueDiagnostics = [];
+    if (ids.length === 0 && venueSummaryUrls.length > 0) {
+      const nestedIds = new Set();
+      for (const summaryUrl of venueSummaryUrls) {
+        console.log(`[discover:venue] ${summaryUrl}`);
+        const summaryHtml = await politeFetch(summaryUrl);
+        const summaryIds = parseRaceList(summaryHtml);
+        summaryIds.forEach(id => nestedIds.add(id));
+        venueDiagnostics.push({
+          url: summaryUrl,
+          race_ids_found: summaryIds.length
+        });
+      }
+      ids = [...nestedIds].sort();
+    }
+    discoveryDiagnostics.push({
+      url: candidate,
+      source: "NETKEIBA_FALLBACK",
+      title: clean($diag("title").first().text()),
+      html_length: listHtml.length,
+      race_ids_found: ids.length,
+      venue_summary_urls: venueSummaryUrls,
+      venue_diagnostics: venueDiagnostics,
+      href_samples: hrefs
+    });
+    console.log(`[discover] candidate found ${ids.length} JRA races`);
+    if (ids.length > 0) {
+      listUrl = candidate;
+      raceIds = ids;
+      break;
+    }
   }
 }
 console.log(`[discover] selected ${raceIds.length} JRA races`);
