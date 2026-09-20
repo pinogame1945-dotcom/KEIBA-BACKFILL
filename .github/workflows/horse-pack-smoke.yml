@@ -1,5 +1,5 @@
 name: Horse pack smoke
-# trigger-v1
+# trigger-v2
 
 on:
   workflow_dispatch:
@@ -15,6 +15,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "src/collect-horses.mjs"
       - ".github/workflows/horse-pack-smoke.yml"
 
 permissions:
