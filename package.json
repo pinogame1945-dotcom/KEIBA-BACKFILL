@@ -12,6 +12,8 @@
   },
   "scripts": {
     "collect": "node src/collect-day.mjs",
-    "smoke:payout": "node scripts/payout-v2-smoke.mjs"
+    "smoke:payout": "node scripts/payout-v2-smoke.mjs",
+    "collect:odds": "node src/collect-historical-odds.mjs",
+    "smoke:odds": "node scripts/historical-odds-pack-smoke.mjs"
   }
 }
