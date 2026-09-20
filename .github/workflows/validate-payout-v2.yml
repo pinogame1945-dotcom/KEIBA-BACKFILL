@@ -1,0 +1,25 @@
+name: Validate payout v2 emergency fix
+
+on:
+  push:
+    branches:
+      - ci/validate-payout-v2
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Syntax
+        run: |
+          node --check src/collect-day.mjs
+          node --check src/payout-normalization.mjs
+          node --check scripts/payout-v2-smoke.mjs
+      - name: Payout v2 regression
+        run: npm run smoke:payout
