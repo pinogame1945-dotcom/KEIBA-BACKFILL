@@ -11,6 +11,7 @@
     "encoding-japanese": "2.2.0"
   },
   "scripts": {
-    "collect": "node src/collect-day.mjs"
+    "collect": "node src/collect-day.mjs",
+    "smoke:payout": "node scripts/payout-v2-smoke.mjs"
   }
 }
