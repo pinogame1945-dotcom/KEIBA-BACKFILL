@@ -1,0 +1,16 @@
+{
+  "name": "keiba-backfill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cheerio": "1.0.0-rc.12",
+    "encoding-japanese": "2.2.0"
+  },
+  "scripts": {
+    "collect": "node src/collect-day.mjs"
+  }
+}
