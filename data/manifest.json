@@ -10,6 +10,28 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0920.html"
     }
   },
-  "updated_at": "2026-09-20T12:15:19.652Z",
-  "horse_packs": {}
+  "updated_at": "2026-09-20T13:09:19.020Z",
+  "horse_packs": {
+    "smoke-2026-09-20-001": {
+      "status": "SUCCESS",
+      "records": 10,
+      "file": "data/horses/smoke-2026-09-20-001.jsonl.gz",
+      "source_dates": [
+        "2026-09-20"
+      ],
+      "source_horse_ids": [
+        "2018100442",
+        "2018101010",
+        "2018101660",
+        "2018102142",
+        "2018105996",
+        "2019100566",
+        "2019102628",
+        "2019102705",
+        "2019104092",
+        "2019105041"
+      ],
+      "request_delay_ms": 1500
+    }
+  }
 }
