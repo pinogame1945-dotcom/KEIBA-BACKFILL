@@ -1,5 +1,5 @@
 name: Historical week production
-# trigger-week-003
+# trigger-week-005-payout-v2
 
 on:
   workflow_dispatch:
@@ -7,11 +7,11 @@ on:
       start_date:
         description: "Newest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-18"
+        default: "2026-09-04"
       end_date:
         description: "Oldest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-05"
+        default: "2026-08-22"
   push:
     branches: [main]
     paths:
@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: keiba-historical-week-production
@@ -52,8 +53,8 @@ jobs:
             echo "start=${{ inputs.start_date }}" >> "$GITHUB_OUTPUT"
             echo "end=${{ inputs.end_date }}" >> "$GITHUB_OUTPUT"
           else
-            echo "start=2026-09-18" >> "$GITHUB_OUTPUT"
-            echo "end=2026-09-05" >> "$GITHUB_OUTPUT"
+            echo "start=2026-09-04" >> "$GITHUB_OUTPUT"
+            echo "end=2026-08-22" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Backfill dates newest to oldest
@@ -146,6 +147,7 @@ jobs:
             git add data/manifest.json data/daily/ data/horses/ data/debug/ 2>/dev/null || true
             if ! git diff --cached --quiet; then
               git commit -m "data: backfill historical day $DATE"
+              git pull --rebase origin main
               git push
             else
               echo "No data changes for $DATE."
@@ -186,3 +188,78 @@ jobs:
             weightedAverageMsPerHorse:measured?Math.round(weighted/measured):null
           });
           NODE
+
+      - name: Verify completed range
+        shell: bash
+        run: |
+          set -euo pipefail
+          node src/verify-range.mjs \
+            "${{ steps.input.outputs.start }}" \
+            "${{ steps.input.outputs.end }}"
+
+      - name: Self-chain next historical range
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          START="${{ steps.input.outputs.start }}"
+          END="${{ steps.input.outputs.end }}"
+
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+
+          PLAN=$(node src/chain-next-range.mjs prepare "$START" "$END" "$GITHUB_RUN_ID")
+          echo "$PLAN"
+          ACTION=$(printf '%s' "$PLAN" | jq -r '.action')
+
+          if [ "$ACTION" = "stop" ] || [ "$ACTION" = "already-dispatched" ]; then
+            echo "Self-chain stopped: $ACTION"
+            exit 0
+          fi
+
+          if [ "$ACTION" = "terminal" ]; then
+            git add .backfill/state.json
+            if ! git diff --cached --quiet; then
+              git commit -m "ci: mark historical backfill terminal range"
+              git pull --rebase origin main
+              git push
+            fi
+            echo "Historical backfill reached configured stop date."
+            exit 0
+          fi
+
+          if [ "$ACTION" != "dispatch" ]; then
+            echo "Unexpected chain action: $ACTION"
+            exit 1
+          fi
+
+          NEXT_START=$(printf '%s' "$PLAN" | jq -r '.next_start')
+          NEXT_END=$(printf '%s' "$PLAN" | jq -r '.next_end')
+
+          git add .backfill/state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: prepare next historical range $NEXT_START to $NEXT_END"
+            git pull --rebase origin main
+            git push
+          fi
+
+          OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/historical-week-production.yml/runs?per_page=30" \
+            --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID and (.status == \"queued\" or .status == \"in_progress\"))] | length")
+          if [ "$OTHER_ACTIVE" != "0" ]; then
+            echo "Another historical-week run is already queued or active; refusing duplicate dispatch."
+            exit 1
+          fi
+
+          echo "Dispatching next historical range: $NEXT_START -> $NEXT_END"
+          gh workflow run historical-week-production.yml \
+            --ref main \
+            -f start_date="$NEXT_START" \
+            -f end_date="$NEXT_END"
+
+          node src/chain-next-range.mjs mark-dispatched "$START" "$END" "$GITHUB_RUN_ID"
+          git add .backfill/state.json
+          git commit -m "ci: mark next historical range dispatched $NEXT_START to $NEXT_END"
+          git pull --rebase origin main
+          git push
