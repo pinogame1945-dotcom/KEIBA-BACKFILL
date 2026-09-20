@@ -1,5 +1,5 @@
 name: Historical week production
-# trigger-week-001
+# trigger-week-002
 
 on:
   workflow_dispatch:
@@ -7,11 +7,11 @@ on:
       start_date:
         description: "Newest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-18"
+        default: "2026-09-11"
       end_date:
         description: "Oldest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-12"
+        default: "2026-09-05"
   push:
     branches: [main]
     paths:
@@ -52,14 +52,15 @@ jobs:
             echo "start=${{ inputs.start_date }}" >> "$GITHUB_OUTPUT"
             echo "end=${{ inputs.end_date }}" >> "$GITHUB_OUTPUT"
           else
-            echo "start=2026-09-18" >> "$GITHUB_OUTPUT"
-            echo "end=2026-09-12" >> "$GITHUB_OUTPUT"
+            echo "start=2026-09-11" >> "$GITHUB_OUTPUT"
+            echo "end=2026-09-05" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Backfill dates newest to oldest
         shell: bash
         run: |
           set -euo pipefail
+          git pull --rebase origin main
           START="${{ steps.input.outputs.start }}"
           END="${{ steps.input.outputs.end }}"
           DATE="$START"
