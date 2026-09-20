@@ -1,0 +1,52 @@
+name: Validate historical payout-v2 resume
+
+on:
+  push:
+    branches:
+      - ci/validate-historical-v2-resume
+    paths:
+      - ".github/workflows/validate-historical-v2-resume.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Syntax
+        run: |
+          node --check src/collect-day.mjs
+          node --check src/payout-normalization.mjs
+          node --check src/chain-next-range.mjs
+          node --check src/verify-range.mjs
+      - name: Payout v2 regression
+        run: npm run smoke:payout
+      - name: Verify current payout-v2 production day
+        run: node src/verify-range.mjs 2026-09-20 2026-09-20
+      - name: Verify safety invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'UNCONFIRMED_EMPTY_DATE' src/collect-day.mjs
+          grep -q 'CONFIRMED_NO_JRA' src/collect-day.mjs
+          grep -q 'payout_parser_version' src/verify-range.mjs
+          grep -q 'race_pack_version' src/verify-range.mjs
+          grep -q 'actions: write' .github/workflows/historical-week-production.yml
+          grep -q 'start=2026-09-04' .github/workflows/historical-week-production.yml
+          grep -q 'end=2026-08-22' .github/workflows/historical-week-production.yml
+      - name: Dry-run next range planner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .backfill/state.json /tmp/state.json
+          PLAN=$(node src/chain-next-range.mjs prepare 2026-09-04 2026-08-22 validation)
+          echo "$PLAN"
+          echo "$PLAN" | grep -q '"action":"dispatch"'
+          echo "$PLAN" | grep -q '"next_start":"2026-08-21"'
+          echo "$PLAN" | grep -q '"next_end":"2026-08-08"'
+          cp /tmp/state.json .backfill/state.json
