@@ -1,0 +1,169 @@
+name: Historical odds backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_days:
+        description: "Meeting days per run (1-30)"
+        required: true
+        default: "10"
+      min_date:
+        description: "Oldest supported date (YYYY-MM-DD)"
+        required: true
+        default: "2007-07-28"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: keiba-historical-odds-self-chain
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      REQUEST_DELAY_MS: "1500"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Contract smoke
+        run: |
+          npm run smoke:odds
+          npm run smoke:odds-plan
+
+      - name: Plan pending odds days
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLAN=$(node src/plan-historical-odds-backfill.mjs plan "${{ inputs.max_days }}" "${{ inputs.min_date }}")
+          echo "$PLAN"
+          {
+            echo "action=$(printf '%s' "$PLAN" | jq -r '.action')"
+            echo "pending_before=$(printf '%s' "$PLAN" | jq -r '.pending_days')"
+            echo "selected_json=$(printf '%s' "$PLAN" | jq -c '.selected')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Collect selected odds days
+        if: steps.plan.outputs.action == 'collect'
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' '${{ steps.plan.outputs.selected_json }}' | jq -r '.[]' | while read -r DATE; do
+            echo "========================================"
+            echo "ODDS BACKFILL $DATE"
+            echo "========================================"
+            node src/collect-historical-odds.mjs "$DATE"
+          done
+
+      - name: Validate selected packs
+        if: steps.plan.outputs.action == 'collect'
+        shell: bash
+        run: |
+          set -euo pipefail
+          SELECTED='${{ steps.plan.outputs.selected_json }}'
+          node --input-type=module - "$SELECTED" <<'NODE'
+          import {access,readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const selected=JSON.parse(process.argv[2]);
+          const manifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
+          for(const date of selected){
+            const day=manifest.days?.[date];
+            if(!day||day.status!=="SUCCESS")throw new Error("odds day not SUCCESS: "+date);
+            if(day.odds_pack_version!==1)throw new Error("odds pack version mismatch: "+date);
+            if(day.decoder_contract_version!==1)throw new Error("decoder contract mismatch: "+date);
+            await access(day.file);
+            const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+            const rows=text?text.split("\n").map(JSON.parse):[];
+            if(rows.length!==Number(day.races??0))throw new Error("odds race count mismatch: "+date);
+            for(const row of rows){
+              if(row.source_status!=="result")throw new Error("non-final odds row: "+date);
+              if(!row.odds||typeof row.odds!=="object"||Array.isArray(row.odds)){
+                throw new Error("odds groups missing: "+date);
+              }
+            }
+          }
+          console.log({validated:selected.length,dates:selected});
+          NODE
+
+      - name: Update odds backfill state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .backfill
+          AFTER=$(node src/plan-historical-odds-backfill.mjs plan "${{ inputs.max_days }}" "${{ inputs.min_date }}")
+          node --input-type=module - "$AFTER" "${{ github.run_id }}" <<'NODE'
+          import {writeFile} from "node:fs/promises";
+          const after=JSON.parse(process.argv[2]);
+          const runId=process.argv[3];
+          const state={
+            schema_version:1,
+            status:after.pending_days>0?"RUNNING":"CAUGHT_UP",
+            min_date:after.min_date,
+            batch_size:after.max_days,
+            race_days:after.race_days,
+            completed_days:after.completed_days,
+            pending_days:after.pending_days,
+            newest_pending:after.newest_pending,
+            oldest_pending:after.oldest_pending,
+            last_run_id:runId,
+            updated_at:new Date().toISOString()
+          };
+          await writeFile(".backfill/odds-state.json",JSON.stringify(state,null,2)+"\n");
+          console.log(state);
+          NODE
+
+      - name: Commit odds data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/odds/ .backfill/odds-state.json
+          if git diff --cached --quiet; then
+            echo "No odds changes."
+            exit 0
+          fi
+          git commit -m "data: historical odds backfill batch"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Self-chain next odds batch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          AFTER=$(node src/plan-historical-odds-backfill.mjs plan "${{ inputs.max_days }}" "${{ inputs.min_date }}")
+          PENDING=$(printf '%s' "$AFTER" | jq -r '.pending_days')
+          if [ "$PENDING" = "0" ]; then
+            echo "Historical odds backfill caught up with all available race packs."
+            exit 0
+          fi
+
+          OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/historical-odds-backfill.yml/runs?per_page=30" \
+            --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID and (.status == \"queued\" or .status == \"in_progress\"))] | length")
+          if [ "$OTHER_ACTIVE" != "0" ]; then
+            echo "Another odds backfill run is already active/queued; skip duplicate dispatch."
+            exit 0
+          fi
+
+          echo "Dispatching next odds batch; pending=$PENDING"
+          gh workflow run historical-odds-backfill.yml \
+            --ref main \
+            -f max_days="${{ inputs.max_days }}" \
+            -f min_date="${{ inputs.min_date }}"
