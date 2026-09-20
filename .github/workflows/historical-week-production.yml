@@ -204,6 +204,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          if [ ! -f ".backfill/odds-auto-enabled" ]; then
+            echo "Historical odds auto-follow is disabled; skip automatic kick."
+            exit 0
+          fi
           git pull --rebase origin main
           PLAN=$(node src/plan-historical-odds-backfill.mjs plan 10 2007-07-28)
           PENDING=$(printf '%s' "$PLAN" | jq -r '.pending_days')
