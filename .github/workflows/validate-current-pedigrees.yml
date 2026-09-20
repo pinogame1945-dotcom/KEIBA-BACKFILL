@@ -1,0 +1,50 @@
+name: Validate current pedigrees
+
+on:
+  push:
+    branches:
+      - ci/validate-current-pedigrees
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate every committed horse pedigree
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const seen=new Set();
+          let packs=0;
+          let horses=0;
+          for(const [name,p] of Object.entries(manifest.horse_packs??{})){
+            if(p.status!=="SUCCESS")continue;
+            packs++;
+            const text=gunzipSync(await readFile(p.file)).toString("utf8").trim();
+            const rows=text?text.split("\n").map(JSON.parse):[];
+            if(rows.length!==p.records)throw new Error(`count mismatch ${name}`);
+            for(const row of rows){
+              const id=String(row.horse_id);
+              if(seen.has(id))throw new Error(`duplicate horse ${id}`);
+              seen.add(id);
+              horses++;
+              if(!Array.isArray(row.pedigree)||row.pedigree.length!==62){
+                throw new Error(`incomplete pedigree ${id}: ${row.pedigree?.length??0}`);
+              }
+              const positions=new Set(row.pedigree.map(n=>`${n.generation}:${n.slot}`));
+              if(positions.size!==62)throw new Error(`duplicate positions ${id}`);
+              for(let g=1;g<=5;g++){
+                for(let s=0;s<2**g;s++){
+                  if(!positions.has(`${g}:${s}`))throw new Error(`missing pedigree position ${id} ${g}:${s}`);
+                }
+              }
+            }
+          }
+          console.log({packs,horses,uniqueHorses:seen.size,allPedigreesComplete:true});
+          NODE
