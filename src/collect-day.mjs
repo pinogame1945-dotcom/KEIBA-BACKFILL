@@ -122,6 +122,18 @@ function parseRaceList(html) {
   return [...ids].sort();
 }
 
+function parseVenueSummaryUrls(html, compactDate) {
+  const $ = load(html);
+  const urls = new Set();
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") ?? "";
+    const m = href.match(new RegExp(`/race/sum/(\\d{2})/${compactDate}/?`));
+    if (!m || !JRA_VENUES.has(m[1])) return;
+    urls.add(new URL(href, DB_BASE).toString());
+  });
+  return [...urls].sort();
+}
+
 function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
   const $ = load(html);
   const titleCandidate = clean($("title").first().text()).split(/[｜|]/)[0]?.trim() || null;
@@ -319,18 +331,45 @@ const discoveryDiagnostics = [];
 for (const candidate of discoveryUrls) {
   console.log(`[discover] ${date} ${candidate}`);
   const listHtml = await politeFetch(candidate);
-  const ids = parseRaceList(listHtml);
+  let ids = parseRaceList(listHtml);
   const $diag = load(listHtml);
   const hrefs = [];
   $diag("a[href]").each((_, el) => {
     const href = $diag(el).attr("href") ?? "";
     if (/race|kaisai/.test(href) && hrefs.length < 50) hrefs.push(href);
   });
+  const venueSummaryUrls = parseVenueSummaryUrls(listHtml, compact);
+  const venueDiagnostics = [];
+  if (ids.length === 0 && venueSummaryUrls.length > 0) {
+    const nestedIds = new Set();
+    for (const summaryUrl of venueSummaryUrls) {
+      console.log(`[discover:venue] ${summaryUrl}`);
+      const summaryHtml = await politeFetch(summaryUrl);
+      const summaryIds = parseRaceList(summaryHtml);
+      summaryIds.forEach(id => nestedIds.add(id));
+      const $summary = load(summaryHtml);
+      const summaryHrefs = [];
+      $summary("a[href]").each((_, el) => {
+        const href = $summary(el).attr("href") ?? "";
+        if (/race/.test(href) && summaryHrefs.length < 30) summaryHrefs.push(href);
+      });
+      venueDiagnostics.push({
+        url: summaryUrl,
+        title: clean($summary("title").first().text()),
+        html_length: summaryHtml.length,
+        race_ids_found: summaryIds.length,
+        href_samples: summaryHrefs
+      });
+    }
+    ids = [...nestedIds].sort();
+  }
   discoveryDiagnostics.push({
     url: candidate,
     title: clean($diag("title").first().text()),
     html_length: listHtml.length,
     race_ids_found: ids.length,
+    venue_summary_urls: venueSummaryUrls,
+    venue_diagnostics: venueDiagnostics,
     href_samples: hrefs
   });
   console.log(`[discover] candidate found ${ids.length} JRA races`);
