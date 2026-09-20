@@ -1,0 +1,48 @@
+name: Validate non-meeting quorum
+
+on:
+  push:
+    branches:
+      - ci/validate-non-meeting-quorum
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      REQUEST_DELAY_MS: "1500"
+      DEBUG_DISCOVERY: "1"
+      SKIP_EMPTY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Syntax
+        run: |
+          node --check src/collect-day.mjs
+          node --check src/verify-range.mjs
+          ruby -e 'require "yaml"; YAML.parse_file(".github/workflows/historical-week-production.yml"); puts "yaml-ok"'
+      - name: Confirm a non-meeting day
+        run: node src/collect-day.mjs 2026-09-18
+      - name: Verify confirmed non-meeting day
+        run: node src/verify-range.mjs 2026-09-18 2026-09-18
+      - name: Ensure rerun is idempotent
+        run: node src/collect-day.mjs 2026-09-18
+      - name: Ensure unaccounted day fails closed
+        shell: bash
+        run: |
+          if node src/verify-range.mjs 2026-09-17 2026-09-17; then
+            echo "Verifier unexpectedly accepted an unaccounted day"
+            exit 1
+          fi
+          echo "unaccounted-day rejection confirmed"
+      - name: Show evidence
+        run: |
+          cat data/debug/non-meeting/2026-09-18.json
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          const m=JSON.parse(await readFile("data/manifest.json","utf8"));
+          console.log(JSON.stringify(m.non_meeting_days?.["2026-09-18"],null,2));
+          NODE
