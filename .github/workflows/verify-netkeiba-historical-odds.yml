@@ -10,33 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe trifecta completeness boundary
+      - name: Compare sort modes
         shell: bash
         run: |
           node <<'NODE'
-          const tests=[
-            ["2010","201005050810"],
-            ["2011","201105050810"],
-            ["2012","201205050811"],
-            ["2013","201305050811"],
-            ["2014","201405050911"],
-            ["2015","201505021201"],
-          ];
+          const raceId="201005050810";
+          const sorts=["odds","ninki",null];
           const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-          async function probe(year,raceId){
+          async function probe(sort){
             const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
-            for(const [k,v] of Object.entries({
-              pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",
-              sort:"odds",compress:"0",output:"json"
-            }))u.searchParams.set(k,v);
-            const res=await fetch(u,{
-              headers:{
-                "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-                "Referer":"https://race.netkeiba.com/",
-                "Accept":"application/json, text/javascript, */*"
-              },
-              signal:AbortSignal.timeout(15000)
-            });
+            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",compress:"0",output:"json"};
+            for(const [k,v] of Object.entries(p))u.searchParams.set(k,v);
+            if(sort)u.searchParams.set("sort",sort);
+            const res=await fetch(u,{headers:{
+              "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+              "Referer":"https://race.netkeiba.com/",
+              "Accept":"application/json, text/javascript, */*"
+            },signal:AbortSignal.timeout(15000)});
             const text=await res.text();
             let json;
             try{json=JSON.parse(text);}catch{
@@ -46,25 +36,21 @@ jobs:
             }
             const map=json?.data?.odds?.["8"]??{};
             const entries=Object.entries(map);
-            const priced=[],unpriced=[];
-            for(const [k,v] of entries){
-              const raw=Array.isArray(v)?String(v[0]??""):"";
-              const n=Number(raw.replace(/,/g,""));
-              (Number.isFinite(n)&&n>0?priced:unpriced).push([k,v]);
-            }
-            const rawCounts={};
-            for(const [,v] of unpriced){
-              const raw=Array.isArray(v)?String(v[0]??""):"<non-array>";
-              rawCounts[raw]=(rawCounts[raw]??0)+1;
-            }
-            return {year,raceId,http:res.status,status:json?.status??null,total:entries.length,priced:priced.length,unpriced:unpriced.length,unpricedRawCounts:rawCounts,unpricedSamples:unpriced.slice(0,5),pricedSamples:priced.slice(0,2)};
+            return {
+              sort:sort??"<none>",status:json?.status??null,
+              official_datetime:json?.data?.official_datetime??null,
+              total:entries.length,
+              sample_100102:map["100102"]??null,
+              sample_100201:map["100201"]??null,
+              first5:entries.slice(0,5)
+            };
           }
           const out=[];
-          for(const t of tests){
-            out.push(await probe(...t));
+          for(const sort of sorts){
+            out.push(await probe(sort));
             await sleep(2000);
           }
-          console.log("ODDS_BOUNDARY_START");
+          console.log("ODDS_SORT_COMPARE_START");
           console.log(JSON.stringify(out,null,2));
-          console.log("ODDS_BOUNDARY_END");
+          console.log("ODDS_SORT_COMPARE_END");
           NODE
