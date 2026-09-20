@@ -381,6 +381,7 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 const manifestAtStart = await loadManifest();
 const dailyPath = path.join("data", "daily", `${date}.jsonl.gz`);
 const existingDay = manifestAtStart.days?.[date];
+const existingNoMeeting = manifestAtStart.non_meeting_days?.[date];
 let dailyFileExists = false;
 try {
   await access(dailyPath);
@@ -400,6 +401,15 @@ if (existingDay?.status === "SUCCESS") {
 
 if (dailyFileExists) {
   throw new Error(`daily pack already exists without SUCCESS manifest; refusing to overwrite: ${dailyPath}`);
+}
+
+if (existingNoMeeting?.status === "CONFIRMED_NO_JRA") {
+  const confirmations = Array.isArray(existingNoMeeting.confirmations) ? existingNoMeeting.confirmations : [];
+  if (confirmations.length < 2) {
+    throw new Error(`invalid non-meeting confirmation ledger for ${date}`);
+  }
+  console.log(`[skip] existing confirmed non-meeting day ${date}`);
+  process.exit(0);
 }
 
 const compact = date.replace(/-/g, "");
@@ -443,45 +453,62 @@ if (raceIds.length === 0) {
   ];
   for (const candidate of discoveryUrls) {
     console.log(`[discover] ${date} ${candidate}`);
-    const listHtml = await politeFetch(candidate);
-    let ids = parseRaceList(listHtml);
-    const $diag = load(listHtml);
-    const hrefs = [];
-    $diag("a[href]").each((_, el) => {
-      const href = $diag(el).attr("href") ?? "";
-      if (/race|kaisai/.test(href) && hrefs.length < 50) hrefs.push(href);
-    });
-    const venueSummaryUrls = parseVenueSummaryUrls(listHtml, compact);
-    const venueDiagnostics = [];
-    if (ids.length === 0 && venueSummaryUrls.length > 0) {
-      const nestedIds = new Set();
-      for (const summaryUrl of venueSummaryUrls) {
-        console.log(`[discover:venue] ${summaryUrl}`);
-        const summaryHtml = await politeFetch(summaryUrl);
-        const summaryIds = parseRaceList(summaryHtml);
-        summaryIds.forEach(id => nestedIds.add(id));
-        venueDiagnostics.push({
-          url: summaryUrl,
-          race_ids_found: summaryIds.length
-        });
+    try {
+      const listHtml = await politeFetch(candidate);
+      let ids = parseRaceList(listHtml);
+      const $diag = load(listHtml);
+      const hrefs = [];
+      $diag("a[href]").each((_, el) => {
+        const href = $diag(el).attr("href") ?? "";
+        if (/race|kaisai/.test(href) && hrefs.length < 50) hrefs.push(href);
+      });
+      const venueSummaryUrls = parseVenueSummaryUrls(listHtml, compact);
+      const venueDiagnostics = [];
+      if (ids.length === 0 && venueSummaryUrls.length > 0) {
+        const nestedIds = new Set();
+        for (const summaryUrl of venueSummaryUrls) {
+          console.log(`[discover:venue] ${summaryUrl}`);
+          try {
+            const summaryHtml = await politeFetch(summaryUrl);
+            const summaryIds = parseRaceList(summaryHtml);
+            summaryIds.forEach(id => nestedIds.add(id));
+            venueDiagnostics.push({
+              url: summaryUrl,
+              race_ids_found: summaryIds.length,
+              html_length: summaryHtml.length
+            });
+          } catch (error) {
+            venueDiagnostics.push({
+              url: summaryUrl,
+              error: error instanceof Error ? error.message : String(error)
+            });
+          }
+        }
+        ids = [...nestedIds].sort();
       }
-      ids = [...nestedIds].sort();
-    }
-    discoveryDiagnostics.push({
-      url: candidate,
-      source: "NETKEIBA_FALLBACK",
-      title: clean($diag("title").first().text()),
-      html_length: listHtml.length,
-      race_ids_found: ids.length,
-      venue_summary_urls: venueSummaryUrls,
-      venue_diagnostics: venueDiagnostics,
-      href_samples: hrefs
-    });
-    console.log(`[discover] candidate found ${ids.length} JRA races`);
-    if (ids.length > 0) {
-      listUrl = candidate;
-      raceIds = ids;
-      break;
+      discoveryDiagnostics.push({
+        url: candidate,
+        source: "NETKEIBA_FALLBACK",
+        title: clean($diag("title").first().text()),
+        html_length: listHtml.length,
+        race_ids_found: ids.length,
+        venue_summary_urls: venueSummaryUrls,
+        venue_diagnostics: venueDiagnostics,
+        href_samples: hrefs
+      });
+      console.log(`[discover] candidate found ${ids.length} JRA races`);
+      if (ids.length > 0) {
+        listUrl = candidate;
+        raceIds = ids;
+        break;
+      }
+    } catch (error) {
+      discoveryDiagnostics.push({
+        url: candidate,
+        source: "NETKEIBA_FALLBACK",
+        error: error instanceof Error ? error.message : String(error)
+      });
+      console.warn(`[discover] candidate failed ${candidate}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -497,7 +524,55 @@ if (process.env.REQUIRE_RACES === "1" && raceIds.length === 0) {
   throw new Error(`no JRA races discovered for required smoke date ${date}`);
 }
 if (process.env.SKIP_EMPTY === "1" && raceIds.length === 0) {
-  console.log(`[skip] no JRA meeting on ${date}`);
+  const successfulZero = discoveryDiagnostics.filter(item =>
+    !item.error &&
+    item.race_ids_found === 0 &&
+    Number(item.html_length ?? 0) >= 1000
+  );
+  const jraZero = successfulZero.filter(item => item.source === "JRA_SCHEDULE");
+  const netkeibaZero = successfulZero.filter(item => item.source === "NETKEIBA_FALLBACK");
+  const distinctNetkeibaUrls = new Set(netkeibaZero.map(item => item.url));
+  const confirmed =
+    (jraZero.length >= 1 && distinctNetkeibaUrls.size >= 1) ||
+    distinctNetkeibaUrls.size >= 2;
+
+  await mkdir(path.join("data","debug","non-meeting"), { recursive: true });
+  const evidencePath = path.join("data","debug","non-meeting",`${date}.json`);
+  await writeFile(
+    evidencePath,
+    JSON.stringify({
+      date,
+      confirmed,
+      policy: "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      discoveryDiagnostics
+    }, null, 2) + "\n"
+  );
+
+  if (!confirmed) {
+    throw new Error(`UNCONFIRMED_EMPTY_DATE ${date}: insufficient independent zero-race evidence`);
+  }
+
+  const manifest = await loadManifest();
+  manifest.schema_version = 1;
+  manifest.days = manifest.days ?? {};
+  manifest.non_meeting_days = manifest.non_meeting_days ?? {};
+  manifest.updated_at = new Date().toISOString();
+  manifest.non_meeting_days[date] = {
+    status: "CONFIRMED_NO_JRA",
+    confirmed_at: new Date().toISOString(),
+    request_delay_ms: delayMs,
+    policy: "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+    confirmations: successfulZero.map(item => ({
+      source: item.source,
+      url: item.url,
+      title: item.title ?? null,
+      html_length: item.html_length,
+      race_ids_found: 0
+    })),
+    evidence_file: evidencePath.replaceAll("\\","/")
+  };
+  await saveManifest(manifest);
+  console.log(`[skip] confirmed no JRA meeting on ${date} with ${successfulZero.length} zero-race confirmations`);
   process.exit(0);
 }
 
