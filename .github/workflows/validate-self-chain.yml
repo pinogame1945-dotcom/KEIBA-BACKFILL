@@ -1,0 +1,39 @@
+name: Validate self-chain
+
+on:
+  push:
+    branches:
+      - ci/validate-self-chain
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check source syntax
+        run: |
+          node --check src/collect-day.mjs
+          node --check src/collect-horses.mjs
+          node --check src/verify-range.mjs
+          node --check src/chain-next-range.mjs
+      - name: Parse production workflow YAML
+        run: ruby -e 'require "yaml"; YAML.parse_file(".github/workflows/historical-week-production.yml"); puts "yaml-ok"'
+      - name: Verify current committed range
+        run: node src/verify-range.mjs 2026-09-20 2026-09-19
+      - name: Dry-run chain planner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .backfill/state.json /tmp/state.json
+          PLAN=$(node src/chain-next-range.mjs prepare 2026-09-04 2026-08-22 dry-run)
+          echo "$PLAN"
+          test "$(printf '%s' "$PLAN" | jq -r '.action')" = "dispatch"
+          test "$(printf '%s' "$PLAN" | jq -r '.next_start')" = "2026-08-21"
+          test "$(printf '%s' "$PLAN" | jq -r '.next_end')" = "2026-08-08"
+          node src/chain-next-range.mjs mark-dispatched 2026-09-04 2026-08-22 dry-run
+          jq -e '.ranges["2026-09-04..2026-08-22"].next_dispatched == true' .backfill/state.json
+          mv /tmp/state.json .backfill/state.json
