@@ -121,11 +121,16 @@ jobs:
           }
 
           const allHorseIds=new Set();
+          const byParser=new Map();
           for(const p of Object.values(manifest.horse_packs??{})){
             if(p.status!=="SUCCESS")continue;
+            const version=Number(p.pedigree_parser_version??1);
+            let seen=byParser.get(version);
+            if(!seen){seen=new Set();byParser.set(version,seen);}
             for(const id of p.source_horse_ids??[]){
               const value=String(id);
-              if(allHorseIds.has(value))throw new Error("duplicate horse across packs: "+value);
+              if(seen.has(value))throw new Error("duplicate horse in pedigree parser v"+version+": "+value);
+              seen.add(value);
               allHorseIds.add(value);
             }
           }
