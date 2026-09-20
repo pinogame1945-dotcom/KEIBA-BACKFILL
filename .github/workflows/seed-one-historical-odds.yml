@@ -1,0 +1,38 @@
+name: Seed one historical odds pack
+
+on:
+  push:
+    branches:
+      - odds-seed-2026-09-20
+    paths:
+      - "odds-seed-trigger.txt"
+
+permissions:
+  contents: write
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REQUEST_DELAY_MS: "1500"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - run: npm run smoke:odds
+      - run: node src/collect-historical-odds.mjs "2026-09-20"
+      - name: Commit seed pack
+        shell: bash
+        run: |
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/odds/
+          if git diff --cached --quiet; then
+            echo "No odds data changes."
+            exit 0
+          fi
+          git commit -m "data: seed historical odds 2026-09-20"
+          git push origin HEAD:odds-seed-2026-09-20
