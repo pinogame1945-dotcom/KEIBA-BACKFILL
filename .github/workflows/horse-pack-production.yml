@@ -71,7 +71,7 @@ jobs:
 
           const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
           const packs=manifest.horse_packs??{};
-          const seenHorseIds=new Set();
+          const seenByParser=new Map();
 
           for(const [packName,entry] of Object.entries(packs)){
             if(entry.status!=="SUCCESS")continue;
@@ -81,12 +81,15 @@ jobs:
             if(rows.length!==entry.records){
               throw new Error(`count mismatch ${packName}: manifest=${entry.records} actual=${rows.length}`);
             }
+            const parserVersion=Number(entry.pedigree_parser_version??1);
+            let seenHorseIds=seenByParser.get(parserVersion);
+            if(!seenHorseIds){seenHorseIds=new Set();seenByParser.set(parserVersion,seenHorseIds);}
             for(const row of rows){
               if(row.schema_version!==1||row.kind!=="horse"||!row.horse_id){
                 throw new Error("invalid horse record in "+packName);
               }
               if(seenHorseIds.has(row.horse_id)){
-                throw new Error("duplicate horse across packs: "+row.horse_id);
+                throw new Error("duplicate horse in pedigree parser v"+parserVersion+": "+row.horse_id);
               }
               seenHorseIds.add(row.horse_id);
               if(!row.profile?.horse_name){
@@ -110,7 +113,7 @@ jobs:
           }
           console.log({
             successfulPacks:Object.values(packs).filter(p=>p.status==="SUCCESS").length,
-            uniqueHorses:seenHorseIds.size
+            pedigreeParserVersions:[...seenByParser.entries()].map(([version,ids])=>({version,uniqueHorses:ids.size}))
           });
           NODE
 
