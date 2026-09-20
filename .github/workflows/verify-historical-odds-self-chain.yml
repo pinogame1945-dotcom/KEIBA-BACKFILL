@@ -1,0 +1,32 @@
+name: Verify historical odds self-chain
+
+on:
+  push:
+    branches:
+      - historical-odds-self-chain
+    paths:
+      - ".odds-self-chain-verify"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Contract smoke
+        run: |
+          npm run smoke:odds
+          npm run smoke:odds-plan
+      - name: Dry-run current manifests
+        run: |
+          node src/plan-historical-odds-backfill.mjs plan 10 2007-07-28
+      - name: Parse workflow YAML
+        run: |
+          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/historical-odds-backfill.yml"); YAML.load_file(".github/workflows/historical-week-production.yml"); puts "workflow yaml parse ok"'
