@@ -1,0 +1,24 @@
+name: Verify pedigree v2 repair code
+
+on:
+  push:
+    branches:
+      - fix-pedigree-parser-v2
+    paths:
+      - ".verify-pedigree-v2-repair"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - run: npm run smoke:pedigree
+      - run: node --check src/repair-pedigree-v2.mjs
