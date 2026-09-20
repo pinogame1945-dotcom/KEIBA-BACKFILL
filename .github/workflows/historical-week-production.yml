@@ -197,6 +197,34 @@ jobs:
             "${{ steps.input.outputs.start }}" \
             "${{ steps.input.outputs.end }}"
 
+      - name: Kick independent odds catch-up
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          PLAN=$(node src/plan-historical-odds-backfill.mjs plan 10 2007-07-28)
+          PENDING=$(printf '%s' "$PLAN" | jq -r '.pending_days')
+          if [ "$PENDING" = "0" ]; then
+            echo "No pending odds days."
+            exit 0
+          fi
+
+          OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/historical-odds-backfill.yml/runs?per_page=30" \
+            --jq "[.workflow_runs[] | select(.status == \"queued\" or .status == \"in_progress\")] | length")
+          if [ "$OTHER_ACTIVE" != "0" ]; then
+            echo "Odds catch-up already active/queued; skip duplicate dispatch."
+            exit 0
+          fi
+
+          echo "Kick odds catch-up; pending=$PENDING"
+          gh workflow run historical-odds-backfill.yml \
+            --ref main \
+            -f max_days="10" \
+            -f min_date="2007-07-28"
+
       - name: Self-chain next historical range
         shell: bash
         env:
