@@ -1,5 +1,5 @@
 name: Historical week production
-# trigger-week-002
+# trigger-week-003
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       start_date:
         description: "Newest date (YYYY-MM-DD)"
         required: true
-        default: "2026-09-11"
+        default: "2026-09-18"
       end_date:
         description: "Oldest date (YYYY-MM-DD)"
         required: true
@@ -27,7 +27,7 @@ concurrency:
 jobs:
   collect-week:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
     env:
       REQUEST_DELAY_MS: "1500"
       SKIP_EMPTY: "1"
@@ -52,7 +52,7 @@ jobs:
             echo "start=${{ inputs.start_date }}" >> "$GITHUB_OUTPUT"
             echo "end=${{ inputs.end_date }}" >> "$GITHUB_OUTPUT"
           else
-            echo "start=2026-09-11" >> "$GITHUB_OUTPUT"
+            echo "start=2026-09-18" >> "$GITHUB_OUTPUT"
             echo "end=2026-09-05" >> "$GITHUB_OUTPUT"
           fi
 
