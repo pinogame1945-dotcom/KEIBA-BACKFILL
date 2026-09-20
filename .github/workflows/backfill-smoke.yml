@@ -1,0 +1,88 @@
+name: Backfill smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "JRA race date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-20"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "package.json"
+      - ".github/workflows/backfill-smoke.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-backfill-smoke
+  cancel-in-progress: false
+
+jobs:
+  collect-one-day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      REQUEST_DELAY_MS: "1500"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve target date
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "date=${{ inputs.date }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "date=2026-09-20" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect one day
+        run: node src/collect-day.mjs "${{ steps.target.outputs.date }}"
+
+      - name: Validate compressed output
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          import { gunzipSync } from "node:zlib";
+          const date = "${{ steps.target.outputs.date }}";
+          const buf = await readFile(`data/daily/${date}.jsonl.gz`);
+          const text = gunzipSync(buf).toString("utf8").trim();
+          const rows = text ? text.split("\n").map(JSON.parse) : [];
+          for (const row of rows) {
+            if (!row?.race?.race_id || !Array.isArray(row.entries) || !Array.isArray(row.results)) {
+              throw new Error("invalid record");
+            }
+            if (row.entries.length === 0 || row.results.length === 0) {
+              throw new Error(`empty race ${row.race.race_id}`);
+            }
+          }
+          console.log({ date, races: rows.length });
+          NODE
+
+      - name: Commit collected data
+        shell: bash
+        run: |
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manifest.json data/daily/
+          if git diff --cached --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git commit -m "data: backfill ${{ steps.target.outputs.date }}"
+          git push
