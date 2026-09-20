@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "enabled": true,
+  "stop_date": "2006-09-01",
+  "range_days": 14,
+  "note": "Set enabled=false to stop self-chaining after the currently running range. stop_date is inclusive."
+}
