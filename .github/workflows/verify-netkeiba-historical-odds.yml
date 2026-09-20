@@ -10,20 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe 2007 sold trifecta races
+      - name: Probe trifecta completeness boundary
         shell: bash
         run: |
           node <<'NODE'
           const tests=[
-            ["2007-函館9R","200702020509","init"],
-            ["2007-函館12R","200702020512","init"],
-            ["2007-函館9R","200702020509","update"],
+            ["2010","201005050810"],
+            ["2011","201105050810"],
+            ["2012","201205050811"],
+            ["2013","201305050811"],
+            ["2014","201405050911"],
+            ["2015","201505021201"],
           ];
           const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-          async function probe(label,raceId,action){
+          async function probe(year,raceId){
             const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
             for(const [k,v] of Object.entries({
-              pid:"api_get_jra_odds",race_id:raceId,type:"8",action,
+              pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",
               sort:"odds",compress:"0",output:"json"
             }))u.searchParams.set(k,v);
             const res=await fetch(u,{
@@ -43,19 +46,25 @@ jobs:
             }
             const map=json?.data?.odds?.["8"]??{};
             const entries=Object.entries(map);
-            const priced=entries.filter(([,v])=>{
-              if(!Array.isArray(v))return false;
-              const n=Number(String(v[0]??"").replace(/,/g,""));
-              return Number.isFinite(n)&&n>0;
-            });
-            return {label,raceId,action,http:res.status,status:json?.status??null,total:entries.length,priced:priced.length,samples:priced.slice(0,5)};
+            const priced=[],unpriced=[];
+            for(const [k,v] of entries){
+              const raw=Array.isArray(v)?String(v[0]??""):"";
+              const n=Number(raw.replace(/,/g,""));
+              (Number.isFinite(n)&&n>0?priced:unpriced).push([k,v]);
+            }
+            const rawCounts={};
+            for(const [,v] of unpriced){
+              const raw=Array.isArray(v)?String(v[0]??""):"<non-array>";
+              rawCounts[raw]=(rawCounts[raw]??0)+1;
+            }
+            return {year,raceId,http:res.status,status:json?.status??null,total:entries.length,priced:priced.length,unpriced:unpriced.length,unpricedRawCounts:rawCounts,unpricedSamples:unpriced.slice(0,5),pricedSamples:priced.slice(0,2)};
           }
           const out=[];
           for(const t of tests){
             out.push(await probe(...t));
             await sleep(2000);
           }
-          console.log("ODDS_VERIFY_2007_START");
+          console.log("ODDS_BOUNDARY_START");
           console.log(JSON.stringify(out,null,2));
-          console.log("ODDS_VERIFY_2007_END");
+          console.log("ODDS_BOUNDARY_END");
           NODE
