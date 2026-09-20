@@ -114,7 +114,7 @@ function parseRaceList(html) {
   const ids = new Set();
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href") ?? "";
-    const m = href.match(/\/race\/(\d{12})\/?/);
+    const m = href.match(/\/race\/(\d{12})\/?/) ?? href.match(/[?&]race_id=(\d{12})/);
     if (!m) return;
     const id = m[1];
     if (JRA_VENUES.has(id.slice(4, 6))) ids.add(id);
@@ -309,11 +309,27 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 }
 
 const compact = date.replace(/-/g, "");
-const listUrl = `${DB_BASE}/race/list/${compact}/`;
-console.log(`[discover] ${date} ${listUrl}`);
-const listHtml = await politeFetch(listUrl);
-const raceIds = parseRaceList(listHtml);
-console.log(`[discover] ${raceIds.length} JRA races`);
+const discoveryUrls = [
+  `${DB_BASE}/race/list/${compact}/`,
+  `https://race.netkeiba.com/top/race_list.html?kaisai_date=${compact}`
+];
+let listUrl = discoveryUrls[0];
+let raceIds = [];
+for (const candidate of discoveryUrls) {
+  console.log(`[discover] ${date} ${candidate}`);
+  const listHtml = await politeFetch(candidate);
+  const ids = parseRaceList(listHtml);
+  console.log(`[discover] candidate found ${ids.length} JRA races`);
+  if (ids.length > 0) {
+    listUrl = candidate;
+    raceIds = ids;
+    break;
+  }
+}
+console.log(`[discover] selected ${raceIds.length} JRA races`);
+if (process.env.REQUIRE_RACES === "1" && raceIds.length === 0) {
+  throw new Error(`no JRA races discovered for required smoke date ${date}`);
+}
 
 const records = [];
 for (let i = 0; i < raceIds.length; i++) {
@@ -342,7 +358,8 @@ manifest.days[date] = {
   races_discovered: raceIds.length,
   races_parsed: records.length,
   file: outPath.replaceAll("\\","/"),
-  request_delay_ms: delayMs
+  request_delay_ms: delayMs,
+  discovery_url: listUrl
 };
 await saveManifest(manifest);
 
