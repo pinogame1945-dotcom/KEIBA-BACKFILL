@@ -14,6 +14,9 @@
     },
     "2026-09-19": {
       "status": "SUCCESS",
+      "race_pack_version": 2,
+      "payout_parser_version": 2,
+      "repaired_from_legacy_payout_v1": true,
       "races_discovered": 24,
       "races_parsed": 24,
       "file": "data/daily/2026-09-19.jsonl.gz",
@@ -53,7 +56,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0905.html"
     }
   },
-  "updated_at": "2026-09-20T17:08:39.849Z",
+  "updated_at": "2026-09-20T17:09:27.525Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
