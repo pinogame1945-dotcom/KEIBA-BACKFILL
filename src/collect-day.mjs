@@ -315,10 +315,24 @@ const discoveryUrls = [
 ];
 let listUrl = discoveryUrls[0];
 let raceIds = [];
+const discoveryDiagnostics = [];
 for (const candidate of discoveryUrls) {
   console.log(`[discover] ${date} ${candidate}`);
   const listHtml = await politeFetch(candidate);
   const ids = parseRaceList(listHtml);
+  const $diag = load(listHtml);
+  const hrefs = [];
+  $diag("a[href]").each((_, el) => {
+    const href = $diag(el).attr("href") ?? "";
+    if (/race|kaisai/.test(href) && hrefs.length < 50) hrefs.push(href);
+  });
+  discoveryDiagnostics.push({
+    url: candidate,
+    title: clean($diag("title").first().text()),
+    html_length: listHtml.length,
+    race_ids_found: ids.length,
+    href_samples: hrefs
+  });
   console.log(`[discover] candidate found ${ids.length} JRA races`);
   if (ids.length > 0) {
     listUrl = candidate;
@@ -328,6 +342,11 @@ for (const candidate of discoveryUrls) {
 }
 console.log(`[discover] selected ${raceIds.length} JRA races`);
 if (process.env.REQUIRE_RACES === "1" && raceIds.length === 0) {
+  await mkdir(path.join("data","debug"), { recursive: true });
+  await writeFile(
+    path.join("data","debug",`${date}.json`),
+    JSON.stringify({ date, discoveryDiagnostics }, null, 2) + "\n"
+  );
   throw new Error(`no JRA races discovered for required smoke date ${date}`);
 }
 
