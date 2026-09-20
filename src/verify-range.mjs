@@ -21,11 +21,30 @@ for(const [packName,pack] of Object.entries(manifest.horse_packs??{})){
 }
 
 let checkedDays=0;
+let checkedNonMeetingDays=0;
 let checkedRaces=0;
 const currentHorsePacks=new Set();
 
-for(const [date,day] of Object.entries(manifest.days??{})){
-  if(date>endDate&&date<=startDate || date===endDate){
+const dayMs=86400000;
+const parseDate=value=>{
+  const [y,m,d]=value.split("-").map(Number);
+  return new Date(Date.UTC(y,m-1,d));
+};
+const formatDate=date=>date.toISOString().slice(0,10);
+const rangeDates=[];
+for(let cursor=parseDate(startDate);formatDate(cursor)>=endDate;cursor=new Date(cursor.getTime()-dayMs)){
+  rangeDates.push(formatDate(cursor));
+}
+
+for(const date of rangeDates){
+  const day=manifest.days?.[date];
+  const noMeeting=manifest.non_meeting_days?.[date];
+
+  if(day&&noMeeting){
+    throw new Error(`conflicting day classification for ${date}`);
+  }
+
+  if(day){
     if(day.status!=="SUCCESS")throw new Error(`day not SUCCESS: ${date}`);
     if((day.request_delay_ms??0)<1500)throw new Error(`unsafe request delay for day ${date}: ${day.request_delay_ms}`);
     const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
@@ -43,7 +62,34 @@ for(const [date,day] of Object.entries(manifest.days??{})){
         }
       }
     }
+    continue;
   }
+
+  if(noMeeting){
+    if(noMeeting.status!=="CONFIRMED_NO_JRA")throw new Error(`non-meeting day not confirmed: ${date}`);
+    if((noMeeting.request_delay_ms??0)<1500)throw new Error(`unsafe request delay for non-meeting day ${date}: ${noMeeting.request_delay_ms}`);
+    if(noMeeting.policy!=="JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO"){
+      throw new Error(`unknown non-meeting confirmation policy for ${date}`);
+    }
+    const confirmations=Array.isArray(noMeeting.confirmations)?noMeeting.confirmations:[];
+    const distinctUrls=new Set(confirmations.map(item=>String(item.url??"")).filter(Boolean));
+    if(confirmations.length<2||distinctUrls.size<2){
+      throw new Error(`insufficient non-meeting confirmations for ${date}`);
+    }
+    for(const item of confirmations){
+      if(item.race_ids_found!==0)throw new Error(`non-zero confirmation in non-meeting ledger for ${date}`);
+      if(Number(item.html_length??0)<1000)throw new Error(`weak non-meeting evidence for ${date}`);
+    }
+    if(!noMeeting.evidence_file)throw new Error(`non-meeting evidence file missing from manifest for ${date}`);
+    const evidence=JSON.parse(await readFile(noMeeting.evidence_file,"utf8"));
+    if(evidence.date!==date||evidence.confirmed!==true){
+      throw new Error(`invalid non-meeting evidence file for ${date}`);
+    }
+    checkedNonMeetingDays++;
+    continue;
+  }
+
+  throw new Error(`unaccounted calendar date in completed range: ${date}`);
 }
 
 for(const [packName,pack] of Object.entries(manifest.horse_packs??{})){
@@ -79,6 +125,8 @@ console.log(JSON.stringify({
   ok:true,
   range:{start:startDate,end:endDate},
   checkedDays,
+  checkedNonMeetingDays,
+  accountedCalendarDays:checkedDays+checkedNonMeetingDays,
   checkedRaces,
   checkedHorsePacks:currentHorsePacks.size,
   successfulHorsePacks,
