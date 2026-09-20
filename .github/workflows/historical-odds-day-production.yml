@@ -1,0 +1,90 @@
+name: Historical odds day production
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Historical JRA date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-20"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-historical-odds-production
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      REQUEST_DELAY_MS: "1500"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Contract smoke
+        run: npm run smoke:odds
+
+      - name: Collect full historical final odds
+        run: node src/collect-historical-odds.mjs "${{ inputs.date }}"
+
+      - name: Validate odds pack
+        shell: bash
+        run: |
+          DATE="${{ inputs.date }}"
+          node --input-type=module - "$DATE" <<'NODE'
+          import {access,readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const date=process.argv[2];
+          const manifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
+          const day=manifest.days?.[date];
+          if(!day)throw new Error("odds manifest day missing");
+          if(day.status==="NO_MEETING"||day.status==="UNSUPPORTED"){
+            console.log({date,status:day.status});
+            process.exit(0);
+          }
+          if(day.status!=="SUCCESS")throw new Error("odds day is not SUCCESS");
+          await access(day.file);
+          const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+          const rows=text?text.split("\n").map(JSON.parse):[];
+          if(rows.length!==day.races)throw new Error("odds race count mismatch");
+          for(const row of rows){
+            if(row.odds_pack_version!==1)throw new Error("odds pack version mismatch");
+            if(row.decoder_contract_version!==1)throw new Error("decoder contract mismatch");
+            if(row.source_status!=="result")throw new Error("non-final odds row");
+            if(!row.odds||typeof row.odds!=="object")throw new Error("odds groups missing");
+          }
+          console.log({
+            date,status:day.status,races:rows.length,
+            rawResponseBytes:day.raw_response_bytes,
+            compressedBytes:day.compressed_bytes,
+            groups:day.groups,
+          });
+          NODE
+
+      - name: Commit odds data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/odds/
+          if git diff --cached --quiet; then
+            echo "No odds data changes."
+            exit 0
+          fi
+          git commit -m "data: backfill historical odds ${{ inputs.date }}"
+          git pull --rebase origin main
+          git push
