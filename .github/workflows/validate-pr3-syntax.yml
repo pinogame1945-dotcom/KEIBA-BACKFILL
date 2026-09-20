@@ -1,0 +1,19 @@
+name: Validate PR3 syntax
+
+on:
+  push:
+    branches:
+      - ci/validate-pr3-syntax
+
+jobs:
+  node-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: |
+          node --check src/collect-day.mjs
+          node --check src/collect-horses.mjs
