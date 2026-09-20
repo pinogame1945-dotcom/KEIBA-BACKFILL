@@ -119,6 +119,10 @@ function parseRaceList(html) {
     const id = m[1];
     if (JRA_VENUES.has(id.slice(4, 6))) ids.add(id);
   });
+  for (const m of html.matchAll(/(?<!\d)((?:19|20)\d{10})(?!\d)/g)) {
+    const id = m[1];
+    if (JRA_VENUES.has(id.slice(4, 6))) ids.add(id);
+  }
   return [...ids].sort();
 }
 
