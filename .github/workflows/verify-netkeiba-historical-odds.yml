@@ -10,18 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Compare sort modes
+      - name: Compare init update metadata
         shell: bash
         run: |
           node <<'NODE'
           const raceId="201005050810";
-          const sorts=["odds","ninki",null];
+          const tests=[
+            ["init","odds"],["update","odds"],
+            ["init","ninki"],["update","ninki"]
+          ];
           const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-          async function probe(sort){
+          async function probe(action,sort){
             const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
-            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",compress:"0",output:"json"};
+            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action,sort,compress:"0",output:"json"};
             for(const [k,v] of Object.entries(p))u.searchParams.set(k,v);
-            if(sort)u.searchParams.set("sort",sort);
             const res=await fetch(u,{headers:{
               "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
               "Referer":"https://race.netkeiba.com/",
@@ -34,23 +36,27 @@ jobs:
               if(!m)throw new Error("non-json "+text.slice(0,160));
               json=JSON.parse(m[1]);
             }
-            const map=json?.data?.odds?.["8"]??{};
+            const data=json?.data??{};
+            const map=data?.odds?.["8"]??{};
             const entries=Object.entries(map);
             return {
-              sort:sort??"<none>",status:json?.status??null,
-              official_datetime:json?.data?.official_datetime??null,
+              action,sort,http:res.status,status:json?.status??null,
+              dataKeys:Object.keys(data),
+              official_datetime:data?.official_datetime??null,
+              update_datetime:data?.update_datetime??null,
+              datetime:data?.datetime??null,
               total:entries.length,
-              sample_100102:map["100102"]??null,
-              sample_100201:map["100201"]??null,
-              first5:entries.slice(0,5)
+              sample100102:map["100102"]??null,
+              sample100201:map["100201"]??null,
+              first3:entries.slice(0,3)
             };
           }
           const out=[];
-          for(const sort of sorts){
-            out.push(await probe(sort));
+          for(const t of tests){
+            out.push(await probe(...t));
             await sleep(2000);
           }
-          console.log("ODDS_SORT_COMPARE_START");
+          console.log("ODDS_ACTION_COMPARE_START");
           console.log(JSON.stringify(out,null,2));
-          console.log("ODDS_SORT_COMPARE_END");
+          console.log("ODDS_ACTION_COMPARE_END");
           NODE
