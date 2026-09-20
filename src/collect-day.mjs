@@ -215,9 +215,16 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
   const track = meta.match(/馬場\s*[:：]?\s*([^ /]+)/)?.[1] ?? null;
   const startTime = meta.match(/(\d{1,2}:\d{2})発走/)?.[1] ?? null;
 
-  const table = $("table.race_table_01").first().length
+  let table = $("table.race_table_01").first().length
     ? $("table.race_table_01").first()
     : $("table[class*='race_table']").first();
+  if (!table.length) {
+    $("table").each((_, candidate) => {
+      if (table.length) return;
+      const headerText = clean($(candidate).find("th").text());
+      if (headerText.includes("着順") && headerText.includes("馬名")) table = $(candidate);
+    });
+  }
   if (!table.length) throw new Error("result table not found: " + raceId);
 
   const headers = [];
@@ -228,8 +235,8 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     finish: findCol("着順"), gate: findCol("枠"), number: findCol("馬番"),
     horse: findCol("馬名"), sexage: findCol("性齢"), weight: findCol("斤量"),
     jockey: findCol("騎手"), time: findCol("タイム"), margin: findCol("着差"),
-    corner: findCol("通過"), last3f: findCol("上り","上がり"), odds: findCol("単勝"),
-    popularity: findCol("人気"), body: findCol("馬体重"), trainer: findCol("調教師"),
+    corner: findCol("通過"), last3f: findCol("上り","上がり","後3F"), odds: findCol("単勝"),
+    popularity: findCol("人気"), body: findCol("馬体重"), trainer: findCol("調教師","厩舎"),
     owner: findCol("馬主"), prize: findCol("賞金")
   };
 
@@ -467,11 +474,26 @@ if (process.env.REQUIRE_RACES === "1" && raceIds.length === 0) {
 const records = [];
 for (let i = 0; i < raceIds.length; i++) {
   const raceId = raceIds[i];
-  const raceUrl = `${DB_BASE}/race/${raceId}/`;
+  const resultUrls = [
+    `https://race.netkeiba.com/race/result.html?race_id=${raceId}`,
+    `${DB_BASE}/race/${raceId}/`
+  ];
   console.log(`[race ${i + 1}/${raceIds.length}] ${raceId}`);
   try {
-    const html = await politeFetch(raceUrl);
-    records.push(parseRaceResult(html, raceId, date, raceUrl));
+    let parsed = null;
+    let lastError = null;
+    for (const raceUrl of resultUrls) {
+      try {
+        const html = await politeFetch(raceUrl);
+        parsed = parseRaceResult(html, raceId, date, raceUrl);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.warn(`[race fallback] ${raceId} ${raceUrl}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    if (!parsed) throw lastError ?? new Error(`all result sources failed: ${raceId}`);
+    records.push(parsed);
   } catch (error) {
     await mkdir(path.join("data","debug"), { recursive: true });
     await writeFile(
