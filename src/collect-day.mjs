@@ -3,6 +3,10 @@ import Encoding from "encoding-japanese";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 import path from "node:path";
+import {access,rename} from "node:fs/promises";
+import {
+  normalizePayoutRows,PAYOUT_PARSER_VERSION,RACE_PACK_VERSION,
+} from "./payout-normalization.mjs";
 
 const DB_BASE = "https://db.netkeiba.com";
 const JRA_VENUES = new Set(["01","02","03","04","05","06","07","08","09","10"]);
@@ -308,19 +312,13 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     if (cells.length < 2) return;
     const betType = betMap[clean(cells.eq(0).text())];
     if (!betType) return;
-    const combinations = splitCellLines($, cells.eq(1));
-    const amounts = splitCellLines($, cells.eq(2)).map(t => intOrNull(t.replace(/円/g,"")));
-    const popularities = splitCellLines($, cells.eq(3)).map(t => intOrNull(t.replace(/人気/g,"")));
-    const rowCount = Math.max(combinations.length, amounts.length, popularities.length, 1);
-    for (let i = 0; i < rowCount; i++) {
-      payouts.push({
-        race_id: raceId,
-        bet_type: betType,
-        combination: valueAt(combinations, i),
-        payout_yen: valueAt(amounts, i),
-        popularity: valueAt(popularities, i)
-      });
-    }
+    payouts.push(...normalizePayoutRows({
+      raceId,
+      betType,
+      combinationLines: splitCellLines($, cells.eq(1)),
+      amountLines: splitCellLines($, cells.eq(2)),
+      popularityLines: splitCellLines($, cells.eq(3)),
+    }));
   });
 
   const laps = [];
@@ -344,6 +342,8 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
 
   return {
     schema_version: 1,
+    race_pack_version: RACE_PACK_VERSION,
+    payout_parser_version: PAYOUT_PARSER_VERSION,
     race: {
       race_id: raceId,
       actual_date: actualDate,
@@ -376,6 +376,45 @@ async function saveManifest(manifest) {
 const date = process.argv[2] || process.env.BACKFILL_DATE;
 if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
   throw new Error("Usage: node src/collect-day.mjs YYYY-MM-DD");
+}
+
+const rebuildLegacy = process.env.REBUILD_LEGACY_PAYOUT_V1 === "1";
+const dailyPath = path.join("data","daily",`${date}.jsonl.gz`);
+const manifestAtStart = await loadManifest();
+const existingDay = manifestAtStart.days?.[date];
+let dailyFileExists = false;
+try {
+  await access(dailyPath);
+  dailyFileExists = true;
+} catch {}
+
+if (existingDay?.status === "SUCCESS" &&
+    Number(existingDay.race_pack_version ?? 1) >= RACE_PACK_VERSION &&
+    Number(existingDay.payout_parser_version ?? 1) >= PAYOUT_PARSER_VERSION) {
+  if (!dailyFileExists) {
+    throw new Error(`manifest marks ${date} payout-v2 SUCCESS but file is missing: ${dailyPath}`);
+  }
+  console.log(`[skip] existing payout-v2 race pack for ${date}`);
+  process.exit(0);
+}
+
+const legacyExisting = Boolean(existingDay) &&
+  (
+    existingDay.status === "LEGACY_PAYOUT_V1" ||
+    Number(existingDay.race_pack_version ?? 1) < RACE_PACK_VERSION ||
+    Number(existingDay.payout_parser_version ?? 1) < PAYOUT_PARSER_VERSION
+  );
+
+if (legacyExisting && !rebuildLegacy) {
+  throw new Error(
+    `LEGACY_PAYOUT_V1 ${date}: refusing to reuse or overwrite old payout pack; run explicit repair mode`
+  );
+}
+if (dailyFileExists && !legacyExisting) {
+  throw new Error(`daily race pack already exists without compatible manifest metadata: ${dailyPath}`);
+}
+if (legacyExisting && rebuildLegacy) {
+  console.log(`[repair] rebuilding legacy payout-v1 race pack for ${date}`);
 }
 
 const compact = date.replace(/-/g, "");
@@ -526,13 +565,20 @@ const lines = records.map(r => JSON.stringify(r)).join("\n") + (records.length ?
 const outDir = path.join("data", "daily");
 await mkdir(outDir, { recursive: true });
 const outPath = path.join(outDir, `${date}.jsonl.gz`);
-await writeFile(outPath, gzipSync(Buffer.from(lines, "utf8"), { level: 9 }));
+const tempPath = outPath + ".payout-v2.tmp";
+await writeFile(tempPath, gzipSync(Buffer.from(lines, "utf8"), { level: 9 }));
+await rename(tempPath, outPath);
 
 const manifest = await loadManifest();
 manifest.schema_version = 1;
+manifest.race_pack_version = RACE_PACK_VERSION;
+manifest.payout_parser_version = PAYOUT_PARSER_VERSION;
 manifest.updated_at = new Date().toISOString();
 manifest.days[date] = {
   status: "SUCCESS",
+  race_pack_version: RACE_PACK_VERSION,
+  payout_parser_version: PAYOUT_PARSER_VERSION,
+  repaired_from_legacy_payout_v1: legacyExisting || undefined,
   races_discovered: raceIds.length,
   races_parsed: records.length,
   file: outPath.replaceAll("\\","/"),
