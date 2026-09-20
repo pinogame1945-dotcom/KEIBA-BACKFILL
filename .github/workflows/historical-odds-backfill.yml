@@ -11,6 +11,10 @@ on:
         description: "Oldest supported date (YYYY-MM-DD)"
         required: true
         default: "2007-07-28"
+  push:
+    branches: [main]
+    paths:
+      - ".backfill/odds-kick"
 
 permissions:
   contents: write
