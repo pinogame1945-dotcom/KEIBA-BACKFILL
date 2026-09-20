@@ -10,19 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Compare init update metadata
+      - name: Validate final odds against payout
         shell: bash
         run: |
           node <<'NODE'
           const raceId="201005050810";
-          const tests=[
-            ["init","odds"],["update","odds"],
-            ["init","ninki"],["update","ninki"]
-          ];
-          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-          async function probe(action,sort){
+          const combo="061602";
+          const expected=251.1; // JRA 3連単払戻25,110円 / 100円
+          async function fetchMap(sort){
             const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
-            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action,sort,compress:"0",output:"json"};
+            const p={pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",sort,compress:"0",output:"json"};
             for(const [k,v] of Object.entries(p))u.searchParams.set(k,v);
             const res=await fetch(u,{headers:{
               "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -33,30 +30,21 @@ jobs:
             let json;
             try{json=JSON.parse(text);}catch{
               const m=text.match(/^[^(]+\((.*)\)\s*;?\s*$/s);
-              if(!m)throw new Error("non-json "+text.slice(0,160));
               json=JSON.parse(m[1]);
             }
-            const data=json?.data??{};
-            const map=data?.odds?.["8"]??{};
-            const entries=Object.entries(map);
-            return {
-              action,sort,http:res.status,status:json?.status??null,
-              dataKeys:Object.keys(data),
-              official_datetime:data?.official_datetime??null,
-              update_datetime:data?.update_datetime??null,
-              datetime:data?.datetime??null,
-              total:entries.length,
-              sample100102:map["100102"]??null,
-              sample100201:map["100201"]??null,
-              first3:entries.slice(0,3)
-            };
+            return json?.data?.odds?.["8"]??{};
           }
-          const out=[];
-          for(const t of tests){
-            out.push(await probe(...t));
-            await sleep(2000);
-          }
-          console.log("ODDS_ACTION_COMPARE_START");
-          console.log(JSON.stringify(out,null,2));
-          console.log("ODDS_ACTION_COMPARE_END");
+          const oddsMap=await fetchMap("odds");
+          await new Promise(r=>setTimeout(r,2000));
+          const ninkiMap=await fetchMap("ninki");
+          const ninkiHit=Object.entries(ninkiMap).find(([,v])=>Array.isArray(v)&&v[3]===combo)??null;
+          console.log("FINAL_ODDS_CROSSCHECK_START");
+          console.log(JSON.stringify({
+            raceId,combo,expectedFromPayout:expected,
+            oddsSortValue:oddsMap[combo]??null,
+            ninkiSortHit:ninkiHit,
+            matchOddsSort:Array.isArray(oddsMap[combo]) ? oddsMap[combo].map(x=>Number(String(x).replace(/,/g,""))).filter(x=>Number.isFinite(x)&&Math.abs(x-expected)<1e-9) : [],
+            matchNinki:ninkiHit&&Array.isArray(ninkiHit[1]) ? ninkiHit[1].map(x=>Number(String(x).replace(/,/g,""))).filter(x=>Number.isFinite(x)&&Math.abs(x-expected)<1e-9) : []
+          },null,2));
+          console.log("FINAL_ODDS_CROSSCHECK_END");
           NODE
