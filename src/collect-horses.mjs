@@ -1,6 +1,6 @@
 import {load} from "cheerio";
 import Encoding from "encoding-japanese";
-import {mkdir,readFile,writeFile} from "node:fs/promises";
+import {mkdir,readFile,writeFile,access} from "node:fs/promises";
 import {gunzipSync,gzipSync} from "node:zlib";
 import path from "node:path";
 
@@ -242,6 +242,17 @@ const existingIndexes=Object.keys(manifestBefore.horse_packs??{})
   .filter(Number.isInteger);
 const nextIndex=(existingIndexes.length?Math.max(...existingIndexes):0)+1;
 const finalPackName=packName||`horse-${sourceDate}-${String(nextIndex).padStart(3,"0")}`;
+const plannedOutPath=path.join("data","horses",`${finalPackName}.jsonl.gz`);
+if(manifestBefore.horse_packs?.[finalPackName]){
+  throw new Error(`horse pack already exists in manifest; refusing to overwrite: ${finalPackName}`);
+}
+try{
+  await access(plannedOutPath);
+  throw new Error(`horse pack file already exists; refusing to overwrite: ${plannedOutPath}`);
+}catch(error){
+  if(error?.code!=="ENOENT")throw error;
+}
+
 
 console.log(JSON.stringify({
   sourceDate,
@@ -318,7 +329,7 @@ if(records.length!==selected.length){
 
 const outDir=path.join("data","horses");
 await mkdir(outDir,{recursive:true});
-const outPath=path.join(outDir,`${finalPackName}.jsonl.gz`);
+const outPath=plannedOutPath;
 const lines=records.map(row=>JSON.stringify(row)).join("\n")+"\n";
 await writeFile(outPath,gzipSync(Buffer.from(lines,"utf8"),{level:9}));
 
