@@ -235,10 +235,11 @@ if(!selected.length){
   process.exit(0);
 }
 
+const productionPrefix=`horse-${sourceDate}-`;
 const existingIndexes=Object.keys(manifestBefore.horse_packs??{})
-  .map(name=>name.match(new RegExp("^horse-"+sourceDate+"-(\\\\d{3})$"))?.[1])
-  .filter(Boolean)
-  .map(Number);
+  .filter(name=>name.startsWith(productionPrefix))
+  .map(name=>Number(name.slice(productionPrefix.length)))
+  .filter(Number.isInteger);
 const nextIndex=(existingIndexes.length?Math.max(...existingIndexes):0)+1;
 const finalPackName=packName||`horse-${sourceDate}-${String(nextIndex).padStart(3,"0")}`;
 
