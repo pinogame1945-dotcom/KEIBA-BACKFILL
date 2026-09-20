@@ -1,6 +1,6 @@
 import { load } from "cheerio";
 import Encoding from "encoding-japanese";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 import path from "node:path";
 
@@ -462,15 +462,22 @@ if (raceIds.length === 0) {
   }
 }
 console.log(`[discover] selected ${raceIds.length} JRA races`);
-await mkdir(path.join("data","debug"), { recursive: true });
-await writeFile(
-  path.join("data","debug",`${date}.json`),
-  JSON.stringify({ date, raceIds, discoveryDiagnostics }, null, 2) + "\n"
-);
+if (process.env.DEBUG_DISCOVERY === "1" || process.env.REQUIRE_RACES === "1") {
+  await mkdir(path.join("data","debug"), { recursive: true });
+  await writeFile(
+    path.join("data","debug",`${date}.json`),
+    JSON.stringify({ date, raceIds, discoveryDiagnostics }, null, 2) + "\n"
+  );
+}
 if (process.env.REQUIRE_RACES === "1" && raceIds.length === 0) {
   throw new Error(`no JRA races discovered for required smoke date ${date}`);
 }
+if (process.env.SKIP_EMPTY === "1" && raceIds.length === 0) {
+  console.log(`[skip] no JRA meeting on ${date}`);
+  process.exit(0);
+}
 
+await unlink(path.join("data","debug",`${date}-error.json`)).catch(() => undefined);
 const records = [];
 for (let i = 0; i < raceIds.length; i++) {
   const raceId = raceIds[i];
