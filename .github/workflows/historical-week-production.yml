@@ -1,0 +1,187 @@
+name: Historical week production
+# trigger-week-001
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Newest date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-18"
+      end_date:
+        description: "Oldest date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-12"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/historical-week-production.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-historical-week-production
+  cancel-in-progress: false
+
+jobs:
+  collect-week:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SKIP_EMPTY: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve range
+        id: input
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "start=${{ inputs.start_date }}" >> "$GITHUB_OUTPUT"
+            echo "end=${{ inputs.end_date }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "start=2026-09-18" >> "$GITHUB_OUTPUT"
+            echo "end=2026-09-12" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Backfill dates newest to oldest
+        shell: bash
+        run: |
+          set -euo pipefail
+          START="${{ steps.input.outputs.start }}"
+          END="${{ steps.input.outputs.end }}"
+          DATE="$START"
+
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          while true; do
+            echo "========================================"
+            echo "BACKFILL DATE $DATE"
+            echo "========================================"
+
+            node src/collect-day.mjs "$DATE"
+
+            if [ -f "data/daily/$DATE.jsonl.gz" ]; then
+              for i in $(seq 1 20); do
+                BEFORE=$(node --input-type=module - "$DATE" <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const date=process.argv[2];
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const completed=new Set();
+          for(const p of Object.values(manifest.horse_packs??{})){
+            if(p.status!=="SUCCESS")continue;
+            for(const id of p.source_horse_ids??[])completed.add(String(id));
+          }
+          const text=gunzipSync(await readFile(`data/daily/${date}.jsonl.gz`)).toString("utf8").trim();
+          const day=new Set();
+          for(const line of text.split("\n").filter(Boolean)){
+            const row=JSON.parse(line);
+            for(const e of row.entries??[])if(e.horse_id)day.add(String(e.horse_id));
+          }
+          console.log([...day].filter(id=>!completed.has(id)).length);
+          NODE
+          )
+                echo "Pending before batch $i on $DATE: $BEFORE"
+                if [ "$BEFORE" = "0" ]; then
+                  break
+                fi
+                node src/collect-horses.mjs --source-date "$DATE" --limit 50 --skip-existing 1
+              done
+
+              node --input-type=module - "$DATE" <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const date=process.argv[2];
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const dayEntry=manifest.days?.[date];
+          if(!dayEntry||dayEntry.status!=="SUCCESS")throw new Error("missing SUCCESS day "+date);
+          const text=gunzipSync(await readFile(dayEntry.file)).toString("utf8").trim();
+          const rows=text?text.split("\n").map(JSON.parse):[];
+          if(rows.length!==dayEntry.races_parsed)throw new Error("daily race count mismatch "+date);
+
+          const dayHorseIds=new Set();
+          for(const row of rows){
+            for(const e of row.entries??[])if(e.horse_id)dayHorseIds.add(String(e.horse_id));
+          }
+
+          const allHorseIds=new Set();
+          for(const p of Object.values(manifest.horse_packs??{})){
+            if(p.status!=="SUCCESS")continue;
+            for(const id of p.source_horse_ids??[]){
+              const value=String(id);
+              if(allHorseIds.has(value))throw new Error("duplicate horse across packs: "+value);
+              allHorseIds.add(value);
+            }
+          }
+
+          const missing=[...dayHorseIds].filter(id=>!allHorseIds.has(id));
+          if(missing.length)throw new Error(`missing ${missing.length} horses for ${date}`);
+          console.log({
+            date,
+            races:rows.length,
+            dayUniqueHorses:dayHorseIds.size,
+            totalHorseMaster:allHorseIds.size,
+            missing:0
+          });
+          NODE
+            else
+              echo "No JRA meeting on $DATE; skipped."
+            fi
+
+            git add data/manifest.json data/daily/ data/horses/ data/debug/ 2>/dev/null || true
+            if ! git diff --cached --quiet; then
+              git commit -m "data: backfill historical day $DATE"
+              git push
+            else
+              echo "No data changes for $DATE."
+            fi
+
+            if [ "$DATE" = "$END" ]; then
+              break
+            fi
+            DATE=$(date -I -d "$DATE - 1 day")
+            if [[ "$DATE" < "$END" ]]; then
+              echo "Date range guard triggered."
+              exit 1
+            fi
+          done
+
+      - name: Final summary
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const ids=new Set();
+          let measured=0;
+          let weighted=0;
+          for(const p of Object.values(manifest.horse_packs??{})){
+            if(p.status!=="SUCCESS")continue;
+            for(const id of p.source_horse_ids??[])ids.add(String(id));
+            if(p.timing?.measured_horses){
+              measured+=p.timing.measured_horses;
+              weighted+=p.timing.average_ms_per_horse*p.timing.measured_horses;
+            }
+          }
+          console.log({
+            raceDays:Object.keys(manifest.days??{}).length,
+            horsePacks:Object.keys(manifest.horse_packs??{}).length,
+            uniqueHorses:ids.size,
+            measuredHorses:measured,
+            weightedAverageMsPerHorse:measured?Math.round(weighted/measured):null
+          });
+          NODE
