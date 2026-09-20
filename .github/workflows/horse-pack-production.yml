@@ -1,0 +1,129 @@
+name: Horse pack production
+# trigger-production-001
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_date:
+        description: "Existing race pack date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-20"
+      limit:
+        description: "Next uncollected horse count"
+        required: true
+        default: "50"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/horse-pack-production.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-horse-pack-production
+  cancel-in-progress: false
+
+jobs:
+  build-next-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      REQUEST_DELAY_MS: "1500"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve inputs
+        id: input
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "date=${{ inputs.source_date }}" >> "$GITHUB_OUTPUT"
+            echo "limit=${{ inputs.limit }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "date=2026-09-20" >> "$GITHUB_OUTPUT"
+            echo "limit=50" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build next uncollected horse pack
+        run: |
+          node src/collect-horses.mjs \
+            --source-date "${{ steps.input.outputs.date }}" \
+            --limit "${{ steps.input.outputs.limit }}" \
+            --skip-existing 1
+
+      - name: Validate all horse packs
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const packs=manifest.horse_packs??{};
+          const seenHorseIds=new Set();
+
+          for(const [packName,entry] of Object.entries(packs)){
+            if(entry.status!=="SUCCESS")continue;
+            const buf=await readFile(entry.file);
+            const text=gunzipSync(buf).toString("utf8").trim();
+            const rows=text?text.split("\n").map(JSON.parse):[];
+            if(rows.length!==entry.records){
+              throw new Error(`count mismatch ${packName}: manifest=${entry.records} actual=${rows.length}`);
+            }
+            for(const row of rows){
+              if(row.schema_version!==1||row.kind!=="horse"||!row.horse_id){
+                throw new Error("invalid horse record in "+packName);
+              }
+              if(seenHorseIds.has(row.horse_id)){
+                throw new Error("duplicate horse across packs: "+row.horse_id);
+              }
+              seenHorseIds.add(row.horse_id);
+              if(!row.profile?.horse_name){
+                throw new Error("horse profile name missing: "+row.horse_id);
+              }
+              if(!Array.isArray(row.pedigree)||row.pedigree.length!==62){
+                throw new Error(`incomplete 5-generation pedigree: ${row.horse_id} nodes=${row.pedigree?.length??0}`);
+              }
+              const positions=new Set(row.pedigree.map(n=>`${n.generation}:${n.slot}`));
+              if(positions.size!==62){
+                throw new Error("duplicate/missing pedigree positions: "+row.horse_id);
+              }
+              for(let generation=1;generation<=5;generation+=1){
+                for(let slot=0;slot<2**generation;slot+=1){
+                  if(!positions.has(`${generation}:${slot}`)){
+                    throw new Error(`missing pedigree position ${row.horse_id} ${generation}:${slot}`);
+                  }
+                }
+              }
+            }
+          }
+          console.log({
+            successfulPacks:Object.values(packs).filter(p=>p.status==="SUCCESS").length,
+            uniqueHorses:seenHorseIds.size
+          });
+          NODE
+
+      - name: Commit production pack or diagnostics
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manifest.json data/horses/ data/debug/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git commit -m "data: add next production horse pedigree pack"
+          git push
