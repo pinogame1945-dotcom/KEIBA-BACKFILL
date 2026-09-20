@@ -1,0 +1,62 @@
+{
+  "incident": "PAYOUT_COMBINATION_SPLIT_V1",
+  "race_pack_version_required": 2,
+  "payout_parser_version_required": 2,
+  "affected_count": 6,
+  "affected": [
+    {
+      "date": "2026-09-20",
+      "file": "data/daily/2026-09-20.jsonl.gz",
+      "races": 24,
+      "prior_status": "SUCCESS",
+      "detected_race_pack_version": 1,
+      "detected_payout_parser_version": 1,
+      "reason": "PAYOUT_COMBINATION_SPLIT_V1"
+    },
+    {
+      "date": "2026-09-19",
+      "file": "data/daily/2026-09-19.jsonl.gz",
+      "races": 24,
+      "prior_status": "SUCCESS",
+      "detected_race_pack_version": 1,
+      "detected_payout_parser_version": 1,
+      "reason": "PAYOUT_COMBINATION_SPLIT_V1"
+    },
+    {
+      "date": "2026-09-13",
+      "file": "data/daily/2026-09-13.jsonl.gz",
+      "races": 24,
+      "prior_status": "SUCCESS",
+      "detected_race_pack_version": 1,
+      "detected_payout_parser_version": 1,
+      "reason": "PAYOUT_COMBINATION_SPLIT_V1"
+    },
+    {
+      "date": "2026-09-12",
+      "file": "data/daily/2026-09-12.jsonl.gz",
+      "races": 24,
+      "prior_status": "SUCCESS",
+      "detected_race_pack_version": 1,
+      "detected_payout_parser_version": 1,
+      "reason": "PAYOUT_COMBINATION_SPLIT_V1"
+    },
+    {
+      "date": "2026-09-06",
+      "file": "data/daily/2026-09-06.jsonl.gz",
+      "races": 36,
+      "prior_status": "SUCCESS",
+      "detected_race_pack_version": 1,
+      "detected_payout_parser_version": 1,
+      "reason": "PAYOUT_COMBINATION_SPLIT_V1"
+    },
+    {
+      "date": "2026-09-05",
+      "file": "data/daily/2026-09-05.jsonl.gz",
+      "races": 36,
+      "prior_status": "SUCCESS",
+      "detected_race_pack_version": 1,
+      "detected_payout_parser_version": 1,
+      "reason": "PAYOUT_COMBINATION_SPLIT_V1"
+    }
+  ]
+}
