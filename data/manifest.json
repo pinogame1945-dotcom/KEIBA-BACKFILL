@@ -3,11 +3,12 @@
   "days": {
     "2026-09-20": {
       "status": "SUCCESS",
-      "races_discovered": 0,
-      "races_parsed": 0,
+      "races_discovered": 24,
+      "races_parsed": 24,
       "file": "data/daily/2026-09-20.jsonl.gz",
-      "request_delay_ms": 1500
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0920.html"
     }
   },
-  "updated_at": "2026-09-20T12:02:34.465Z"
+  "updated_at": "2026-09-20T12:12:56.527Z"
 }
