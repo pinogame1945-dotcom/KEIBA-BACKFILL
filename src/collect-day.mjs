@@ -384,12 +384,12 @@ for (const candidate of discoveryUrls) {
   }
 }
 console.log(`[discover] selected ${raceIds.length} JRA races`);
+await mkdir(path.join("data","debug"), { recursive: true });
+await writeFile(
+  path.join("data","debug",`${date}.json`),
+  JSON.stringify({ date, raceIds, discoveryDiagnostics }, null, 2) + "\n"
+);
 if (process.env.REQUIRE_RACES === "1" && raceIds.length === 0) {
-  await mkdir(path.join("data","debug"), { recursive: true });
-  await writeFile(
-    path.join("data","debug",`${date}.json`),
-    JSON.stringify({ date, discoveryDiagnostics }, null, 2) + "\n"
-  );
   throw new Error(`no JRA races discovered for required smoke date ${date}`);
 }
 
