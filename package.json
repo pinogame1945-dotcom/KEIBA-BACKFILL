@@ -16,6 +16,7 @@
     "collect:odds": "node src/collect-historical-odds.mjs",
     "smoke:odds": "node scripts/historical-odds-pack-smoke.mjs",
     "smoke:odds-plan": "node scripts/historical-odds-plan-smoke.mjs",
-    "plan:odds": "node src/plan-historical-odds-backfill.mjs plan"
+    "plan:odds": "node src/plan-historical-odds-backfill.mjs plan",
+    "smoke:pedigree": "node scripts/pedigree-v2-smoke.mjs"
   }
 }

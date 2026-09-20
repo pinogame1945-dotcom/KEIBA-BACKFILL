@@ -11,7 +11,7 @@ on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/historical-day-production.yml"
+      - ".backfill/day-kick"
 
 permissions:
   contents: write
@@ -116,11 +116,17 @@ jobs:
           }
 
           const allHorseIds=new Set();
+          const byParser=new Map();
           for(const [name,p] of Object.entries(manifest.horse_packs??{})){
             if(p.status!=="SUCCESS")continue;
+            const version=Number(p.pedigree_parser_version??1);
+            let seen=byParser.get(version);
+            if(!seen){seen=new Set();byParser.set(version,seen);}
             for(const id of p.source_horse_ids??[]){
-              if(allHorseIds.has(String(id)))throw new Error("duplicate horse across packs: "+id);
-              allHorseIds.add(String(id));
+              const value=String(id);
+              if(seen.has(value))throw new Error("duplicate horse in pedigree parser v"+version+": "+value);
+              seen.add(value);
+              allHorseIds.add(value);
             }
           }
 

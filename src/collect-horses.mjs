@@ -3,10 +3,13 @@ import Encoding from "encoding-japanese";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
 import {gunzipSync,gzipSync} from "node:zlib";
 import path from "node:path";
+import {parsePedigreeV2} from "./pedigree-parser.mjs";
 
 const DB_BASE="https://db.netkeiba.com";
 const USER_AGENT="KEIBA-BACKFILL/0.1 (+https://github.com/pinogame1945-dotcom/KEIBA-BACKFILL)";
 const MIN_DELAY_MS=1000;
+const HORSE_PACK_VERSION=2;
+const PEDIGREE_PARSER_VERSION=2;
 const delayMs=Math.max(MIN_DELAY_MS,Number(process.env.REQUEST_DELAY_MS||1500));
 let lastFetchAt=0;
 
@@ -124,42 +127,6 @@ function parseHorseProfile(html,hid,sourceUrl){
   };
 }
 
-function parsePedigree(html){
-  const $=load(html);
-  const table=$("table.blood_table").first().length
-    ?$("table.blood_table").first()
-    :$("table[class*='blood']").first();
-  if(!table.length)return [];
-
-  const counters=new Map();
-  const nodes=[];
-  table.find("td").each((_,td)=>{
-    const cell=$(td);
-    const anchor=cell.find("a[href*='/horse/']").first();
-    const name=clean(anchor.text())||clean(cell.text()).split(" ")[0]||"";
-    if(!name)return;
-
-    const rowspan=Math.max(1,Number(cell.attr("rowspan")??"1"));
-    const generationMap={16:1,8:2,4:3,2:4,1:5};
-    const generation=generationMap[rowspan];
-    if(!generation)return;
-
-    const slot=counters.get(generation)??0;
-    counters.set(generation,slot+1);
-    nodes.push({
-      generation,
-      slot,
-      ancestor_id:horseId(anchor.attr("href")),
-      ancestor_name:name,
-      raw_text:clean(cell.text())
-    });
-  });
-
-  return nodes
-    .filter(node=>node.slot<Math.pow(2,node.generation))
-    .sort((a,b)=>a.generation-b.generation||a.slot-b.slot);
-}
-
 async function loadManifest(){
   try{return JSON.parse(await readFile("data/manifest.json","utf8"));}
   catch{return {schema_version:1,days:{},horse_packs:{}};}
@@ -213,6 +180,7 @@ const manifestBefore=await loadManifest();
 const completedHorseIds=new Set();
 for(const entry of Object.values(manifestBefore.horse_packs??{})){
   if(entry?.status!=="SUCCESS")continue;
+  if(Number(entry.pedigree_parser_version??0)<PEDIGREE_PARSER_VERSION)continue;
   for(const id of entry.source_horse_ids??[]){
     completedHorseIds.add(String(id));
   }
@@ -270,7 +238,7 @@ for(let i=0;i<selected.length;i+=1){
     const pedigreeStartedAt=Date.now();
     const pedigreeHtml=await politeFetch(pedigreeUrl);
     const pedigreeFetchedAt=Date.now();
-    const pedigree=parsePedigree(pedigreeHtml);
+    const pedigree=parsePedigreeV2(pedigreeHtml);
     if(!pedigree.length)throw new Error("pedigree empty");
     if(!pedigree.some(node=>node.generation===1&&node.slot===0)){
       throw new Error("sire missing");
@@ -280,6 +248,8 @@ for(let i=0;i<selected.length;i+=1){
     }
     records.push({
       schema_version:1,
+      horse_pack_version:HORSE_PACK_VERSION,
+      pedigree_parser_version:PEDIGREE_PARSER_VERSION,
       kind:"horse",
       horse_id:hid,
       profile,
@@ -347,6 +317,8 @@ const timingSummary={
 };
 manifest.horse_packs[finalPackName]={
   status:"SUCCESS",
+  horse_pack_version:HORSE_PACK_VERSION,
+  pedigree_parser_version:PEDIGREE_PARSER_VERSION,
   records:records.length,
   file:outPath.replaceAll("\\","/"),
   source_dates:[sourceDate],
