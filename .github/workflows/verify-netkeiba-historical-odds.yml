@@ -10,58 +10,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Cross-check all 2010 ticket types
+      - name: Validate 2007 final odds
         shell: bash
         run: |
           node <<'NODE'
-          const raceId="201005050810";
-          const tests=[
-            {type:1,group:"1",name:"WIN",combo:"06",expected:8.8},
-            {type:1,group:"2",name:"PLACE",combo:"06",payoutRatio:2.0},
-            {type:3,group:"3",name:"BRACKET_QUINELLA",combo:"0308",expected:6.9},
-            {type:4,group:"4",name:"QUINELLA",combo:"0616",expected:7.1},
-            {type:5,group:"5",name:"WIDE",combo:"0616",payoutRatio:3.0},
-            {type:6,group:"6",name:"EXACTA",combo:"0616",expected:18.8},
-            {type:7,group:"7",name:"TRIO",combo:"020616",expected:49.4},
-            {type:8,group:"8",name:"TRIFECTA",combo:"061602",expected:251.1},
-          ];
-          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-          async function fetchType(type){
-            const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
-            const p={pid:"api_get_jra_odds",race_id:raceId,type:String(type),action:"init",sort:"odds",compress:"0",output:"json"};
-            for(const [k,v] of Object.entries(p))u.searchParams.set(k,v);
-            const res=await fetch(u,{headers:{
-              "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-              "Referer":"https://race.netkeiba.com/",
-              "Accept":"application/json, text/javascript, */*"
-            },signal:AbortSignal.timeout(15000)});
-            const text=await res.text();
-            let json;
-            try{json=JSON.parse(text);}catch{
-              const m=text.match(/^[^(]+\((.*)\)\s*;?\s*$/s);
-              json=JSON.parse(m[1]);
-            }
-            return json;
+          const raceId="200702020512",combo="071213",expected=176.7;
+          const u=new URL("https://race.netkeiba.com/api/api_get_jra_odds.html");
+          for(const [k,v] of Object.entries({
+            pid:"api_get_jra_odds",race_id:raceId,type:"8",action:"init",
+            sort:"odds",compress:"0",output:"json"
+          }))u.searchParams.set(k,v);
+          const res=await fetch(u,{headers:{
+            "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+            "Referer":"https://race.netkeiba.com/",
+            "Accept":"application/json, text/javascript, */*"
+          },signal:AbortSignal.timeout(15000)});
+          const text=await res.text();
+          let json;
+          try{json=JSON.parse(text);}catch{
+            const m=text.match(/^[^(]+\((.*)\)\s*;?\s*$/s);
+            json=JSON.parse(m[1]);
           }
-          const cache=new Map(),out=[];
-          for(const t of tests){
-            if(!cache.has(t.type)){
-              cache.set(t.type,await fetchType(t.type));
-              await sleep(2000);
-            }
-            const json=cache.get(t.type);
-            const v=json?.data?.odds?.[t.group]?.[t.combo]??null;
-            const nums=Array.isArray(v)?v.map(x=>Number(String(x).replace(/,/g,""))):[];
-            const expected=t.expected??null;
-            out.push({
-              ...t,status:json?.status??null,official_datetime:json?.data?.official_datetime??null,
-              raw:v,length:Array.isArray(v)?v.length:null,
-              firstTriple:Array.isArray(v)?v.slice(0,3):null,
-              secondTriple:Array.isArray(v)&&v.length>=6?v.slice(3,6):null,
-              expectedMatches:expected==null?null:nums.map((x,i)=>({index:i,value:x})).filter(x=>Number.isFinite(x.value)&&Math.abs(x.value-expected)<1e-9)
-            });
-          }
-          console.log("ALL_TYPES_CROSSCHECK_START");
-          console.log(JSON.stringify(out,null,2));
-          console.log("ALL_TYPES_CROSSCHECK_END");
+          const raw=json?.data?.odds?.["8"]?.[combo]??null;
+          console.log("VERIFY_2007_FINAL_START");
+          console.log(JSON.stringify({
+            raceId,combo,expectedFromPayout:expected,status:json?.status??null,
+            official_datetime:json?.data?.official_datetime??null,raw,
+            matches:Array.isArray(raw)?raw.map((x,i)=>({index:i,value:Number(String(x).replace(/,/g,""))})).filter(x=>Number.isFinite(x.value)&&Math.abs(x.value-expected)<1e-9):[]
+          },null,2));
+          console.log("VERIFY_2007_FINAL_END");
           NODE
