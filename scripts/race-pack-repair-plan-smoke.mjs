@@ -3,6 +3,9 @@ import {mkdtemp,mkdir,writeFile} from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import {spawnSync} from "node:child_process";
+import {RESULT_PARSER_VERSION} from "../src/result-columns.mjs";
+import {LAP_PARSER_VERSION} from "../src/lap-parser.mjs";
+import {SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION} from "../src/schedule-integrity.mjs";
 
 const dir=await mkdtemp(path.join(os.tmpdir(),"keiba-repair-plan-"));
 await mkdir(path.join(dir,"data"),{recursive:true});
@@ -10,8 +13,8 @@ await writeFile(path.join(dir,"package.json"),JSON.stringify({type:"module"}));
 const manifest={
   days:{
     "2026-09-20":{status:"SUCCESS",race_pack_version:2,result_parser_version:1,lap_parser_version:1,schedule_contract_version:0,races_parsed:24},
-    "2026-09-19":{status:"SUCCESS",race_pack_version:3,result_parser_version:3,lap_parser_version:2,schedule_contract_version:1,races_parsed:24},
-    "2026-09-13":{status:"SUCCESS",race_pack_version:3,result_parser_version:2,lap_parser_version:2,schedule_contract_version:1,races_parsed:24},
+    "2026-09-19":{status:"SUCCESS",race_pack_version:SCHEDULE_SAFE_RACE_PACK_VERSION,result_parser_version:RESULT_PARSER_VERSION,lap_parser_version:LAP_PARSER_VERSION,schedule_contract_version:SCHEDULE_CONTRACT_VERSION,races_parsed:24},
+    "2026-09-13":{status:"SUCCESS",race_pack_version:SCHEDULE_SAFE_RACE_PACK_VERSION,result_parser_version:Math.max(1,RESULT_PARSER_VERSION-1),lap_parser_version:LAP_PARSER_VERSION,schedule_contract_version:SCHEDULE_CONTRACT_VERSION,races_parsed:24},
     "2026-09-12":{status:"FAILED",race_pack_version:1,races_parsed:0},
   }
 };
