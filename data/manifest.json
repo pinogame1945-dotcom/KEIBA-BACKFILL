@@ -100,9 +100,31 @@
     },
     "2026-09-12": {
       "status": "SUCCESS",
-      "race_pack_version": 2,
+      "race_pack_version": 3,
       "payout_parser_version": 2,
-      "repaired_from_legacy_payout_v1": true,
+      "result_parser_version": 3,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 313,
+        "finish_time_present": 313,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 306,
+        "flat_finish_time_present": 306,
+        "last3f_present": 306,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 23,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 23,
+        "flat_lap_complete_races": 23,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "repaired_for_schedule_integrity": true,
+      "repaired_from_result_parser_v1": true,
+      "repaired_from_lap_parser_v1": true,
       "races_discovered": 24,
       "races_parsed": 24,
       "file": "data/daily/2026-09-12.jsonl.gz",
@@ -517,7 +539,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/5/0503.html"
     }
   },
-  "updated_at": "2026-09-21T17:34:03.779Z",
+  "updated_at": "2026-09-21T17:34:55.910Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
