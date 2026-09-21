@@ -9,6 +9,7 @@ import {
 } from "./payout-normalization.mjs";
 import {findLast3fColumn,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
+import {flatLast3fDayQuality} from "./result-quality.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
@@ -838,12 +839,8 @@ const finishedResults=records.flatMap(row=>row.results??[]).filter(row=>
   row?.result_status==="FINISHED"&&row?.official_finish_position!=null
 );
 const timedResults=finishedResults.filter(row=>row?.finish_time_ms!=null);
-const last3fPresent=timedResults.filter(row=>row?.last_3f!=null).length;
-const last3fSuspicious=timedResults.filter(row=>
-  row?.last_3f!=null&&(Number(row.last_3f)<20||Number(row.last_3f)>60)
-).length;
 const finishTimeCoverage=finishedResults.length?timedResults.length/finishedResults.length:0;
-const last3fCoverage=timedResults.length?last3fPresent/timedResults.length:0;
+const flatLast3f=flatLast3fDayQuality(records);
 const flatLapTargets=records.filter(row=>
   row?.race?.discipline==="FLAT"&&expectedLapSegments(row?.race?.distance_m)>0
 );
@@ -853,27 +850,31 @@ const completeLapRaces=flatLapTargets.filter(row=>
 const resultQuality={
   finished_results:finishedResults.length,
   finish_time_present:timedResults.length,
-  last3f_present:last3fPresent,
-  last3f_suspicious:last3fSuspicious,
+  last3f_scope:"FLAT",
+  flat_finished_results:flatLast3f.finishedResults,
+  flat_finish_time_present:flatLast3f.timedResults,
+  last3f_present:flatLast3f.present,
+  last3f_suspicious:flatLast3f.suspicious,
   finish_time_coverage_pct:Number((finishTimeCoverage*100).toFixed(1)),
-  last3f_coverage_pct:Number((last3fCoverage*100).toFixed(1)),
+  flat_finish_time_coverage_pct:Number((flatLast3f.finishTimeCoverage*100).toFixed(1)),
+  last3f_coverage_pct:Number((flatLast3f.last3fCoverage*100).toFixed(1)),
   flat_lap_target_races:flatLapTargets.length,
   flat_lap_complete_races:completeLapRaces,
   flat_lap_coverage_pct:flatLapTargets.length
     ?Number((completeLapRaces/flatLapTargets.length*100).toFixed(1))
     :100,
 };
-if(timedResults.length>=8&&finishTimeCoverage>=0.8&&last3fCoverage<0.9){
+if(flatLast3f.timedResults>=8&&flatLast3f.finishTimeCoverage>=0.8&&flatLast3f.last3fCoverage<0.9){
   throw new Error(
     "RESULT_QUALITY_LAST3F_LOW "+date+
-    ": finish_time="+resultQuality.finish_time_coverage_pct+
+    ": scope=FLAT finish_time="+resultQuality.flat_finish_time_coverage_pct+
     "% last3f="+resultQuality.last3f_coverage_pct+"%"
   );
 }
-if(last3fSuspicious>0){
+if(flatLast3f.suspicious>0){
   throw new Error(
     "RESULT_QUALITY_LAST3F_SUSPICIOUS "+date+
-    ": suspicious="+last3fSuspicious
+    ": scope=FLAT suspicious="+flatLast3f.suspicious
   );
 }
 if(flatLapTargets.length>0&&completeLapRaces!==flatLapTargets.length){

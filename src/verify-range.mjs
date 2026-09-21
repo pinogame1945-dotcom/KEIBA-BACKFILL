@@ -6,6 +6,7 @@ import {
 } from "./schedule-integrity.mjs";
 import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments} from "./lap-parser.mjs";
+import {flatLast3fDayQuality,raceFlatLast3fQuality} from "./result-quality.mjs";
 
 const [startDate,endDate]=process.argv.slice(2);
 const dateRe=/^\d{4}-\d{2}-\d{2}$/;
@@ -150,12 +151,6 @@ for(const date of rangeDates){
     if(Number(day.lap_parser_version??1)<LAP_PARSER_VERSION){
       throw new Error(`legacy lap parser in completed range: ${date}`);
     }
-    if(Number(day.result_quality?.last3f_coverage_pct??0)<90){
-      throw new Error(`last3f coverage below contract: ${date} / ${day.result_quality?.last3f_coverage_pct??0}%`);
-    }
-    if(Number(day.result_quality?.last3f_suspicious??0)>0){
-      throw new Error(`suspicious last3f rows in completed range: ${date} / ${day.result_quality.last3f_suspicious}`);
-    }
     if(scheduleIntegrity){
       if(Number(day.race_pack_version??0)<SCHEDULE_SAFE_RACE_PACK_VERSION){
         throw new Error(`schedule-safe race pack version missing: ${date}`);
@@ -168,6 +163,24 @@ for(const date of rangeDates){
     const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
     const rows=text?text.split("\n").map(JSON.parse):[];
     if(rows.length!==day.races_parsed)throw new Error(`daily race count mismatch ${date}`);
+    const flatLast3f=flatLast3fDayQuality(rows);
+    if(flatLast3f.timedResults>=8&&flatLast3f.finishTimeCoverage>=0.8&&flatLast3f.last3fCoverage<0.9){
+      throw new Error(`last3f coverage below contract: ${date} / scope=FLAT / ${Number((flatLast3f.last3fCoverage*100).toFixed(1))}%`);
+    }
+    if(flatLast3f.suspicious>0){
+      throw new Error(`suspicious flat last3f rows in completed range: ${date} / ${flatLast3f.suspicious}`);
+    }
+    if(day.result_quality?.last3f_scope==="FLAT"){
+      const manifestCoverage=Number(day.result_quality?.last3f_coverage_pct??0);
+      const recomputedCoverage=Number((flatLast3f.last3fCoverage*100).toFixed(1));
+      if(manifestCoverage!==recomputedCoverage){
+        throw new Error(`manifest/recomputed flat last3f coverage mismatch: ${date} / ${manifestCoverage}% != ${recomputedCoverage}%`);
+      }
+      const manifestSuspicious=Number(day.result_quality?.last3f_suspicious??0);
+      if(manifestSuspicious!==flatLast3f.suspicious){
+        throw new Error(`manifest/recomputed flat last3f suspicious mismatch: ${date} / ${manifestSuspicious} != ${flatLast3f.suspicious}`);
+      }
+    }
     dayRowsCache.set(date,rows);
     checkedDays++;
     checkedRaces+=rows.length;
@@ -219,16 +232,9 @@ for(const date of rangeDates){
           throw new Error(`incomplete flat laps ${row.race.race_id}: ${row.laps.length}/${expected}`);
         }
       }
-      const timed=(row.results??[]).filter(result=>
-        result?.result_status==="FINISHED"&&
-        result?.official_finish_position!=null&&
-        result?.finish_time_ms!=null
-      );
-      const badLast3f=timed.filter(result=>
-        result?.last_3f==null||Number(result.last_3f)<20||Number(result.last_3f)>60
-      );
-      if(timed.length>=8&&badLast3f.length/timed.length>0.1){
-        throw new Error(`last3f row quality below contract ${row.race.race_id}: bad=${badLast3f.length}/${timed.length}`);
+      const last3fQuality=raceFlatLast3fQuality(row);
+      if(last3fQuality.eligible&&last3fQuality.timed>=8&&last3fQuality.bad/last3fQuality.timed>0.1){
+        throw new Error(`last3f row quality below contract ${row.race.race_id}: scope=FLAT bad=${last3fQuality.bad}/${last3fQuality.timed}`);
       }
       if(!row.entries.length||!row.results.length)throw new Error(`empty race ${row.race.race_id}`);
       for(const payout of row.payouts){
