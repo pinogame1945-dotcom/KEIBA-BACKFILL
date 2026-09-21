@@ -4,6 +4,8 @@ import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   meetingKeyFromRaceId,scheduleIntegrityEnabled,validateRaceOwnership,
 } from "./schedule-integrity.mjs";
+import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
+import {LAP_PARSER_VERSION,expectedLapSegments} from "./lap-parser.mjs";
 
 const [startDate,endDate]=process.argv.slice(2);
 const dateRe=/^\d{4}-\d{2}-\d{2}$/;
@@ -92,7 +94,9 @@ for(const [packName,pack] of Object.entries(manifest.horse_packs??{})){
   if(pack.status!=="SUCCESS")continue;
   successfulHorsePacks++;
   if((pack.request_delay_ms??0)<1500)throw new Error(`unsafe request delay in ${packName}: ${pack.request_delay_ms}`);
+  const horsePackVersion=Number(pack.horse_pack_version??1);
   const parserVersion=Number(pack.pedigree_parser_version??1);
+  if(horsePackVersion<2||parserVersion<2)continue;
   let sameVersion=horseIdsByParserVersion.get(parserVersion);
   if(!sameVersion){
     sameVersion=new Set();
@@ -140,6 +144,18 @@ for(const date of rangeDates){
     if(day.status!=="SUCCESS")throw new Error(`day not SUCCESS: ${date}`);
     if(Number(day.race_pack_version??1)<2)throw new Error(`legacy race pack in completed range: ${date}`);
     if(Number(day.payout_parser_version??1)<2)throw new Error(`legacy payout parser in completed range: ${date}`);
+    if(Number(day.result_parser_version??1)<RESULT_PARSER_VERSION){
+      throw new Error(`legacy result parser in completed range: ${date}`);
+    }
+    if(Number(day.lap_parser_version??1)<LAP_PARSER_VERSION){
+      throw new Error(`legacy lap parser in completed range: ${date}`);
+    }
+    if(Number(day.result_quality?.last3f_coverage_pct??0)<90){
+      throw new Error(`last3f coverage below contract: ${date} / ${day.result_quality?.last3f_coverage_pct??0}%`);
+    }
+    if(Number(day.result_quality?.last3f_suspicious??0)>0){
+      throw new Error(`suspicious last3f rows in completed range: ${date} / ${day.result_quality.last3f_suspicious}`);
+    }
     if(scheduleIntegrity){
       if(Number(day.race_pack_version??0)<SCHEDULE_SAFE_RACE_PACK_VERSION){
         throw new Error(`schedule-safe race pack version missing: ${date}`);
@@ -188,7 +204,32 @@ for(const date of rangeDates){
         }
       }
       if(Number(row.payout_parser_version??1)<2)throw new Error(`legacy payout row ${row.race.race_id}`);
-      if(!Array.isArray(row.entries)||!Array.isArray(row.results)||!Array.isArray(row.payouts))throw new Error(`invalid race arrays ${row.race.race_id}`);
+      if(Number(row.result_parser_version??1)<RESULT_PARSER_VERSION){
+        throw new Error(`legacy result parser row ${row.race.race_id}`);
+      }
+      if(Number(row.lap_parser_version??1)<LAP_PARSER_VERSION){
+        throw new Error(`legacy lap parser row ${row.race.race_id}`);
+      }
+      if(!Array.isArray(row.entries)||!Array.isArray(row.results)||!Array.isArray(row.payouts)||!Array.isArray(row.laps)){
+        throw new Error(`invalid race arrays ${row.race.race_id}`);
+      }
+      if(row.race?.discipline==="FLAT"){
+        const expected=expectedLapSegments(row.race?.distance_m);
+        if(expected>0&&row.laps.length!==expected){
+          throw new Error(`incomplete flat laps ${row.race.race_id}: ${row.laps.length}/${expected}`);
+        }
+      }
+      const timed=(row.results??[]).filter(result=>
+        result?.result_status==="FINISHED"&&
+        result?.official_finish_position!=null&&
+        result?.finish_time_ms!=null
+      );
+      const badLast3f=timed.filter(result=>
+        result?.last_3f==null||Number(result.last_3f)<20||Number(result.last_3f)>60
+      );
+      if(timed.length>=8&&badLast3f.length/timed.length>0.1){
+        throw new Error(`last3f row quality below contract ${row.race.race_id}: bad=${badLast3f.length}/${timed.length}`);
+      }
       if(!row.entries.length||!row.results.length)throw new Error(`empty race ${row.race.race_id}`);
       for(const payout of row.payouts){
         const arity=payoutArity[payout.bet_type];
