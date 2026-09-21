@@ -19,6 +19,7 @@ const payoutArity={
 };
 const horseIds=new Set();
 const horseIdsByParserVersion=new Map();
+const dayRowsCache=new Map();
 let successfulHorsePacks=0;
 if(scheduleIntegrity){
   for(const [key,event] of Object.entries(manifest.rescheduled_meetings??{})){
@@ -113,7 +114,6 @@ let checkedScheduleExceptionDays=0;
 let checkedRaces=0;
 const currentHorsePacks=new Set();
 const raceOwners=new Map();
-const dayRowsCache=new Map();
 
 const dayMs=86400000;
 const parseDate=value=>{
