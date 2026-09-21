@@ -1,0 +1,52 @@
+name: Pedigree v2 repair - one shot 2026-08-29
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".backfill/pedigree-repair-kick"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-historical-week-production
+  cancel-in-progress: true
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      REQUEST_DELAY_MS: "1500"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Parser contract
+        run: npm run smoke:pedigree
+      - name: Repair all legacy pedigree for 2026-08-29
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4; do
+            echo "repair batch $i/4"
+            node src/repair-pedigree-v2.mjs --source-date "2026-08-29" --limit 100
+          done
+      - name: Validate repaired date
+        run: node src/verify-range.mjs "2026-08-29" "2026-08-29"
+      - name: Commit repair packs
+        shell: bash
+        run: |
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manifest.json data/horses/ data/debug/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No repair data changes."
+            exit 0
+          fi
+          git commit -m "data: repair pedigree v2 for 2026-08-29"
+          git pull --rebase origin main
+          git push origin HEAD:main
