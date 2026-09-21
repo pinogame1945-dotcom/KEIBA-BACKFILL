@@ -16,27 +16,27 @@
       "status": "SUCCESS",
       "race_pack_version": 3,
       "payout_parser_version": 2,
-      "result_parser_version": 2,
+      "result_parser_version": 3,
       "lap_parser_version": 2,
       "result_quality": {
         "finished_results": 285,
         "finish_time_present": 285,
         "last3f_scope": "FLAT",
-        "flat_finished_results": 0,
-        "flat_finish_time_present": 0,
-        "last3f_present": 0,
+        "flat_finished_results": 273,
+        "flat_finish_time_present": 273,
+        "last3f_present": 273,
         "last3f_suspicious": 0,
         "finish_time_coverage_pct": 100,
-        "flat_finish_time_coverage_pct": 0,
+        "flat_finish_time_coverage_pct": 100,
         "last3f_coverage_pct": 100,
-        "flat_lap_target_races": 0,
-        "flat_lap_complete_races": 0,
+        "flat_races": 23,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 23,
+        "flat_lap_complete_races": 23,
         "flat_lap_coverage_pct": 100
       },
       "schedule_contract_version": 1,
-      "repaired_for_schedule_integrity": true,
       "repaired_from_result_parser_v1": true,
-      "repaired_from_lap_parser_v1": true,
       "races_discovered": 24,
       "races_parsed": 24,
       "file": "data/daily/2026-09-19.jsonl.gz",
@@ -473,7 +473,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/5/0503.html"
     }
   },
-  "updated_at": "2026-09-21T16:57:54.096Z",
+  "updated_at": "2026-09-21T17:13:32.174Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -21066,6 +21066,6 @@
   },
   "rescheduled_meetings": {},
   "cancelled_meetings": {},
-  "result_parser_version": 2,
+  "result_parser_version": 3,
   "lap_parser_version": 2
 }
