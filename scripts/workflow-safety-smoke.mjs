@@ -34,7 +34,7 @@ for(const token of [
   "inputs.allow_odds_followup",
   "inputs.allow_self_chain",
   '-f allow_self_chain="true"',
-  '-f allow_odds_followup="${{ inputs.allow_odds_followup }}"',
+  '-f allow_odds_followup="true"',
 ]){
   assert.ok(week.includes(token),"week staged-safety token missing: "+token);
 }
@@ -46,8 +46,8 @@ assert.ok(
 );
 assert.match(
   week,
-  /name: Kick independent odds catch-up[\s\S]*?if: \$\{\{ github\.event_name == 'workflow_dispatch' && inputs\.allow_odds_followup \}\}/,
-  "odds follow-up must require explicit workflow input",
+  /name: Kick independent odds catch-up[\s\S]*?if: \$\{\{ github\.event_name == 'workflow_dispatch' && \(inputs\.allow_odds_followup \|\| inputs\.allow_self_chain\) \}\}/,
+  "odds follow-up must require explicit odds request or production self-chain",
 );
 assert.match(
   week,
@@ -59,7 +59,9 @@ assert.ok(
   week.includes('if [ "$ODDS_AUTO" != "enabled" ]; then'),
   "odds auto-follow must have repository-side kill switch",
 );
-assert.equal(control.enabled,false,"historical self-chain repository control must stay locked during staged revival");
-assert.equal(oddsSwitch,"disabled","historical odds auto-follow repository switch must stay disabled during staged revival");
+assert.equal(typeof control.enabled,"boolean","historical self-chain repository control must be boolean");
+assert.ok(["enabled","disabled"].includes(oddsSwitch),"historical odds auto-follow repository switch must be enabled or disabled");
+assert.equal(control.stop_date,"2006-09-01","historical self-chain stop date changed unexpectedly");
+assert.equal(control.range_days,14,"historical self-chain batch size changed unexpectedly");
 
-console.log("workflow staged-revival safety smoke ok");
+console.log("workflow production safety smoke ok");

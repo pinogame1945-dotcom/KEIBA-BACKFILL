@@ -3,5 +3,5 @@
   "enabled": true,
   "stop_date": "2006-09-01",
   "range_days": 14,
-  "note": "Historical self-chaining re-enabled after result-parser v4 stale repair reached stale=0 and full saved-range audit passed."
+  "note": "Historical self-chaining enabled after parser-v4 repair/audit; repository kill switches remain authoritative."
 }
