@@ -7,6 +7,7 @@ import {access,rename} from "node:fs/promises";
 import {
   normalizePayoutRows,PAYOUT_PARSER_VERSION,RACE_PACK_VERSION,
 } from "./payout-normalization.mjs";
+import {findLast3fColumn,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
@@ -258,7 +259,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     finish: findCol("着順"), gate: findCol("枠"), number: findCol("馬番"),
     horse: findCol("馬名"), sexage: findCol("性齢"), weight: findCol("斤量"),
     jockey: findCol("騎手"), time: findCol("タイム"), margin: findCol("着差"),
-    corner: findCol("通過"), last3f: findCol("上り","上がり","後3F"), odds: findCol("単勝"),
+    corner: findCol("通過"), last3f: findLast3fColumn(headers), odds: findCol("単勝"),
     popularity: findCol("人気"), body: findCol("馬体重"), trainer: findCol("調教師","厩舎"),
     owner: findCol("馬主"), prize: findCol("賞金")
   };
@@ -363,6 +364,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     schema_version: 1,
     race_pack_version: effectiveRacePackVersion,
     payout_parser_version: PAYOUT_PARSER_VERSION,
+    result_parser_version: RESULT_PARSER_VERSION,
     ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
     race: {
       race_id: raceId,
@@ -458,6 +460,7 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 }
 
 const rebuildLegacy = process.env.REBUILD_LEGACY_PAYOUT_V1 === "1";
+const rebuildResultParserV1 = process.env.REBUILD_RESULT_PARSER_V1 === "1";
 const dailyPath = path.join("data","daily",`${date}.jsonl.gz`);
 const manifestAtStart = await loadManifest();
 const existingDay = manifestAtStart.days?.[date];
@@ -473,7 +476,13 @@ const scheduleUpgradeExisting=Boolean(
     Number(existingDay.schedule_contract_version??0)<SCHEDULE_CONTRACT_VERSION
   )
 );
+const resultParserUpgradeExisting=Boolean(
+  existingDay?.status==="SUCCESS"&&
+  Number(existingDay.result_parser_version??1)<RESULT_PARSER_VERSION&&
+  rebuildResultParserV1
+);
 if (existingDay?.status === "SUCCESS" &&
+    !resultParserUpgradeExisting &&
     Number(existingDay.race_pack_version ?? 1) >= effectiveRacePackVersion &&
     Number(existingDay.payout_parser_version ?? 1) >= PAYOUT_PARSER_VERSION &&
     (!scheduleIntegrity||
@@ -497,7 +506,7 @@ if (legacyExisting && !rebuildLegacy) {
     `LEGACY_PAYOUT_V1 ${date}: refusing to reuse or overwrite old payout pack; run explicit repair mode`
   );
 }
-if (dailyFileExists && !legacyExisting && !scheduleUpgradeExisting) {
+if (dailyFileExists && !legacyExisting && !scheduleUpgradeExisting && !resultParserUpgradeExisting) {
   throw new Error(`daily race pack already exists without compatible manifest metadata: ${dailyPath}`);
 }
 if (legacyExisting && rebuildLegacy) {
@@ -505,6 +514,9 @@ if (legacyExisting && rebuildLegacy) {
 }
 if(scheduleUpgradeExisting){
   console.log(`[repair] upgrading race pack to schedule contract v${SCHEDULE_CONTRACT_VERSION} for ${date}`);
+}
+if(resultParserUpgradeExisting){
+  console.log(`[repair] rebuilding result parser v1 pack with result parser v${RESULT_PARSER_VERSION} for ${date}`);
 }
 
 const existingNoMeeting = manifestAtStart.non_meeting_days?.[date];
@@ -798,6 +810,28 @@ if (raceIds.length > 0 && records.length+rescheduledAway !== raceIds.length) {
   );
 }
 
+const finishedResults=records.flatMap(row=>row.results??[]).filter(row=>
+  row?.result_status==="FINISHED"&&row?.official_finish_position!=null
+);
+const timedResults=finishedResults.filter(row=>row?.finish_time_ms!=null);
+const last3fPresent=timedResults.filter(row=>row?.last_3f!=null).length;
+const finishTimeCoverage=finishedResults.length?timedResults.length/finishedResults.length:0;
+const last3fCoverage=timedResults.length?last3fPresent/timedResults.length:0;
+const resultQuality={
+  finished_results:finishedResults.length,
+  finish_time_present:timedResults.length,
+  last3f_present:last3fPresent,
+  finish_time_coverage_pct:Number((finishTimeCoverage*100).toFixed(1)),
+  last3f_coverage_pct:Number((last3fCoverage*100).toFixed(1)),
+};
+if(timedResults.length>=8&&finishTimeCoverage>=0.8&&last3fCoverage<0.5){
+  throw new Error(
+    "RESULT_QUALITY_LAST3F_LOW "+date+
+    ": finish_time="+resultQuality.finish_time_coverage_pct+
+    "% last3f="+resultQuality.last3f_coverage_pct+"%"
+  );
+}
+
 const manifest = await loadManifest();
 manifest.schema_version=1;
 manifest.days=manifest.days??{};
@@ -862,9 +896,12 @@ manifest.days[date]={
   status:"SUCCESS",
   race_pack_version:effectiveRacePackVersion,
   payout_parser_version:PAYOUT_PARSER_VERSION,
+  result_parser_version:RESULT_PARSER_VERSION,
+  result_quality:resultQuality,
   ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
   repaired_from_legacy_payout_v1:legacyExisting||undefined,
   repaired_for_schedule_integrity:scheduleUpgradeExisting||undefined,
+  repaired_from_result_parser_v1:resultParserUpgradeExisting||undefined,
   races_discovered:raceIds.length,
   races_rescheduled_away:rescheduledAway||undefined,
   races_parsed:records.length,
@@ -884,5 +921,6 @@ console.log(JSON.stringify({
   ok:true,date,races:records.length,rescheduledAway,
   entries:records.reduce((n,r)=>n+r.entries.length,0),
   payouts:records.reduce((n,r)=>n+r.payouts.length,0),
+  resultQuality,
   output:outPath,
 },null,2));
