@@ -8,6 +8,11 @@ on:
         description: "Historical JRA date (YYYY-MM-DD)"
         required: true
         default: "2026-09-19"
+      force_recollect_current:
+        description: "Re-fetch a current SUCCESS day to probe the live acquisition/parser path"
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: write
 
@@ -47,6 +52,8 @@ jobs:
           fi
 
       - name: Collect race day
+        env:
+          FORCE_RECOLLECT_CURRENT: ${{ inputs.force_recollect_current && '1' || '0' }}
         run: |
           node src/collect-day.mjs "${{ steps.input.outputs.date }}"
 
