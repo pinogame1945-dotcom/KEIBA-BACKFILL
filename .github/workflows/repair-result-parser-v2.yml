@@ -15,6 +15,11 @@ on:
         description: "Maximum stale meeting days to repair in this run (1-20)"
         required: true
         default: "10"
+  push:
+    branches:
+      - main
+    paths:
+      - ".backfill/repair-kick"
 
 permissions:
   contents: write
@@ -31,6 +36,9 @@ jobs:
       REQUEST_DELAY_MS: "1500"
       SCHEDULE_INTEGRITY_V2: "1"
       SKIP_EMPTY: "1"
+      REPAIR_NEWEST: ${{ github.event.inputs.newest_date || '2026-09-20' }}
+      REPAIR_OLDEST: ${{ github.event.inputs.oldest_date || '2006-09-01' }}
+      REPAIR_MAX: ${{ github.event.inputs.max_repairs || '10' }}
 
     steps:
       - name: Checkout
@@ -62,10 +70,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          NEWEST="${{ inputs.newest_date }}"
-          OLDEST="${{ inputs.oldest_date }}"
-          MAX="${{ inputs.max_repairs }}"
-          node src/plan-race-pack-repair.mjs "$NEWEST" "$OLDEST" "$MAX" | tee /tmp/race-pack-repair-plan.json
+          node src/plan-race-pack-repair.mjs "$REPAIR_NEWEST" "$REPAIR_OLDEST" "$REPAIR_MAX" | tee /tmp/race-pack-repair-plan.json
           SELECTED=$(jq -r '.selected_days' /tmp/race-pack-repair-plan.json)
           echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
 
@@ -102,4 +107,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node src/plan-race-pack-repair.mjs             "${{ inputs.newest_date }}"             "${{ inputs.oldest_date }}"             "20"
+          node src/plan-race-pack-repair.mjs "$REPAIR_NEWEST" "$REPAIR_OLDEST" "20"
