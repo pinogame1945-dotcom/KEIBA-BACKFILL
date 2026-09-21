@@ -1,5 +1,4 @@
 export const FLAT_LAST3F_MIN_SECONDS=20;
-export const FLAT_LAST3F_MAX_SECONDS=60;
 
 export function isFlatRace(race){
   return race?.discipline==="FLAT";
@@ -16,7 +15,10 @@ function isTimed(result){
 export function isSuspiciousFlatLast3f(result){
   if(result?.last_3f==null)return false;
   const value=Number(result.last_3f);
-  return !Number.isFinite(value)||value<FLAT_LAST3F_MIN_SECONDS||value>FLAT_LAST3F_MAX_SECONDS;
+  if(!Number.isFinite(value)||value<FLAT_LAST3F_MIN_SECONDS)return true;
+  const finishMs=Number(result?.finish_time_ms);
+  if(Number.isFinite(finishMs)&&finishMs>0&&value*1000>finishMs)return true;
+  return false;
 }
 
 export function flatLast3fDayQuality(records){
