@@ -32,6 +32,7 @@ jobs:
       SCHEDULE_INTEGRITY_V2: "1"
       SKIP_EMPTY: "1"
       REBUILD_RESULT_PARSER_V1: "1"
+      REBUILD_LAP_PARSER_V1: "1"
 
     steps:
       - uses: actions/checkout@v4

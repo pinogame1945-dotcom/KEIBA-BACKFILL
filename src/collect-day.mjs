@@ -8,6 +8,7 @@ import {
   normalizePayoutRows,PAYOUT_PARSER_VERSION,RACE_PACK_VERSION,
 } from "./payout-normalization.mjs";
 import {findLast3fColumn,RESULT_PARSER_VERSION} from "./result-columns.mjs";
+import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
@@ -341,18 +342,12 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     }));
   });
 
-  const laps = [];
+  const laps = parseRaceLaps($,raceId,distance);
   const corners = [];
   $("tr").each((_, tr) => {
     const cells = directCells($, tr, true);
     if (cells.length < 2) return;
     const label = clean(cells.eq(0).text());
-    if (label === "ラップ") {
-      const raw = clean(cells.eq(1).text());
-      [...raw.matchAll(/\d{1,2}\.\d/g)].map(m => Number(m[0])).forEach((value, i) => {
-        laps.push({ race_id: raceId, segment_no: i + 1, lap_seconds: value });
-      });
-    }
     if (/[1-4]コーナー/.test(label)) {
       corners.push({ race_id: raceId, corner_label: label, passage_raw: clean(cells.eq(1).text()) });
     }
@@ -365,6 +360,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     race_pack_version: effectiveRacePackVersion,
     payout_parser_version: PAYOUT_PARSER_VERSION,
     result_parser_version: RESULT_PARSER_VERSION,
+    lap_parser_version: LAP_PARSER_VERSION,
     ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
     race: {
       race_id: raceId,
@@ -461,6 +457,7 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 
 const rebuildLegacy = process.env.REBUILD_LEGACY_PAYOUT_V1 === "1";
 const rebuildResultParserV1 = process.env.REBUILD_RESULT_PARSER_V1 === "1";
+const rebuildLapParserV1 = process.env.REBUILD_LAP_PARSER_V1 === "1";
 const dailyPath = path.join("data","daily",`${date}.jsonl.gz`);
 const manifestAtStart = await loadManifest();
 const existingDay = manifestAtStart.days?.[date];
@@ -481,8 +478,14 @@ const resultParserUpgradeExisting=Boolean(
   Number(existingDay.result_parser_version??1)<RESULT_PARSER_VERSION&&
   rebuildResultParserV1
 );
+const lapParserUpgradeExisting=Boolean(
+  existingDay?.status==="SUCCESS"&&
+  Number(existingDay.lap_parser_version??1)<LAP_PARSER_VERSION&&
+  rebuildLapParserV1
+);
 if (existingDay?.status === "SUCCESS" &&
     !resultParserUpgradeExisting &&
+    !lapParserUpgradeExisting &&
     Number(existingDay.race_pack_version ?? 1) >= effectiveRacePackVersion &&
     Number(existingDay.payout_parser_version ?? 1) >= PAYOUT_PARSER_VERSION &&
     (!scheduleIntegrity||
@@ -506,7 +509,7 @@ if (legacyExisting && !rebuildLegacy) {
     `LEGACY_PAYOUT_V1 ${date}: refusing to reuse or overwrite old payout pack; run explicit repair mode`
   );
 }
-if (dailyFileExists && !legacyExisting && !scheduleUpgradeExisting && !resultParserUpgradeExisting) {
+if (dailyFileExists && !legacyExisting && !scheduleUpgradeExisting && !resultParserUpgradeExisting && !lapParserUpgradeExisting) {
   throw new Error(`daily race pack already exists without compatible manifest metadata: ${dailyPath}`);
 }
 if (legacyExisting && rebuildLegacy) {
@@ -517,6 +520,9 @@ if(scheduleUpgradeExisting){
 }
 if(resultParserUpgradeExisting){
   console.log(`[repair] rebuilding result parser v1 pack with result parser v${RESULT_PARSER_VERSION} for ${date}`);
+}
+if(lapParserUpgradeExisting){
+  console.log(`[repair] rebuilding lap parser v1 pack with lap parser v${LAP_PARSER_VERSION} for ${date}`);
 }
 
 const existingNoMeeting = manifestAtStart.non_meeting_days?.[date];
@@ -762,6 +768,14 @@ for (let i = 0; i < raceIds.length; i++) {
       try {
         const html = await politeFetch(raceUrl);
         parsed = parseRaceResult(html, raceId, date, raceUrl);
+        if(parsed.race.discipline==="FLAT"){
+          const expected=expectedLapSegments(parsed.race.distance_m);
+          if(expected>0&&parsed.laps.length!==expected){
+            throw new Error(
+              `FLAT_LAPS_INCOMPLETE ${raceId}: expected=${expected} actual=${parsed.laps.length}`
+            );
+          }
+        }
         break;
       } catch (error) {
         lastError = error;
@@ -817,18 +831,35 @@ const timedResults=finishedResults.filter(row=>row?.finish_time_ms!=null);
 const last3fPresent=timedResults.filter(row=>row?.last_3f!=null).length;
 const finishTimeCoverage=finishedResults.length?timedResults.length/finishedResults.length:0;
 const last3fCoverage=timedResults.length?last3fPresent/timedResults.length:0;
+const flatLapTargets=records.filter(row=>
+  row?.race?.discipline==="FLAT"&&expectedLapSegments(row?.race?.distance_m)>0
+);
+const completeLapRaces=flatLapTargets.filter(row=>
+  row.laps?.length===expectedLapSegments(row?.race?.distance_m)
+).length;
 const resultQuality={
   finished_results:finishedResults.length,
   finish_time_present:timedResults.length,
   last3f_present:last3fPresent,
   finish_time_coverage_pct:Number((finishTimeCoverage*100).toFixed(1)),
   last3f_coverage_pct:Number((last3fCoverage*100).toFixed(1)),
+  flat_lap_target_races:flatLapTargets.length,
+  flat_lap_complete_races:completeLapRaces,
+  flat_lap_coverage_pct:flatLapTargets.length
+    ?Number((completeLapRaces/flatLapTargets.length*100).toFixed(1))
+    :100,
 };
 if(timedResults.length>=8&&finishTimeCoverage>=0.8&&last3fCoverage<0.5){
   throw new Error(
     "RESULT_QUALITY_LAST3F_LOW "+date+
     ": finish_time="+resultQuality.finish_time_coverage_pct+
     "% last3f="+resultQuality.last3f_coverage_pct+"%"
+  );
+}
+if(flatLapTargets.length>0&&completeLapRaces!==flatLapTargets.length){
+  throw new Error(
+    "RESULT_QUALITY_FLAT_LAPS_INCOMPLETE "+date+
+    ": complete="+completeLapRaces+"/"+flatLapTargets.length
   );
 }
 
@@ -890,6 +921,12 @@ manifest.race_pack_version=Math.max(
 manifest.payout_parser_version=Math.max(
   Number(manifest.payout_parser_version??1),PAYOUT_PARSER_VERSION,
 );
+manifest.result_parser_version=Math.max(
+  Number(manifest.result_parser_version??1),RESULT_PARSER_VERSION,
+);
+manifest.lap_parser_version=Math.max(
+  Number(manifest.lap_parser_version??1),LAP_PARSER_VERSION,
+);
 if(manifest.schedule_exception_days)delete manifest.schedule_exception_days[date];
 if(manifest.non_meeting_days)delete manifest.non_meeting_days[date];
 manifest.days[date]={
@@ -897,11 +934,13 @@ manifest.days[date]={
   race_pack_version:effectiveRacePackVersion,
   payout_parser_version:PAYOUT_PARSER_VERSION,
   result_parser_version:RESULT_PARSER_VERSION,
+  lap_parser_version:LAP_PARSER_VERSION,
   result_quality:resultQuality,
   ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
   repaired_from_legacy_payout_v1:legacyExisting||undefined,
   repaired_for_schedule_integrity:scheduleUpgradeExisting||undefined,
   repaired_from_result_parser_v1:resultParserUpgradeExisting||undefined,
+  repaired_from_lap_parser_v1:lapParserUpgradeExisting||undefined,
   races_discovered:raceIds.length,
   races_rescheduled_away:rescheduledAway||undefined,
   races_parsed:records.length,
