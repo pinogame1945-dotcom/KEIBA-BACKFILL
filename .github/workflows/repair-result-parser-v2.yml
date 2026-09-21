@@ -1,20 +1,20 @@
-name: Repair result parser v2
+name: Repair stale race packs
 
 on:
   workflow_dispatch:
     inputs:
-      start_date:
-        description: "Newest date (YYYY-MM-DD)"
+      newest_date:
+        description: "Newest existing SUCCESS day eligible for repair"
         required: true
-        default: "2026-05-17"
-      end_date:
-        description: "Oldest date (YYYY-MM-DD)"
+        default: "2026-09-20"
+      oldest_date:
+        description: "Oldest existing SUCCESS day eligible for repair"
         required: true
-        default: "2026-05-17"
-  push:
-    branches: [main]
-    paths:
-      - ".backfill/result-repair-kick.json"
+        default: "2006-09-01"
+      max_repairs:
+        description: "Maximum stale meeting days to repair in this run (1-20)"
+        required: true
+        default: "10"
 
 permissions:
   contents: write
@@ -31,72 +31,75 @@ jobs:
       REQUEST_DELAY_MS: "1500"
       SCHEDULE_INTEGRITY_V2: "1"
       SKIP_EMPTY: "1"
-      REBUILD_RESULT_PARSER_V1: "1"
-      REBUILD_LAP_PARSER_V1: "1"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
 
-      - run: npm install --no-audit --no-fund
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
 
-      - name: Resolve range
-        id: range
+      - name: Validate repair source
+        run: |
+          node --check src/collect-day.mjs
+          node --check src/verify-range.mjs
+          node --check src/plan-race-pack-repair.mjs
+          npm run smoke:result-columns
+          npm run smoke:result-quality
+          npm run smoke:race-meta
+          npm run smoke:lap
+          npm run smoke:schedule
+          npm run smoke:repair-plan
+          npm run smoke:workflow-safety
+
+      - name: Plan stale meeting days
+        id: plan
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            START="${{ inputs.start_date }}"
-            END="${{ inputs.end_date }}"
-          else
-            START=$(jq -r '.start_date' .backfill/result-repair-kick.json)
-            END=$(jq -r '.end_date' .backfill/result-repair-kick.json)
-          fi
-          if [[ ! "$START" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || [[ ! "$END" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            echo "Invalid range: $START -> $END"
-            exit 1
-          fi
-          if [[ "$START" < "$END" ]]; then
-            echo "start_date must be newest and >= end_date"
-            exit 1
-          fi
-          echo "start=$START" >> "$GITHUB_OUTPUT"
-          echo "end=$END" >> "$GITHUB_OUTPUT"
+          NEWEST="${{ inputs.newest_date }}"
+          OLDEST="${{ inputs.oldest_date }}"
+          MAX="${{ inputs.max_repairs }}"
+          node src/plan-race-pack-repair.mjs "$NEWEST" "$OLDEST" "$MAX" | tee /tmp/race-pack-repair-plan.json
+          SELECTED=$(jq -r '.selected_days' /tmp/race-pack-repair-plan.json)
+          echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
 
-      - name: Repair dates
+      - name: Repair selected meeting days
+        if: ${{ steps.plan.outputs.selected != '0' }}
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "keiba-backfill-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          START="${{ steps.range.outputs.start }}"
-          END="${{ steps.range.outputs.end }}"
-          DATE="$START"
 
-          while true; do
+          mapfile -t DATES < <(jq -r '.dates[].date' /tmp/race-pack-repair-plan.json)
+          for DATE in "${DATES[@]}"; do
             echo "========================================"
-            echo "RESULT PARSER REPAIR $DATE"
+            echo "RACE PACK REPAIR $DATE"
             echo "========================================"
+
+            git pull --rebase origin main
             node src/collect-day.mjs "$DATE"
-            if [ -f "data/daily/$DATE.jsonl.gz" ]; then
-              node scripts/audit-result-quality.mjs "$DATE"
-            fi
+            node scripts/audit-result-quality.mjs "$DATE"
+            node src/verify-range.mjs "$DATE" "$DATE"
+
             git add data/manifest.json data/daily/ data/debug/ 2>/dev/null || true
             if ! git diff --cached --quiet; then
-              git commit -m "data: repair result parser v2 $DATE"
+              git commit -m "data: repair current race pack $DATE"
               git pull --rebase origin main
               git push
-            fi
-            if [ "$DATE" = "$END" ]; then break; fi
-            DATE=$(date -I -d "$DATE - 1 day")
-            if [[ "$DATE" < "$END" ]]; then
-              echo "Date range guard triggered"
-              exit 1
+            else
+              echo "No data changes for $DATE."
             fi
           done
 
-      - name: Audit repository
-        run: node scripts/audit-result-quality.mjs
+      - name: Report remaining stale packs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node src/plan-race-pack-repair.mjs             "${{ inputs.newest_date }}"             "${{ inputs.oldest_date }}"             "20"
