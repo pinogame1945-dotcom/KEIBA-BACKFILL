@@ -47,3 +47,24 @@ export function raceFlatLast3fQuality(row){
   ).length;
   return {eligible:true,scope:"FLAT",timed:timed.length,bad};
 }
+
+
+export function listSuspiciousFlatLast3f(records){
+  const out=[];
+  for(const row of records??[]){
+    if(!isFlatRace(row?.race))continue;
+    for(const result of row?.results??[]){
+      if(!isTimed(result)||!isSuspiciousFlatLast3f(result))continue;
+      out.push({
+        race_id:row?.race?.race_id??result?.race_id??null,
+        race_name:row?.race?.race_name??null,
+        horse_id:result?.horse_id??null,
+        official_finish_position:result?.official_finish_position??null,
+        finish_time_ms:result?.finish_time_ms??null,
+        last_3f:result?.last_3f??null,
+        source_url:row?.race?.source_url??null,
+      });
+    }
+  }
+  return out;
+}

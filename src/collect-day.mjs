@@ -9,7 +9,7 @@ import {
 } from "./payout-normalization.mjs";
 import {findLast3fColumn,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
-import {flatLast3fDayQuality} from "./result-quality.mjs";
+import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./result-quality.mjs";
 import {classifyRaceDiscipline,selectRaceMeta} from "./race-meta.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
@@ -879,9 +879,11 @@ if(flatLast3f.timedResults>=8&&flatLast3f.finishTimeCoverage>=0.8&&flatLast3f.la
   );
 }
 if(flatLast3f.suspicious>0){
+  const suspiciousRows=listSuspiciousFlatLast3f(records);
   throw new Error(
     "RESULT_QUALITY_LAST3F_SUSPICIOUS "+date+
-    ": scope=FLAT suspicious="+flatLast3f.suspicious
+    ": scope=FLAT suspicious="+flatLast3f.suspicious+
+    " rows="+JSON.stringify(suspiciousRows.slice(0,10))
   );
 }
 if(records.length>=8&&flatRaceCount===0){

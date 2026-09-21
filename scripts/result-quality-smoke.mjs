@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {flatLast3fDayQuality,raceFlatLast3fQuality} from "../src/result-quality.mjs";
+import {flatLast3fDayQuality,raceFlatLast3fQuality,listSuspiciousFlatLast3f} from "../src/result-quality.mjs";
 
 const obstacle=JSON.parse(await readFile("fixtures/result-quality/obstacle-race.json","utf8"));
 const flat=JSON.parse(await readFile("fixtures/result-quality/flat-race.json","utf8"));
@@ -29,3 +29,19 @@ assert.equal(mixedDay.present,8,"flat last3f presence must be computed from flat
 assert.equal(mixedDay.suspicious,1,"only the bad flat row must be suspicious");
 
 console.log("flat-only last3f quality smoke ok");
+
+{
+  const suspicious=listSuspiciousFlatLast3f?.([
+    {
+      race:{race_id:"fixture-flat",race_name:"fixture",discipline:"FLAT",source_url:"fixture://flat"},
+      results:[{
+        race_id:"fixture-flat",horse_id:"horse-x",official_finish_position:8,
+        result_status:"FINISHED",finish_time_ms:130000,last_3f:61.2
+      }]
+    }
+  ]);
+  assert.equal(suspicious.length,1);
+  assert.equal(suspicious[0].race_id,"fixture-flat");
+  assert.equal(suspicious[0].horse_id,"horse-x");
+  assert.equal(suspicious[0].last_3f,61.2);
+}
