@@ -180,6 +180,7 @@ const manifestBefore=await loadManifest();
 const completedHorseIds=new Set();
 for(const entry of Object.values(manifestBefore.horse_packs??{})){
   if(entry?.status!=="SUCCESS")continue;
+  if(Number(entry.horse_pack_version??0)<HORSE_PACK_VERSION)continue;
   if(Number(entry.pedigree_parser_version??0)<PEDIGREE_PARSER_VERSION)continue;
   for(const id of entry.source_horse_ids??[]){
     completedHorseIds.add(String(id));
