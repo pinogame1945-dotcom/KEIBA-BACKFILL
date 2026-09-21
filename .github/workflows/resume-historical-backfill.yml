@@ -41,15 +41,43 @@ jobs:
             exit 1
           fi
 
-      - name: Resume from cancelled 2026-05-02 boundary
+      - name: Resume requested historical range
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+          KICK=".backfill/resume-historical-kick"
+          read_value() {
+            awk -F= -v key="$1" '$1 == key {sub(/^[^=]*=/, ""); print; exit}' "$KICK"
+          }
+
+          START="$(read_value start_date)"
+          END="$(read_value end_date)"
+          ALLOW_SELF_CHAIN="$(read_value allow_self_chain)"
+          ALLOW_ODDS_FOLLOWUP="$(read_value allow_odds_followup)"
+
+          if [[ ! "$START" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || [[ ! "$END" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Invalid resume range in $KICK: $START -> $END"
+            exit 1
+          fi
+          if [[ "$START" < "$END" ]]; then
+            echo "Resume start_date must be newest and >= end_date: $START -> $END"
+            exit 1
+          fi
+          if [[ "$ALLOW_SELF_CHAIN" != "true" && "$ALLOW_SELF_CHAIN" != "false" ]]; then
+            echo "Invalid allow_self_chain in $KICK: $ALLOW_SELF_CHAIN"
+            exit 1
+          fi
+          if [[ "$ALLOW_ODDS_FOLLOWUP" != "true" && "$ALLOW_ODDS_FOLLOWUP" != "false" ]]; then
+            echo "Invalid allow_odds_followup in $KICK: $ALLOW_ODDS_FOLLOWUP"
+            exit 1
+          fi
+
+          echo "Resuming historical production: $START -> $END"
           gh workflow run historical-week-production.yml \
             --ref main \
-            -f start_date=2026-05-02 \
-            -f end_date=2026-05-02 \
-            -f allow_self_chain=true \
-            -f allow_odds_followup=false
+            -f start_date="$START" \
+            -f end_date="$END" \
+            -f allow_self_chain="$ALLOW_SELF_CHAIN" \
+            -f allow_odds_followup="$ALLOW_ODDS_FOLLOWUP"
