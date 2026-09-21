@@ -34,6 +34,10 @@ const incomplete=load(`
 <tr><td>12.4</td><td>11.4</td><td>12.1</td></tr>
 </table>
 `);
-assert.equal(parseRaceLaps(incomplete,"202606010103",1000).length,3);
+assert.equal(
+  parseRaceLaps(incomplete,"202606010103",1000).length,
+  0,
+  "incomplete modern lap table must fail closed instead of emitting partial laps",
+);
 
 console.log("lap parser smoke passed");
