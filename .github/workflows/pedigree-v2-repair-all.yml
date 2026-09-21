@@ -1,0 +1,50 @@
+name: Pedigree v2 repair all legacy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".backfill/pedigree-repair-all-kick"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-historical-week-production
+  cancel-in-progress: false
+
+jobs:
+  repair-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      REQUEST_DELAY_MS: "1500"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Parser contract
+        run: npm run smoke:pedigree
+      - name: Repair remaining legacy pedigree safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 50); do
+            echo "pedigree v2 global repair batch $i/50"
+            node src/repair-pedigree-v2.mjs --limit 100
+
+            git config user.name "keiba-backfill-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/manifest.json data/horses/ data/debug/ 2>/dev/null || true
+
+            if git diff --cached --quiet; then
+              echo "No remaining legacy pedigree changes."
+              break
+            fi
+
+            git commit -m "data: add global pedigree v2 repair batch $i"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          done
