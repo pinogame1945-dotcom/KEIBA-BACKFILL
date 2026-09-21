@@ -399,8 +399,16 @@ async function saveManifest(manifest) {
 async function repairRescheduledTargetPacks(manifest,events){
   if(!scheduleIntegrity||!events.length)return [];
   const repaired=[];
+  // The manifest ledger is canonical. Raw discovery can emit multiple candidates
+  // for the same meeting while walking adjacent historical dates.
+  const canonicalEvents=new Map();
+  for(const candidate of events.filter(Boolean)){
+    const event=manifest.rescheduled_meetings?.[candidate.meeting_key]??candidate;
+    if(event?.status!=="RESCHEDULED"||!event.meeting_key||!event.actual_date)continue;
+    canonicalEvents.set(event.meeting_key,event);
+  }
   const byActual=new Map();
-  for(const event of events.filter(Boolean)){
+  for(const event of canonicalEvents.values()){
     const list=byActual.get(event.actual_date)??[];
     list.push(event);
     byActual.set(event.actual_date,list);
@@ -420,8 +428,12 @@ async function repairRescheduledTargetPacks(manifest,events){
       if(String(row?.race?.actual_date??"")!==actualDate){
         throw new Error("target pack actual_date mismatch during reschedule repair: "+actualDate+" / "+String(row?.race?.race_id??""));
       }
-      const currentScheduled=String(row.race.scheduled_date??actualDate);
-      const scheduled=event.scheduled_date<currentScheduled?event.scheduled_date:currentScheduled;
+      // Always converge the row to the canonical ledger. Keeping the earlier
+      // row value here can preserve a stale candidate and split pack vs ledger.
+      const scheduled=String(event.scheduled_date??"");
+      if(!scheduled){
+        throw new Error("reschedule ledger missing scheduled_date during repair: "+event.meeting_key);
+      }
       if(row.race.scheduled_date!==scheduled||row.race.schedule_status!=="RESCHEDULED"||
          Number(row.race_pack_version??0)<SCHEDULE_SAFE_RACE_PACK_VERSION||
          Number(row.schedule_contract_version??0)<SCHEDULE_CONTRACT_VERSION){
