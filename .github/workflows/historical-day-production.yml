@@ -8,11 +8,6 @@ on:
         description: "Historical JRA date (YYYY-MM-DD)"
         required: true
         default: "2026-09-19"
-  push:
-    branches: [main]
-    paths:
-      - ".backfill/day-kick"
-
 permissions:
   contents: write
 
