@@ -456,8 +456,6 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 }
 
 const rebuildLegacy = process.env.REBUILD_LEGACY_PAYOUT_V1 === "1";
-const rebuildResultParserV1 = process.env.REBUILD_RESULT_PARSER_V1 === "1";
-const rebuildLapParserV1 = process.env.REBUILD_LAP_PARSER_V1 === "1";
 const dailyPath = path.join("data","daily",`${date}.jsonl.gz`);
 const manifestAtStart = await loadManifest();
 const existingDay = manifestAtStart.days?.[date];
@@ -475,13 +473,11 @@ const scheduleUpgradeExisting=Boolean(
 );
 const resultParserUpgradeExisting=Boolean(
   existingDay?.status==="SUCCESS"&&
-  Number(existingDay.result_parser_version??1)<RESULT_PARSER_VERSION&&
-  rebuildResultParserV1
+  Number(existingDay.result_parser_version??1)<RESULT_PARSER_VERSION
 );
 const lapParserUpgradeExisting=Boolean(
   existingDay?.status==="SUCCESS"&&
-  Number(existingDay.lap_parser_version??1)<LAP_PARSER_VERSION&&
-  rebuildLapParserV1
+  Number(existingDay.lap_parser_version??1)<LAP_PARSER_VERSION
 );
 if (existingDay?.status === "SUCCESS" &&
     !resultParserUpgradeExisting &&
