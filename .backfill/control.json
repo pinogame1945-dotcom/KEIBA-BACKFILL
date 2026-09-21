@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "enabled": true,
+  "enabled": false,
   "stop_date": "2006-09-01",
   "range_days": 14,
-  "note": "Set enabled=false to stop self-chaining after the currently running range. stop_date is inclusive."
+  "note": "Paused for pedigree v2 repair. Set enabled=true only when normal historical self-chaining should resume."
 }
