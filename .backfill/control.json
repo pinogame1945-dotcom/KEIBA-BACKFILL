@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "enabled": true,
+  "enabled": false,
   "stop_date": "2006-09-01",
   "range_days": 14,
-  "note": "Normal historical self-chaining resumed after pedigree v2 repair completed."
+  "note": "Historical self-chaining locked during staged revival. Re-enable only after explicit approval following 1-day and 7-day verification."
 }
