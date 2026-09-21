@@ -21,6 +21,11 @@ jobs:
       REQUEST_DELAY_MS: "1500"
     steps:
       - uses: actions/checkout@v4
+      - name: Sync latest main before repair
+        shell: bash
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
