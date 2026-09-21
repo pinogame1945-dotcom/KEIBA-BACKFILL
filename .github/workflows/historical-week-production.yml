@@ -95,6 +95,12 @@ jobs:
             node src/collect-day.mjs "$DATE"
 
             if [ -f "data/daily/$DATE.jsonl.gz" ]; then
+              # Upgrade legacy pedigree packs without re-fetching horse profiles.
+              for repair_round in $(seq 1 10); do
+                echo "Pedigree-v2 repair round $repair_round on $DATE"
+                node src/repair-pedigree-v2.mjs --source-date "$DATE" --limit 200
+              done
+
               for i in $(seq 1 20); do
                 BEFORE=$(node --input-type=module - "$DATE" <<'NODE'
           import {readFile} from "node:fs/promises";
