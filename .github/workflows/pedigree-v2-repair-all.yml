@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: keiba-historical-week-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   repair-all:
