@@ -9,6 +9,13 @@ const oddsSwitch=(await readFile(".backfill/odds-auto-enabled","utf8")).trim();
 assert.ok(day.includes("workflow_dispatch:"),"day backfill must be manual-dispatch capable");
 assert.ok(!day.includes("\n  push:\n"),"day backfill must not auto-run on repository push");
 assert.ok(day.includes("Verify one-day production contract"),"day backfill must use full production verification");
+assert.ok(day.includes("force_recollect_current:"),"one-day workflow must expose explicit force-recollect probe input");
+assert.ok(day.includes("type: boolean"),"force-recollect probe input must be boolean");
+assert.ok(day.includes("default: false"),"force-recollect probe must default off");
+assert.ok(
+  day.includes("FORCE_RECOLLECT_CURRENT: ${{ inputs.force_recollect_current && '1' || '0' }}"),
+  "one-day workflow must pass force-recollect only from explicit input",
+);
 assert.ok(day.includes('node src/verify-range.mjs "$DATE" "$DATE"'),"day verification must use verify-range");
 assert.ok(!day.includes("if: always()"),"failed day verification must not commit data");
 assert.ok(
