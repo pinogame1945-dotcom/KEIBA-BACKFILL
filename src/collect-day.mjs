@@ -825,6 +825,9 @@ const finishedResults=records.flatMap(row=>row.results??[]).filter(row=>
 );
 const timedResults=finishedResults.filter(row=>row?.finish_time_ms!=null);
 const last3fPresent=timedResults.filter(row=>row?.last_3f!=null).length;
+const last3fSuspicious=timedResults.filter(row=>
+  row?.last_3f!=null&&(Number(row.last_3f)<20||Number(row.last_3f)>60)
+).length;
 const finishTimeCoverage=finishedResults.length?timedResults.length/finishedResults.length:0;
 const last3fCoverage=timedResults.length?last3fPresent/timedResults.length:0;
 const flatLapTargets=records.filter(row=>
@@ -837,6 +840,7 @@ const resultQuality={
   finished_results:finishedResults.length,
   finish_time_present:timedResults.length,
   last3f_present:last3fPresent,
+  last3f_suspicious:last3fSuspicious,
   finish_time_coverage_pct:Number((finishTimeCoverage*100).toFixed(1)),
   last3f_coverage_pct:Number((last3fCoverage*100).toFixed(1)),
   flat_lap_target_races:flatLapTargets.length,
@@ -845,11 +849,17 @@ const resultQuality={
     ?Number((completeLapRaces/flatLapTargets.length*100).toFixed(1))
     :100,
 };
-if(timedResults.length>=8&&finishTimeCoverage>=0.8&&last3fCoverage<0.5){
+if(timedResults.length>=8&&finishTimeCoverage>=0.8&&last3fCoverage<0.9){
   throw new Error(
     "RESULT_QUALITY_LAST3F_LOW "+date+
     ": finish_time="+resultQuality.finish_time_coverage_pct+
     "% last3f="+resultQuality.last3f_coverage_pct+"%"
+  );
+}
+if(last3fSuspicious>0){
+  throw new Error(
+    "RESULT_QUALITY_LAST3F_SUSPICIOUS "+date+
+    ": suspicious="+last3fSuspicious
   );
 }
 if(flatLapTargets.length>0&&completeLapRaces!==flatLapTargets.length){
