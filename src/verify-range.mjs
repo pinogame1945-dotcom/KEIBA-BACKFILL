@@ -123,6 +123,12 @@ for(const [packName,pack] of Object.entries(manifest.horse_packs??{})){
   const inRange=(pack.source_dates??[]).some(date=>date<=startDate&&date>=endDate);
   if(!inRange)continue;
   currentHorsePacks.add(packName);
+  const repairOnly=pack.repair_from_pedigree_parser_v1===true;
+  const packHorseVersion=Number(pack.horse_pack_version??1);
+  const packPedigreeVersion=Number(pack.pedigree_parser_version??1);
+  if(repairOnly&&(packHorseVersion<2||packPedigreeVersion<2)){
+    throw new Error(`invalid pedigree repair pack contract ${packName}: horse_pack_version=${packHorseVersion} pedigree_parser_version=${packPedigreeVersion}`);
+  }
   const text=gunzipSync(await readFile(pack.file)).toString("utf8").trim();
   const rows=text?text.split("\n").map(JSON.parse):[];
   if(rows.length!==pack.records)throw new Error(`horse record count mismatch ${packName}`);
@@ -134,7 +140,16 @@ for(const [packName,pack] of Object.entries(manifest.horse_packs??{})){
     if(actualIds.has(id))throw new Error(`duplicate horse inside ${packName}: ${id}`);
     actualIds.add(id);
     if(!manifestIds.has(id))throw new Error(`horse missing from pack manifest ${packName}: ${id}`);
-    if(!row.profile?.horse_name)throw new Error(`horse name missing: ${id}`);
+    if(repairOnly){
+      if(Number(row.horse_pack_version??0)<2||Number(row.pedigree_parser_version??0)<2){
+        throw new Error(`invalid pedigree repair row version ${packName}: ${id}`);
+      }
+      if(row.profile!==null){
+        throw new Error(`pedigree repair row must not contain profile data ${packName}: ${id}`);
+      }
+    }else if(!row.profile?.horse_name){
+      throw new Error(`horse name missing: ${id}`);
+    }
     if(!Array.isArray(row.pedigree)||row.pedigree.length!==62)throw new Error(`incomplete pedigree ${id}: ${row.pedigree?.length??0}`);
     const positions=new Set(row.pedigree.map(node=>`${node.generation}:${node.slot}`));
     if(positions.size!==62)throw new Error(`duplicate pedigree positions: ${id}`);
