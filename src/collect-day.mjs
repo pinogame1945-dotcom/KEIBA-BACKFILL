@@ -456,6 +456,7 @@ if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 }
 
 const rebuildLegacy = process.env.REBUILD_LEGACY_PAYOUT_V1 === "1";
+const forceRecollectCurrent = process.env.FORCE_RECOLLECT_CURRENT === "1";
 const dailyPath = path.join("data","daily",`${date}.jsonl.gz`);
 const manifestAtStart = await loadManifest();
 const existingDay = manifestAtStart.days?.[date];
@@ -480,6 +481,7 @@ const lapParserUpgradeExisting=Boolean(
   Number(existingDay.lap_parser_version??1)<LAP_PARSER_VERSION
 );
 if (existingDay?.status === "SUCCESS" &&
+    !forceRecollectCurrent &&
     !resultParserUpgradeExisting &&
     !lapParserUpgradeExisting &&
     Number(existingDay.race_pack_version ?? 1) >= effectiveRacePackVersion &&
@@ -491,6 +493,15 @@ if (existingDay?.status === "SUCCESS" &&
   }
   console.log(`[skip] existing current race pack for ${date}`);
   process.exit(0);
+}
+if(
+  forceRecollectCurrent&&existingDay?.status==="SUCCESS"&&
+  !resultParserUpgradeExisting&&!lapParserUpgradeExisting&&!scheduleUpgradeExisting
+){
+  if(!dailyFileExists){
+    throw new Error(`cannot force-recollect missing current pack: ${dailyPath}`);
+  }
+  console.log(`[probe] force recollect current SUCCESS day ${date}`);
 }
 
 const legacyExisting = Boolean(existingDay) &&
@@ -505,7 +516,10 @@ if (legacyExisting && !rebuildLegacy) {
     `LEGACY_PAYOUT_V1 ${date}: refusing to reuse or overwrite old payout pack; run explicit repair mode`
   );
 }
-if (dailyFileExists && !legacyExisting && !scheduleUpgradeExisting && !resultParserUpgradeExisting && !lapParserUpgradeExisting) {
+if (
+  dailyFileExists&&!forceRecollectCurrent&&!legacyExisting&&
+  !scheduleUpgradeExisting&&!resultParserUpgradeExisting&&!lapParserUpgradeExisting
+) {
   throw new Error(`daily race pack already exists without compatible manifest metadata: ${dailyPath}`);
 }
 if (legacyExisting && rebuildLegacy) {
@@ -898,74 +912,3 @@ if(
     cancelled_meetings:[...new Set(cancelledEvents.map(item=>item.meeting_key))],
     updated_at:new Date().toISOString(),
   };
-  manifest.race_pack_version=Math.max(
-    Number(manifest.race_pack_version??1),effectiveRacePackVersion,
-  );
-  manifest.payout_parser_version=Math.max(
-    Number(manifest.payout_parser_version??1),PAYOUT_PARSER_VERSION,
-  );
-  await saveManifest(manifest);
-  console.log(JSON.stringify({
-    ok:true,date,races:0,rescheduledAway,scheduleExceptionOnly:true,
-    rescheduledMeetings:manifest.schedule_exception_days[date].rescheduled_meetings,
-    cancelledMeetings:manifest.schedule_exception_days[date].cancelled_meetings,
-  },null,2));
-  process.exit(0);
-}
-
-const lines=records.map(r=>JSON.stringify(r)).join("\n")+(records.length?"\n":"");
-const outDir=path.join("data","daily");
-await mkdir(outDir,{recursive:true});
-const outPath=path.join(outDir,`${date}.jsonl.gz`);
-const tempPath=outPath+".race-pack.tmp";
-await writeFile(tempPath,gzipSync(Buffer.from(lines,"utf8"),{level:9}));
-await rename(tempPath,outPath);
-
-manifest.race_pack_version=Math.max(
-  Number(manifest.race_pack_version??1),effectiveRacePackVersion,
-);
-manifest.payout_parser_version=Math.max(
-  Number(manifest.payout_parser_version??1),PAYOUT_PARSER_VERSION,
-);
-manifest.result_parser_version=Math.max(
-  Number(manifest.result_parser_version??1),RESULT_PARSER_VERSION,
-);
-manifest.lap_parser_version=Math.max(
-  Number(manifest.lap_parser_version??1),LAP_PARSER_VERSION,
-);
-if(manifest.schedule_exception_days)delete manifest.schedule_exception_days[date];
-if(manifest.non_meeting_days)delete manifest.non_meeting_days[date];
-manifest.days[date]={
-  status:"SUCCESS",
-  race_pack_version:effectiveRacePackVersion,
-  payout_parser_version:PAYOUT_PARSER_VERSION,
-  result_parser_version:RESULT_PARSER_VERSION,
-  lap_parser_version:LAP_PARSER_VERSION,
-  result_quality:resultQuality,
-  ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
-  repaired_from_legacy_payout_v1:legacyExisting||undefined,
-  repaired_for_schedule_integrity:scheduleUpgradeExisting||undefined,
-  repaired_from_result_parser_v1:resultParserUpgradeExisting||undefined,
-  repaired_from_lap_parser_v1:lapParserUpgradeExisting||undefined,
-  races_discovered:raceIds.length,
-  races_rescheduled_away:rescheduledAway||undefined,
-  races_parsed:records.length,
-  file:outPath.replaceAll("\\","/"),
-  request_delay_ms:delayMs,
-  discovery_url:listUrl,
-  ...(scheduleIntegrity&&rescheduleEvents.length
-    ?{rescheduled_meetings:[...new Set(rescheduleEvents.map(item=>item.meeting_key))]}
-    :{}),
-  ...(scheduleIntegrity&&cancelledEvents.length
-    ?{cancelled_meetings:[...new Set(cancelledEvents.map(item=>item.meeting_key))]}
-    :{}),
-};
-await saveManifest(manifest);
-
-console.log(JSON.stringify({
-  ok:true,date,races:records.length,rescheduledAway,
-  entries:records.reduce((n,r)=>n+r.entries.length,0),
-  payouts:records.reduce((n,r)=>n+r.payouts.length,0),
-  resultQuality,
-  output:outPath,
-},null,2));
