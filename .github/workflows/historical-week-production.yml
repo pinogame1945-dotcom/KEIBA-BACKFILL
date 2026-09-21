@@ -31,6 +31,7 @@ jobs:
     timeout-minutes: 180
     env:
       REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
       SKIP_EMPTY: "1"
 
     steps:

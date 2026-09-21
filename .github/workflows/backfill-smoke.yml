@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 30
     env:
       REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
       REQUIRE_RACES: "1"
 
     steps:

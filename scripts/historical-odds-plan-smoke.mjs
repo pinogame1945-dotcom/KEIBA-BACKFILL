@@ -9,7 +9,7 @@ await mkdir(path.join(dir,"data","odds"),{recursive:true});
 await writeFile(path.join(dir,"data","manifest.json"),JSON.stringify({
   days:{
     "2026-09-20":{status:"SUCCESS",races_parsed:24,file:"data/daily/2026-09-20.jsonl.gz"},
-    "2026-09-19":{status:"SUCCESS",races_parsed:24,file:"data/daily/2026-09-19.jsonl.gz"},
+    "2026-09-19":{status:"SUCCESS",races_parsed:24,file:"data/daily/2026-09-19.jsonl.gz",schedule_contract_version:1},
     "2026-09-18":{status:"NO_MEETING",races_parsed:0},
     "2007-07-27":{status:"SUCCESS",races_parsed:12,file:"data/daily/2007-07-27.jsonl.gz"}
   }
@@ -17,6 +17,9 @@ await writeFile(path.join(dir,"data","manifest.json"),JSON.stringify({
 await writeFile(path.join(dir,"data","odds","manifest.json"),JSON.stringify({
   days:{
     "2026-09-20":{
+      status:"SUCCESS",odds_pack_version:1,decoder_contract_version:1
+    },
+    "2026-09-19":{
       status:"SUCCESS",odds_pack_version:1,decoder_contract_version:1
     }
   }

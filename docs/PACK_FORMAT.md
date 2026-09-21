@@ -118,3 +118,63 @@ The Android app owns a canonical ingestion adapter that maps pack v1 into its cu
 - BACKFILL changes only when the logical data being transported changes.
 
 A new app DB schema version and a new pack schema version are independent decisions.
+
+
+## Schedule integrity contract
+
+Race packs created with schedule integrity enabled use `race_pack_version: 3` and
+`schedule_contract_version: 1`.
+
+The calendar date owning a daily race pack is the race's actual execution date.
+A race MUST NOT be stored in a daily pack whose date differs from
+`race.actual_date`.
+
+For a normally held race:
+
+```json
+{
+  "race_pack_version": 3,
+  "schedule_contract_version": 1,
+  "race": {
+    "race_id": "202609040711",
+    "scheduled_date": "2026-09-21",
+    "actual_date": "2026-09-21",
+    "schedule_status": "ACTIVE"
+  }
+}
+```
+
+For a postponed/rescheduled race, the canonical race ID remains unchanged and the
+record belongs only to the actual execution day's pack:
+
+```json
+{
+  "race_pack_version": 3,
+  "schedule_contract_version": 1,
+  "race": {
+    "race_id": "202606040701",
+    "scheduled_date": "2026-09-21",
+    "actual_date": "2026-09-22",
+    "schedule_status": "RESCHEDULED"
+  }
+}
+```
+
+The manifest keeps meeting-level history under `rescheduled_meetings`. This is
+meeting-level rather than day-level because one venue may be postponed while
+another venue runs normally on the same calendar date.
+
+If every scheduled meeting on a calendar date is moved away or cancelled and
+therefore no race pack is owned by that date,
+`schedule_exception_days[date]` marks the date as `NO_RACES_HELD`.
+Meeting-level history remains authoritative in `rescheduled_meetings` and
+`cancelled_meetings`. A partial cancellation/postponement does not turn the
+whole calendar date into a no-race day; normally held venues remain in the
+date's SUCCESS pack.
+
+Historical final-odds packs keep `odds_pack_version: 1` for app compatibility,
+but schedule-aware odds records and manifest entries add
+`schedule_contract_version: 1`, `actual_date`, and `scheduled_date`.
+
+A schedule-contract race pack requires a schedule-contract odds pack before that
+odds day is considered complete.

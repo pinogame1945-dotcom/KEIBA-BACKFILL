@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 60
     env:
       REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
 
     steps:
       - name: Checkout

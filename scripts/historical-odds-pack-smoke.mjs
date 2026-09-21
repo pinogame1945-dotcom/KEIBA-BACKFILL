@@ -38,11 +38,17 @@ const archived=archiveHistoricalOddsPayload({
   payload,
   sourceUrl:"https://race.netkeiba.com/api/api_get_jra_odds.html",
   fetchedAt:"2026-09-21T00:00:00.000Z",
+  actualDate:"2010-11-27",
+  scheduledDate:"2010-11-26",
+  scheduleContractVersion:1,
 });
 assert.equal(archived.odds_pack_version,1);
 assert.equal(archived.decoder_contract_version,1);
 assert.equal(archived.odds["8"]["061602"][3],"251.1");
 assert.equal(archived.group_summary["8"].priced_rows,1);
+assert.equal(archived.actual_date,"2010-11-27");
+assert.equal(archived.scheduled_date,"2010-11-26");
+assert.equal(archived.schedule_contract_version,1);
 
 const parsed=parseNetkeibaOddsResponse(JSON.stringify(payload));
 assert.equal(parsed.status,"result");

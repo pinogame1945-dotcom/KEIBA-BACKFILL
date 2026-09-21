@@ -1,7 +1,11 @@
 import {readFile} from "node:fs/promises";
+import {
+  SCHEDULE_CONTRACT_VERSION,scheduleIntegrityEnabled,
+} from "./schedule-integrity.mjs";
 
 const DEFAULT_MIN_DATE="2007-07-28";
 const DEFAULT_BATCH=10;
+const scheduleIntegrity=scheduleIntegrityEnabled();
 
 async function load(path,fallback){
   try{return JSON.parse(await readFile(path,"utf8"));}
@@ -34,11 +38,21 @@ const raceDays=Object.entries(raceManifest.days??{})
 
 const completed=new Set(
   Object.entries(oddsManifest.days??{})
-    .filter(([,entry])=>
-      entry?.status==="SUCCESS"&&
-      Number(entry?.odds_pack_version??0)>=1&&
-      Number(entry?.decoder_contract_version??0)>=1
-    )
+    .filter(([date,entry])=>{
+      if(
+        entry?.status!=="SUCCESS"||
+        Number(entry?.odds_pack_version??0)<1||
+        Number(entry?.decoder_contract_version??0)<1
+      )return false;
+      const raceEntry=raceManifest.days?.[date];
+      if(
+        scheduleIntegrity&&
+        Number(raceEntry?.schedule_contract_version??0)>=SCHEDULE_CONTRACT_VERSION
+      ){
+        return Number(entry?.schedule_contract_version??0)>=SCHEDULE_CONTRACT_VERSION;
+      }
+      return true;
+    })
     .map(([date])=>date)
 );
 

@@ -5,11 +5,15 @@ import {
   NETKEIBA_ODDS_START_DATE,ODDS_DECODER_CONTRACT_VERSION,ODDS_PACK_VERSION,
   archiveHistoricalOddsPayload,parseNetkeibaOddsResponse,
 } from "./historical-odds-pack.mjs";
+import {
+  SCHEDULE_CONTRACT_VERSION,scheduleIntegrityEnabled,
+} from "./schedule-integrity.mjs";
 
 const API="https://race.netkeiba.com/api/api_get_jra_odds.html";
 const MIN_DELAY_MS=1000;
 const delayMs=Math.max(MIN_DELAY_MS,Number(process.env.REQUEST_DELAY_MS||1500));
 let lastFetchAt=0;
+const scheduleIntegrity=scheduleIntegrityEnabled();
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
@@ -74,18 +78,29 @@ async function atomicWrite(file,bytes){
   await rename(tmp,file);
 }
 
-function readRaceIdsFromDay(bytes){
+function readRaceOwnersFromDay(bytes,ownerDate){
   const text=gunzipSync(bytes).toString("utf8").trim();
   if(!text)return [];
-  const ids=[];
+  const byId=new Map();
   for(const line of text.split("\n")){
     if(!line.trim())continue;
     const row=JSON.parse(line);
     const raceId=String(row?.race?.race_id??"");
     if(!/^\d{12}$/.test(raceId))throw new Error("daily pack contains invalid race id");
-    ids.push(raceId);
+    const actualDate=String(row?.race?.actual_date??ownerDate);
+    const scheduledDate=String(row?.race?.scheduled_date??actualDate);
+    if(scheduleIntegrity&&actualDate!==ownerDate){
+      throw new Error("odds source race owner mismatch: "+ownerDate+" / "+raceId+" / "+actualDate);
+    }
+    const existing=byId.get(raceId);
+    if(existing&&(
+      existing.actualDate!==actualDate||existing.scheduledDate!==scheduledDate
+    )){
+      throw new Error("conflicting race ownership in daily pack: "+raceId);
+    }
+    byId.set(raceId,{raceId,actualDate,scheduledDate});
   }
-  return [...new Set(ids)].sort();
+  return [...byId.values()].sort((a,b)=>a.raceId.localeCompare(b.raceId));
 }
 
 const date=process.argv[2]||process.env.ODDS_BACKFILL_DATE;
@@ -103,10 +118,19 @@ const oddsManifest=await loadJson(oddsManifestPath,{
 });
 oddsManifest.days??={};
 
+const rootManifest=await loadJson("data/manifest.json",{days:{}});
+const raceDayEntry=rootManifest?.days?.[date]??null;
+const requiresScheduleContract=Boolean(
+  scheduleIntegrity&&
+  Number(raceDayEntry?.schedule_contract_version??0)>=SCHEDULE_CONTRACT_VERSION
+);
+
 const existing=oddsManifest.days[date];
 if(existing?.status==="SUCCESS"&&
    Number(existing.odds_pack_version)===ODDS_PACK_VERSION&&
-   Number(existing.decoder_contract_version)===ODDS_DECODER_CONTRACT_VERSION){
+   Number(existing.decoder_contract_version)===ODDS_DECODER_CONTRACT_VERSION&&
+   (!requiresScheduleContract||
+    Number(existing.schedule_contract_version??0)>=SCHEDULE_CONTRACT_VERSION)){
   if(!await exists(oddsDailyPath)){
     throw new Error("odds manifest marks SUCCESS but file missing: "+oddsDailyPath);
   }
@@ -130,7 +154,6 @@ if(date<NETKEIBA_ODDS_START_DATE){
 
 const dayPath=path.join("data","daily",date+".jsonl.gz");
 if(!await exists(dayPath)){
-  const rootManifest=await loadJson("data/manifest.json",{});
   if(rootManifest?.non_meeting_days?.[date]?.status==="CONFIRMED_NO_JRA"){
     oddsManifest.days[date]={
       status:"NO_MEETING",
@@ -145,20 +168,24 @@ if(!await exists(dayPath)){
   throw new Error("race pack required before odds backfill: "+dayPath);
 }
 
-const raceIds=readRaceIdsFromDay(await readFile(dayPath));
-if(!raceIds.length)throw new Error("race pack has no races: "+dayPath);
+const raceOwners=readRaceOwnersFromDay(await readFile(dayPath),date);
+if(!raceOwners.length)throw new Error("race pack has no races: "+dayPath);
 
 const records=[];
 let rawResponseBytes=0;
-for(let i=0;i<raceIds.length;i+=1){
-  const raceId=raceIds[i];
+for(let i=0;i<raceOwners.length;i+=1){
+  const owner=raceOwners[i];
+  const raceId=owner.raceId;
   const url=sourceUrl(raceId);
-  console.log("[odds] "+date+" "+(i+1)+"/"+raceIds.length+" "+raceId);
+  console.log("[odds] "+date+" "+(i+1)+"/"+raceOwners.length+" "+raceId);
   const text=await politeFetch(url);
   rawResponseBytes+=Buffer.byteLength(text);
   const payload=parseNetkeibaOddsResponse(text);
   records.push(archiveHistoricalOddsPayload({
     raceId,payload,sourceUrl:url,fetchedAt:new Date().toISOString(),
+    actualDate:requiresScheduleContract?owner.actualDate:null,
+    scheduledDate:requiresScheduleContract?owner.scheduledDate:null,
+    scheduleContractVersion:requiresScheduleContract?SCHEDULE_CONTRACT_VERSION:null,
   }));
 }
 
@@ -186,6 +213,7 @@ oddsManifest.days[date]={
   file:oddsDailyPath,
   odds_pack_version:ODDS_PACK_VERSION,
   decoder_contract_version:ODDS_DECODER_CONTRACT_VERSION,
+  ...(requiresScheduleContract?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
   request_delay_ms:delayMs,
   raw_response_bytes:rawResponseBytes,
   compressed_bytes:zipped.length,

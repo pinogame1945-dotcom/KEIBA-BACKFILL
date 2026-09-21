@@ -65,6 +65,7 @@ export function summarizeOddsGroups(odds){
 
 export function archiveHistoricalOddsPayload({
   raceId,payload,sourceUrl,fetchedAt=new Date().toISOString(),
+  actualDate=null,scheduledDate=null,scheduleContractVersion=null,
 }){
   if(!/^\d{12}$/.test(String(raceId)))throw new Error("invalid race id: "+raceId);
   if(!payload||typeof payload!=="object")throw new Error("odds payload missing");
@@ -88,6 +89,9 @@ export function archiveHistoricalOddsPayload({
     odds_pack_version:ODDS_PACK_VERSION,
     decoder_contract_version:ODDS_DECODER_CONTRACT_VERSION,
     race_id:String(raceId),
+    ...(actualDate?{actual_date:String(actualDate)}:{}),
+    ...(scheduledDate?{scheduled_date:String(scheduledDate)}:{}),
+    ...(scheduleContractVersion?{schedule_contract_version:Number(scheduleContractVersion)}:{}),
     odds_kind:"FINAL",
     source:ODDS_SOURCE,
     source_url:sourceUrl??null,
