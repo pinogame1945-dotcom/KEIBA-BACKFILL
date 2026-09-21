@@ -22,11 +22,6 @@ on:
         required: true
         type: boolean
         default: false
-  push:
-    branches: [main]
-    paths:
-      - ".backfill/week-kick"
-
 permissions:
   contents: write
   actions: write
@@ -61,16 +56,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            START="${{ inputs.start_date }}"
-            END="${{ inputs.end_date }}"
-          elif [ -f ".backfill/week-kick" ]; then
-            START=$(jq -r '.start_date // empty' .backfill/week-kick)
-            END=$(jq -r '.end_date // empty' .backfill/week-kick)
-          else
-            echo "Push-triggered backfill requires .backfill/week-kick with start_date/end_date."
-            exit 1
-          fi
+          START="${{ inputs.start_date }}"
+          END="${{ inputs.end_date }}"
 
           if [[ ! "$START" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || [[ ! "$END" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
             echo "Invalid resolved range: $START -> $END"
@@ -81,7 +68,16 @@ jobs:
             exit 1
           fi
 
-          echo "Resolved historical range: $START -> $END"
+          START_TS=$(date -u -d "$START" +%s)
+          END_TS=$(date -u -d "$END" +%s)
+          DAYS=$(( (START_TS - END_TS) / 86400 + 1 ))
+          if [ "${{ inputs.allow_self_chain }}" != "true" ] && [ "$DAYS" -gt 7 ]; then
+            echo "Staged test mode is limited to 7 calendar days. Requested: $DAYS days."
+            echo "Continuous/long-range mode requires explicit allow_self_chain=true."
+            exit 1
+          fi
+
+          echo "Resolved historical range: $START -> $END ($DAYS days)"
           echo "start=$START" >> "$GITHUB_OUTPUT"
           echo "end=$END" >> "$GITHUB_OUTPUT"
 
@@ -251,8 +247,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ ! -f ".backfill/odds-auto-enabled" ]; then
-            echo "Historical odds auto-follow is disabled; skip automatic kick."
+          ODDS_AUTO=$(cat .backfill/odds-auto-enabled 2>/dev/null || true)
+          if [ "$ODDS_AUTO" != "enabled" ]; then
+            echo "Historical odds auto-follow is disabled by repository control."
             exit 0
           fi
           git pull --rebase origin main
