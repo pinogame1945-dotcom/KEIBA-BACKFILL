@@ -1,0 +1,55 @@
+name: Resume historical backfill
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".backfill/resume-historical-kick"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confirm self-chain is enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENABLED=$(jq -r '.enabled' .backfill/control.json)
+          if [ "$ENABLED" != "true" ]; then
+            echo "Historical self-chain remains disabled."
+            exit 1
+          fi
+
+      - name: Refuse duplicate historical production
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/historical-week-production.yml/runs?per_page=30" \
+            --jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$ACTIVE" != "0" ]; then
+            echo "Historical week production already active/queued: $ACTIVE"
+            exit 1
+          fi
+
+      - name: Resume from cancelled 2026-05-02 boundary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run historical-week-production.yml \
+            --ref main \
+            -f start_date=2026-05-02 \
+            -f end_date=2026-05-02 \
+            -f allow_self_chain=true \
+            -f allow_odds_followup=false
