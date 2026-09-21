@@ -41,6 +41,13 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Validate collector source
+        run: |
+          node --check src/collect-day.mjs
+          node --check src/verify-range.mjs
+          node --check src/result-quality.mjs
+          npm run smoke:result-quality
+
       - name: Resolve date
         id: input
         shell: bash
