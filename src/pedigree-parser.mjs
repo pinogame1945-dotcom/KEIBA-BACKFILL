@@ -54,9 +54,22 @@ export function parsePedigreeV2(html){
 
   nodes.sort((a,b)=>a.generation-b.generation||a.slot-b.slot);
   if(nodes.length){
+    if(nodes.length!==62){
+      throw new Error("pedigree incomplete: expected=62 actual="+nodes.length);
+    }
+    const positions=new Set(nodes.map(node=>node.generation+":"+node.slot));
+    if(positions.size!==62)throw new Error("pedigree duplicate positions");
+    for(let generation=1;generation<=5;generation+=1){
+      for(let slot=0;slot<2**generation;slot+=1){
+        if(!positions.has(generation+":"+slot)){
+          throw new Error("pedigree position missing: "+generation+":"+slot);
+        }
+      }
+    }
     const sire=nodes.find(node=>node.generation===1&&node.slot===0);
     const dam=nodes.find(node=>node.generation===1&&node.slot===1);
-    if(!sire||!dam)throw new Error("pedigree parent pair missing");
+    const damsire=nodes.find(node=>node.generation===2&&node.slot===2);
+    if(!sire||!dam||!damsire)throw new Error("pedigree parent/damsire position missing");
   }
   return nodes;
 }
