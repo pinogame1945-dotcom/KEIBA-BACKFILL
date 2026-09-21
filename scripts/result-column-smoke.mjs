@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {findLast3fColumn,normalizeResultHeader,RESULT_PARSER_VERSION} from "../src/result-columns.mjs";
 
-assert.equal(RESULT_PARSER_VERSION,2);
+assert.equal(RESULT_PARSER_VERSION,3);
 const headers=[
   "着\n順","馬名","タイム","上\nが\nり\n指\n数","通過","上り","単勝"
 ];

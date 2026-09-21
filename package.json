@@ -23,6 +23,7 @@
     "smoke:pedigree": "node scripts/pedigree-v2-smoke.mjs",
     "smoke:schedule": "node scripts/schedule-integrity-smoke.mjs",
     "smoke:workflow-safety": "node scripts/workflow-safety-smoke.mjs",
-    "smoke:result-quality": "node scripts/result-quality-smoke.mjs"
+    "smoke:result-quality": "node scripts/result-quality-smoke.mjs",
+    "smoke:race-meta": "node scripts/race-meta-smoke.mjs"
   }
 }

@@ -163,6 +163,11 @@ for(const date of rangeDates){
     const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
     const rows=text?text.split("\n").map(JSON.parse):[];
     if(rows.length!==day.races_parsed)throw new Error(`daily race count mismatch ${date}`);
+    const flatRaceCount=rows.filter(row=>row?.race?.discipline==="FLAT").length;
+    const obstacleRaceCount=rows.filter(row=>row?.race?.discipline==="OBSTACLE").length;
+    if(rows.length>=8&&flatRaceCount===0){
+      throw new Error(`discipline quality below contract: ${date} / flat=0 obstacle=${obstacleRaceCount} races=${rows.length}`);
+    }
     const flatLast3f=flatLast3fDayQuality(rows);
     if(flatLast3f.timedResults>=8&&flatLast3f.finishTimeCoverage>=0.8&&flatLast3f.last3fCoverage<0.9){
       throw new Error(`last3f coverage below contract: ${date} / scope=FLAT / ${Number((flatLast3f.last3fCoverage*100).toFixed(1))}%`);

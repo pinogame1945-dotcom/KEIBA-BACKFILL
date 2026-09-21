@@ -46,7 +46,10 @@ jobs:
           node --check src/collect-day.mjs
           node --check src/verify-range.mjs
           node --check src/result-quality.mjs
+          node --check src/race-meta.mjs
+          npm run smoke:result-columns
           npm run smoke:result-quality
+          npm run smoke:race-meta
 
       - name: Resolve date
         id: input

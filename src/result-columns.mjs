@@ -1,4 +1,4 @@
-export const RESULT_PARSER_VERSION=2;
+export const RESULT_PARSER_VERSION=3;
 
 export function normalizeResultHeader(value){
   return String(value??"").replace(/\s+/g,"").trim();

@@ -10,6 +10,7 @@ import {
 import {findLast3fColumn,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {flatLast3fDayQuality} from "./result-quality.mjs";
+import {classifyRaceDiscipline,selectRaceMeta} from "./race-meta.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
@@ -214,21 +215,17 @@ function parseVenueSummaryUrls(html, compactDate) {
 function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
   const $ = load(html);
   const titleCandidate = clean($("title").first().text()).split(/[｜|]/)[0]?.trim() || null;
-  const raceName = clean($("h1").first().text()) || clean($(".race_name").first().text()) || titleCandidate || null;
+  const raceName = clean($(".RaceName").first().text()) || clean($("h1").first().text()) || clean($(".race_name").first().text()) || titleCandidate || null;
   const pageText = clean($.root().text());
   const dm = pageText.match(/((?:19|20)\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日/);
   const actualDate = dm
     ? `${dm[1]}-${String(Number(dm[2])).padStart(2,"0")}-${String(Number(dm[3])).padStart(2,"0")}`
     : fallbackDate;
 
-  const meta = $(".data_intro").first().length
-    ? clean($(".data_intro").first().text())
-    : $(".race_head").first().length
-      ? clean($(".race_head").first().text())
-      : pageText;
+  const meta = selectRaceMeta($);
 
   const distance = intOrNull(meta.match(/(\d{3,4})m/)?.[1]);
-  const discipline = meta.includes("障") ? "OBSTACLE" : "FLAT";
+  const discipline = classifyRaceDiscipline(meta,raceName);
   const surface = meta.includes("芝") && meta.includes("ダート")
     ? "MIXED"
     : meta.includes("芝")
@@ -241,14 +238,20 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
   const track = meta.match(/馬場\s*[:：]?\s*([^ /]+)/)?.[1] ?? null;
   const startTime = meta.match(/(\d{1,2}:\d{2})発走/)?.[1] ?? null;
 
-  let table = $("table.race_table_01").first().length
-    ? $("table.race_table_01").first()
-    : $("table[class*='race_table']").first();
+  let table = $("table.race_table_01").first();
+  if (!table.length) table = $("table.RaceTable01").first();
+  if (!table.length) table = $("#All_Result_Table table").first();
+  if (!table.length) table = $("table[class*='race_table']").first();
+  if (!table.length) table = $("table[class*='RaceTable']").first();
   if (!table.length) {
     $("table").each((_, candidate) => {
       if (table.length) return;
-      const headerText = clean($(candidate).find("th").text());
-      if (headerText.includes("着順") && headerText.includes("馬名")) table = $(candidate);
+      const headerText = clean($(candidate).find("th").text()).replace(/\s/g,"");
+      if (
+        headerText.includes("着順") &&
+        headerText.includes("馬名") &&
+        (headerText.includes("騎手") || headerText.includes("タイム"))
+      ) table = $(candidate);
     });
   }
   if (!table.length) throw new Error("result table not found: " + raceId);
@@ -530,7 +533,7 @@ if(scheduleUpgradeExisting){
   console.log(`[repair] upgrading race pack to schedule contract v${SCHEDULE_CONTRACT_VERSION} for ${date}`);
 }
 if(resultParserUpgradeExisting){
-  console.log(`[repair] rebuilding result parser v1 pack with result parser v${RESULT_PARSER_VERSION} for ${date}`);
+  console.log(`[repair] rebuilding result parser v${Number(existingDay.result_parser_version??1)} pack with result parser v${RESULT_PARSER_VERSION} for ${date}`);
 }
 if(lapParserUpgradeExisting){
   console.log(`[repair] rebuilding lap parser v1 pack with lap parser v${LAP_PARSER_VERSION} for ${date}`);
@@ -847,6 +850,8 @@ const flatLapTargets=records.filter(row=>
 const completeLapRaces=flatLapTargets.filter(row=>
   row.laps?.length===expectedLapSegments(row?.race?.distance_m)
 ).length;
+const flatRaceCount=records.filter(row=>row?.race?.discipline==="FLAT").length;
+const obstacleRaceCount=records.filter(row=>row?.race?.discipline==="OBSTACLE").length;
 const resultQuality={
   finished_results:finishedResults.length,
   finish_time_present:timedResults.length,
@@ -858,6 +863,8 @@ const resultQuality={
   finish_time_coverage_pct:Number((finishTimeCoverage*100).toFixed(1)),
   flat_finish_time_coverage_pct:Number((flatLast3f.finishTimeCoverage*100).toFixed(1)),
   last3f_coverage_pct:Number((flatLast3f.last3fCoverage*100).toFixed(1)),
+  flat_races:flatRaceCount,
+  obstacle_races:obstacleRaceCount,
   flat_lap_target_races:flatLapTargets.length,
   flat_lap_complete_races:completeLapRaces,
   flat_lap_coverage_pct:flatLapTargets.length
@@ -875,6 +882,12 @@ if(flatLast3f.suspicious>0){
   throw new Error(
     "RESULT_QUALITY_LAST3F_SUSPICIOUS "+date+
     ": scope=FLAT suspicious="+flatLast3f.suspicious
+  );
+}
+if(records.length>=8&&flatRaceCount===0){
+  throw new Error(
+    "RESULT_QUALITY_DISCIPLINE_NO_FLAT "+date+
+    ": races="+records.length+" obstacle="+obstacleRaceCount
   );
 }
 if(flatLapTargets.length>0&&completeLapRaces!==flatLapTargets.length){
