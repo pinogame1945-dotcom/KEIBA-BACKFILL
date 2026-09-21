@@ -1,6 +1,6 @@
 import Encoding from "encoding-japanese";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
-import {gzipSync} from "node:zlib";
+import {gunzipSync,gzipSync} from "node:zlib";
 import path from "node:path";
 import {parsePedigreeV2} from "./pedigree-parser.mjs";
 
@@ -51,6 +51,19 @@ if(sourceDate&&!/^\d{4}-\d{2}-\d{2}$/.test(sourceDate))throw new Error("invalid 
 if(!Number.isInteger(limit)||limit<1||limit>200)throw new Error("--limit must be 1..200");
 
 const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+let targetDateHorseIds=null;
+if(sourceDate){
+  const daily=manifest.days?.[sourceDate];
+  if(!daily?.file)throw new Error("daily pack missing for source date: "+sourceDate);
+  const text=gunzipSync(await readFile(daily.file)).toString("utf8").trim();
+  targetDateHorseIds=new Set();
+  for(const line of text.split("\n").filter(Boolean)){
+    const row=JSON.parse(line);
+    for(const entry of row.entries??[]){
+      if(entry?.horse_id)targetDateHorseIds.add(String(entry.horse_id));
+    }
+  }
+}
 const legacyIds=new Set();
 const v2Ids=new Set();
 const datesByHorse=new Map();
@@ -58,11 +71,13 @@ for(const entry of Object.values(manifest.horse_packs??{})){
   if(entry?.status!=="SUCCESS")continue;
   const dates=(entry.source_dates??[]).map(String);
   const ids=(entry.source_horse_ids??[]).map(String);
-  if(Number(entry.pedigree_parser_version??0)>=PEDIGREE_PARSER_VERSION){
+  if(
+    Number(entry.horse_pack_version??0)>=HORSE_PACK_VERSION&&
+    Number(entry.pedigree_parser_version??0)>=PEDIGREE_PARSER_VERSION
+  ){
     for(const id of ids)v2Ids.add(id);
     continue;
   }
-  if(sourceDate&&!dates.includes(sourceDate))continue;
   for(const id of ids){
     legacyIds.add(id);
     const set=datesByHorse.get(id)??new Set();
@@ -70,7 +85,10 @@ for(const entry of Object.values(manifest.horse_packs??{})){
     datesByHorse.set(id,set);
   }
 }
-const pending=[...legacyIds].filter(id=>!v2Ids.has(id)).sort();
+const pending=[...legacyIds]
+  .filter(id=>!v2Ids.has(id))
+  .filter(id=>!targetDateHorseIds||targetDateHorseIds.has(id))
+  .sort();
 const selected=pending.slice(0,limit);
 if(!selected.length){
   console.log(JSON.stringify({ok:true,sourceDate,pending:0,selected:0,message:"no pedigree v2 repair pending"},null,2));
