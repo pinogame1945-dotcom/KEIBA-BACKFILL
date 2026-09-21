@@ -1694,9 +1694,39 @@
       "file": "data/daily/2026-03-22.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/3/0322.html"
+    },
+    "2026-03-21": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 505,
+        "finish_time_present": 505,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 495,
+        "flat_finish_time_present": 495,
+        "last3f_present": 495,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2026-03-21.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/3/0321.html"
     }
   },
-  "updated_at": "2026-09-21T20:40:16.952Z",
+  "updated_at": "2026-09-21T20:45:08.742Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -21475,6 +21505,104 @@
         "average_profile_fetch_ms": 1637,
         "average_pedigree_fetch_ms": 1942,
         "measured_horses": 5
+      }
+    },
+    "horse-2026-03-21-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 50,
+      "file": "data/horses/horse-2026-03-21-001.jsonl.gz",
+      "source_dates": [
+        "2026-03-21"
+      ],
+      "source_horse_ids": [
+        "2019104588",
+        "2019110053",
+        "2020102679",
+        "2020102868",
+        "2020103361",
+        "2020110034",
+        "2021105048",
+        "2021105451",
+        "2021106209",
+        "2021106829",
+        "2022101388",
+        "2022102058",
+        "2022102196",
+        "2022102763",
+        "2022103355",
+        "2022104167",
+        "2022110064",
+        "2023100018",
+        "2023100091",
+        "2023100156",
+        "2023100480",
+        "2023101273",
+        "2023101414",
+        "2023101549",
+        "2023101633",
+        "2023101651",
+        "2023101770",
+        "2023102216",
+        "2023102407",
+        "2023102554",
+        "2023102916",
+        "2023103342",
+        "2023103463",
+        "2023103498",
+        "2023104084",
+        "2023104255",
+        "2023104490",
+        "2023104492",
+        "2023104507",
+        "2023104525",
+        "2023104795",
+        "2023105037",
+        "2023105564",
+        "2023106006",
+        "2023106402",
+        "2023106457",
+        "2023106727",
+        "2023106756",
+        "2023106875",
+        "2023107526"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 206493,
+        "average_ms_per_horse": 4129,
+        "median_ms_per_horse": 4047,
+        "min_ms_per_horse": 2951,
+        "max_ms_per_horse": 5572,
+        "average_profile_fetch_ms": 1916,
+        "average_pedigree_fetch_ms": 2198,
+        "measured_horses": 50
+      }
+    },
+    "horse-2026-03-21-002": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 2,
+      "file": "data/horses/horse-2026-03-21-002.jsonl.gz",
+      "source_dates": [
+        "2026-03-21"
+      ],
+      "source_horse_ids": [
+        "2023107538",
+        "2023109082"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 6928,
+        "average_ms_per_horse": 3463,
+        "median_ms_per_horse": 3463,
+        "min_ms_per_horse": 2394,
+        "max_ms_per_horse": 4532,
+        "average_profile_fetch_ms": 1125,
+        "average_pedigree_fetch_ms": 2277,
+        "measured_horses": 2
       }
     }
   },
