@@ -104,6 +104,8 @@ jobs:
           const completed=new Set();
           for(const p of Object.values(manifest.horse_packs??{})){
             if(p.status!=="SUCCESS")continue;
+            if(Number(p.horse_pack_version??0)<2)continue;
+            if(Number(p.pedigree_parser_version??0)<2)continue;
             for(const id of p.source_horse_ids??[])completed.add(String(id));
           }
           const text=gunzipSync(await readFile(`data/daily/${date}.jsonl.gz`)).toString("utf8").trim();
@@ -142,6 +144,8 @@ jobs:
           const byParser=new Map();
           for(const p of Object.values(manifest.horse_packs??{})){
             if(p.status!=="SUCCESS")continue;
+            if(Number(p.horse_pack_version??0)<2)continue;
+            if(Number(p.pedigree_parser_version??0)<2)continue;
             const version=Number(p.pedigree_parser_version??1);
             let seen=byParser.get(version);
             if(!seen){seen=new Set();byParser.set(version,seen);}
