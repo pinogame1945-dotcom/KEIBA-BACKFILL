@@ -21,6 +21,7 @@
     "smoke:odds-plan": "node scripts/historical-odds-plan-smoke.mjs",
     "plan:odds": "node src/plan-historical-odds-backfill.mjs plan",
     "smoke:pedigree": "node scripts/pedigree-v2-smoke.mjs",
-    "smoke:schedule": "node scripts/schedule-integrity-smoke.mjs"
+    "smoke:schedule": "node scripts/schedule-integrity-smoke.mjs",
+    "smoke:workflow-safety": "node scripts/workflow-safety-smoke.mjs"
   }
 }
