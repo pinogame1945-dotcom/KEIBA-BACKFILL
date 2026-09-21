@@ -1,0 +1,85 @@
+name: Continue stale race pack repairs
+
+on:
+  workflow_run:
+    workflows:
+      - Repair stale race packs
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  continue-repair:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Check auto-repair switch
+        id: switch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f .backfill/repair-auto-enabled ]] && [[ "$(tr -d '[:space:]' < .backfill/repair-auto-enabled)" == "enabled" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Plan remaining stale packs
+        if: ${{ steps.switch.outputs.enabled == 'true' }}
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          node src/plan-race-pack-repair.mjs "2026-09-20" "2006-09-01" "10" | tee /tmp/repair-plan.json
+          STALE=$(jq -r '.stale_days' /tmp/repair-plan.json)
+          SELECTED=$(jq -r '.selected_days' /tmp/repair-plan.json)
+          echo "stale=$STALE" >> "$GITHUB_OUTPUT"
+          echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch next 10-day repair batch
+        if: ${{ steps.switch.outputs.enabled == 'true' && steps.plan.outputs.stale != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run repair-result-parser-v2.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f newest_date=2026-09-20 \
+            -f oldest_date=2006-09-01 \
+            -f max_repairs=10
+
+      - name: Report auto-repair state
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Stale race-pack auto repair"
+            echo
+            echo "Switch: ${{ steps.switch.outputs.enabled || 'false' }}"
+            echo "Remaining stale days: ${{ steps.plan.outputs.stale || 'not checked' }}"
+            echo "Selected for next run: ${{ steps.plan.outputs.selected || '0' }}"
+            if [[ "${{ steps.switch.outputs.enabled }}" == "true" && "${{ steps.plan.outputs.stale }}" != "0" ]]; then
+              echo "Next bounded repair batch dispatched."
+            elif [[ "${{ steps.switch.outputs.enabled }}" == "true" ]]; then
+              echo "No stale packs remain. Auto repair stops here."
+            else
+              echo "Auto repair is disabled."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
