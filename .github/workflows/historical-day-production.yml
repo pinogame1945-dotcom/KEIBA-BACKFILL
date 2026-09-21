@@ -153,8 +153,14 @@ jobs:
           });
           NODE
 
+      - name: Verify one-day production contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATE="${{ steps.input.outputs.date }}"
+          node src/verify-range.mjs "$DATE" "$DATE"
+
       - name: Commit historical data
-        if: always()
         shell: bash
         run: |
           git config user.name "keiba-backfill-bot"
