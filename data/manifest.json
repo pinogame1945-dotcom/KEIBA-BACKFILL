@@ -9602,7 +9602,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2023/2023/10/1014.html"
     }
   },
-  "updated_at": "2026-09-22T20:40:21.432Z",
+  "updated_at": "2026-09-22T20:40:29.015Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -66375,6 +66375,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2023-10-16.json"
+    },
+    "2023-10-13": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-22T20:40:29.016Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20231013/",
+          "title": "2023年10月13日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 66960,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20231013",
+          "title": "レース一覧 | 2023年10月13日 レース情報(JRA) - netkeiba",
+          "html_length": 43254,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2023-10-13.json"
     }
   },
   "rescheduled_meetings": {
