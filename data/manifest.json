@@ -2054,13 +2054,48 @@
       "file": "data/daily/2026-02-10.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/2/0210.html",
-      "reschedule_repaired_at": "2026-09-21T21:39:55.633Z",
+      "reschedule_repaired_at": "2026-09-22T00:12:58.449Z",
       "rescheduled_meetings": [
+        "2026080204",
+        "2026050104"
+      ]
+    },
+    "2026-02-08": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 178,
+        "finish_time_present": 178,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 178,
+        "flat_finish_time_present": 178,
+        "last3f_present": 178,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 12,
+        "obstacle_races": 0,
+        "flat_lap_target_races": 12,
+        "flat_lap_complete_races": 12,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 12,
+      "races_parsed": 12,
+      "file": "data/daily/2026-02-08.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/2/0208.html",
+      "rescheduled_meetings": [
+        "2026050104",
         "2026080204"
       ]
     }
   },
-  "updated_at": "2026-09-22T00:12:29.316Z",
+  "updated_at": "2026-09-22T00:14:04.464Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -22850,6 +22885,44 @@
         "average_pedigree_fetch_ms": 2243,
         "measured_horses": 34
       }
+    },
+    "horse-2026-02-08-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 15,
+      "file": "data/horses/horse-2026-02-08-001.jsonl.gz",
+      "source_dates": [
+        "2026-02-08"
+      ],
+      "source_horse_ids": [
+        "2019103672",
+        "2019106933",
+        "2020100651",
+        "2020103123",
+        "2021100454",
+        "2021101432",
+        "2021104426",
+        "2021105563",
+        "2021106519",
+        "2022100618",
+        "2022104832",
+        "2023101944",
+        "2023103575",
+        "2023107465",
+        "2023110040"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 64699,
+        "average_ms_per_horse": 4313,
+        "median_ms_per_horse": 4262,
+        "min_ms_per_horse": 3250,
+        "max_ms_per_horse": 5224,
+        "average_profile_fetch_ms": 1937,
+        "average_pedigree_fetch_ms": 2351,
+        "measured_horses": 15
+      }
     }
   },
   "race_pack_version": 3,
@@ -26376,12 +26449,30 @@
     }
   },
   "rescheduled_meetings": {
+    "2026050104": {
+      "meeting_key": "2026050104",
+      "venue_code": "05",
+      "meeting_no": 1,
+      "meeting_day": 4,
+      "scheduled_date": "2026-02-08",
+      "actual_date": "2026-02-10",
+      "status": "RESCHEDULED",
+      "source": "JRA_SCHEDULE",
+      "history": [
+        {
+          "scheduled_date": "2026-02-08",
+          "actual_date": "2026-02-10",
+          "source": "JRA_SCHEDULE"
+        }
+      ],
+      "updated_at": "2026-09-22T00:12:58.436Z"
+    },
     "2026080204": {
       "meeting_key": "2026080204",
       "venue_code": "08",
       "meeting_no": 2,
       "meeting_day": 4,
-      "scheduled_date": "2026-02-09",
+      "scheduled_date": "2026-02-08",
       "actual_date": "2026-02-10",
       "status": "RESCHEDULED",
       "source": "JRA_SCHEDULE",
@@ -26390,9 +26481,14 @@
           "scheduled_date": "2026-02-09",
           "actual_date": "2026-02-10",
           "source": "JRA_SCHEDULE"
+        },
+        {
+          "scheduled_date": "2026-02-08",
+          "actual_date": "2026-02-09",
+          "source": "JRA_SCHEDULE"
         }
       ],
-      "updated_at": "2026-09-22T00:12:29.316Z"
+      "updated_at": "2026-09-22T00:12:58.436Z"
     }
   },
   "cancelled_meetings": {},
