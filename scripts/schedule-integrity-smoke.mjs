@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,rescheduleEventFromMeeting,
-  rescheduleEventFromRaceDates,scheduleForRace,scheduleIntegrityEnabled,
+  rescheduleEventFromRaceDates,rescheduleCoversScheduledDate,scheduleForRace,scheduleIntegrityEnabled,
   upsertRescheduleEvents,validateRaceOwnership,
 } from "../src/schedule-integrity.mjs";
 
@@ -64,6 +64,22 @@ assert.equal(
   scheduleForRace(manifest,"202606040701","2026-09-22").status,
   "RESCHEDULED",
 );
+
+const chained={days:{},rescheduled_meetings:{}};
+upsertRescheduleEvents(chained,[{
+  meeting_key:"2026080204",venue_code:"08",meeting_no:2,meeting_day:4,
+  scheduled_date:"2026-02-09",actual_date:"2026-02-10",status:"RESCHEDULED",source:"JRA_SCHEDULE",
+}],"2026-02-09T00:00:00.000Z");
+upsertRescheduleEvents(chained,[{
+  meeting_key:"2026080204",venue_code:"08",meeting_no:2,meeting_day:4,
+  scheduled_date:"2026-02-08",actual_date:"2026-02-09",status:"RESCHEDULED",source:"JRA_SCHEDULE",
+}],"2026-02-08T00:00:00.000Z");
+const chainedEvent=chained.rescheduled_meetings["2026080204"];
+assert.equal(chainedEvent.scheduled_date,"2026-02-08");
+assert.equal(chainedEvent.actual_date,"2026-02-10");
+assert.equal(rescheduleCoversScheduledDate(chainedEvent,"2026-02-08"),true);
+assert.equal(rescheduleCoversScheduledDate(chainedEvent,"2026-02-09"),true);
+assert.equal(rescheduleCoversScheduledDate(chainedEvent,"2026-02-10"),false);
 
 const inferred=rescheduleEventFromRaceDates(
   "202606040701","2026-09-21","2026-09-22",

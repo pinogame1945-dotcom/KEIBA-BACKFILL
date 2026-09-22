@@ -137,6 +137,18 @@ export function upsertRescheduleEvents(manifest,events,now=new Date().toISOStrin
   return manifest;
 }
 
+export function rescheduleCoversScheduledDate(event,date){
+  if(event?.status!=="RESCHEDULED")return false;
+  const target=String(date??"");
+  const finalActual=String(event?.actual_date??"");
+  if(String(event?.scheduled_date??"")===target&&finalActual>target)return true;
+  const history=Array.isArray(event?.history)?event.history:[];
+  return history.some(step=>
+    String(step?.scheduled_date??"")===target&&
+    String(step?.actual_date??"")>target
+  );
+}
+
 export function upsertCancellationEvents(manifest,events,now=new Date().toISOString()){
   manifest.cancelled_meetings??={};
   for(const event of events.filter(Boolean)){

@@ -2,7 +2,7 @@ import {readFile} from "node:fs/promises";
 import {gunzipSync} from "node:zlib";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
-  meetingKeyFromRaceId,scheduleIntegrityEnabled,validateRaceOwnership,
+  meetingKeyFromRaceId,rescheduleCoversScheduledDate,scheduleIntegrityEnabled,validateRaceOwnership,
 } from "./schedule-integrity.mjs";
 import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments} from "./lap-parser.mjs";
@@ -301,10 +301,7 @@ for(const date of rangeDates){
     }
     for(const key of moved){
       const event=manifest.rescheduled_meetings?.[key];
-      if(
-        !event||event.status!=="RESCHEDULED"||
-        event.scheduled_date!==date||!event.actual_date
-      ){
+      if(!rescheduleCoversScheduledDate(event,date)){
         throw new Error(`invalid rescheduled ledger ${date} / ${key}`);
       }
     }
