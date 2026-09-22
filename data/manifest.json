@@ -3685,7 +3685,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2025/2025/8/0823.html"
     }
   },
-  "updated_at": "2026-09-22T05:13:53.813Z",
+  "updated_at": "2026-09-22T05:13:59.828Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -34383,6 +34383,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2025-08-20.json"
+    },
+    "2025-08-19": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-22T05:13:59.828Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20250819/",
+          "title": "2025年08月19日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 70117,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20250819",
+          "title": "レース一覧 | 2025年8月19日 レース情報(JRA) - netkeiba",
+          "html_length": 42564,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2025-08-19.json"
     }
   },
   "rescheduled_meetings": {
