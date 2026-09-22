@@ -2395,7 +2395,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/1/0110.html"
     }
   },
-  "updated_at": "2026-09-22T01:51:41.952Z",
+  "updated_at": "2026-09-22T01:52:13.534Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -27741,6 +27741,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2026-01-13.json"
+    },
+    "2026-01-09": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-22T01:52:13.534Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20260109/",
+          "title": "2026年01月09日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 63970,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20260109",
+          "title": "レース一覧 | 2026年1月9日 レース情報(JRA) - netkeiba",
+          "html_length": 42560,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2026-01-09.json"
     }
   },
   "rescheduled_meetings": {
