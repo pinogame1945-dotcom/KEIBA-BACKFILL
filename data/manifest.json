@@ -7500,9 +7500,39 @@
       "file": "data/daily/2024-06-15.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2024/2024/6/0615.html"
+    },
+    "2024-06-09": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 501,
+        "finish_time_present": 501,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 491,
+        "flat_finish_time_present": 491,
+        "last3f_present": 491,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2024-06-09.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2024/2024/6/0609.html"
     }
   },
-  "updated_at": "2026-09-22T15:40:50.875Z",
+  "updated_at": "2026-09-22T15:45:50.809Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -42501,6 +42531,106 @@
         "max_ms_per_horse": 4649,
         "average_profile_fetch_ms": 1598,
         "average_pedigree_fetch_ms": 2431,
+        "measured_horses": 4
+      }
+    },
+    "horse-2024-06-09-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 50,
+      "file": "data/horses/horse-2024-06-09-001.jsonl.gz",
+      "source_dates": [
+        "2024-06-09"
+      ],
+      "source_horse_ids": [
+        "2015103217",
+        "2015105850",
+        "2017105339",
+        "2018102195",
+        "2019101100",
+        "2019101635",
+        "2019102490",
+        "2019103663",
+        "2019110013",
+        "2020101896",
+        "2020101960",
+        "2020102119",
+        "2020102393",
+        "2020102936",
+        "2020104134",
+        "2020110073",
+        "2021100055",
+        "2021100199",
+        "2021100504",
+        "2021100777",
+        "2021100780",
+        "2021101175",
+        "2021101232",
+        "2021101477",
+        "2021101690",
+        "2021101838",
+        "2021102059",
+        "2021102156",
+        "2021102292",
+        "2021102675",
+        "2021102695",
+        "2021103174",
+        "2021103233",
+        "2021103362",
+        "2021103547",
+        "2021103686",
+        "2021103973",
+        "2021104036",
+        "2021104264",
+        "2021104709",
+        "2021104724",
+        "2021104917",
+        "2021105090",
+        "2021105538",
+        "2021106001",
+        "2021106342",
+        "2021106575",
+        "2021106921",
+        "2021106922",
+        "2021106984"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 209597,
+        "average_ms_per_horse": 4191,
+        "median_ms_per_horse": 4242,
+        "min_ms_per_horse": 2224,
+        "max_ms_per_horse": 4898,
+        "average_profile_fetch_ms": 1964,
+        "average_pedigree_fetch_ms": 2212,
+        "measured_horses": 50
+      }
+    },
+    "horse-2024-06-09-002": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 4,
+      "file": "data/horses/horse-2024-06-09-002.jsonl.gz",
+      "source_dates": [
+        "2024-06-09"
+      ],
+      "source_horse_ids": [
+        "2021107073",
+        "2021107119",
+        "2021110070",
+        "2022110085"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 14564,
+        "average_ms_per_horse": 3635,
+        "median_ms_per_horse": 3672,
+        "min_ms_per_horse": 2272,
+        "max_ms_per_horse": 4924,
+        "average_profile_fetch_ms": 1476,
+        "average_pedigree_fetch_ms": 2117,
         "measured_horses": 4
       }
     }
