@@ -47,9 +47,13 @@ export function parseJraMeetingScheduleText(text,{year,date,venueCodes}){
         .filter(n=>n>=1&&n<=12)
     )].sort((a,b)=>a-b);
     const moved=chunk.match(/(?:代替競馬|代替開催|代替)[\s\S]{0,80}?(\d{1,2})月\s*(\d{1,2})日/);
+    // A chunk may contain an individual-race cancellation (e.g. 第4競走中止)
+    // while the rest of the meeting is held normally. If race numbers are present,
+    // treat the meeting as active unless there is an explicit reschedule.
     const cancelled=/中止|延期|取りやめ/.test(chunk);
-    const actualDate=moved?isoFromMonthDay(year,moved[1],moved[2],date):(cancelled?null:date);
-    const status=moved?"RESCHEDULED":cancelled?"CANCELLED":raceNos.length?"ACTIVE":"UNKNOWN";
+    const wholeMeetingCancelled=cancelled&&raceNos.length===0;
+    const actualDate=moved?isoFromMonthDay(year,moved[1],moved[2],date):(wholeMeetingCancelled?null:date);
+    const status=moved?"RESCHEDULED":raceNos.length?"ACTIVE":wholeMeetingCancelled?"CANCELLED":"UNKNOWN";
     const meeting={
       meeting_key:key,venue_name:venueName,venue_code:venueCode,
       meeting_no:meetingNo,day_no:dayNo,race_nos:raceNos,

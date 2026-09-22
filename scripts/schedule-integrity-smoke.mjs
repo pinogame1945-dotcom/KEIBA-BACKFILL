@@ -37,6 +37,14 @@ assert.equal(cancelledOnly.raceIds.length,0);
 assert.equal(cancelledOnly.meetings[0].status,"CANCELLED");
 assert.equal(cancellationEventFromMeeting(cancelledOnly.meetings[0]).status,"CANCELLED");
 
+const partialCancellation=parseJraMeetingScheduleText(
+  ["1回小倉6日","第4競走は中止。","レース番号","1レース 2レース 3レース 5レース 6レース 7レース 8レース 9レース 10レース 11レース 12レース"].join(" "),
+  {year:2026,date:"2026-02-08",venueCodes:venues},
+);
+assert.equal(partialCancellation.meetings[0].status,"ACTIVE");
+assert.equal(partialCancellation.raceIds.length,11);
+assert.equal(cancellationEventFromMeeting(partialCancellation.meetings[0]),null);
+
 const sep22=["4回中山7日","レース番号",races].join(" ");
 const day22=parseJraMeetingScheduleText(sep22,{
   year:2026,date:"2026-09-22",venueCodes:venues,
