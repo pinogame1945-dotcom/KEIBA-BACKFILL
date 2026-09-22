@@ -10562,7 +10562,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2023/2023/7/0701.html"
     }
   },
-  "updated_at": "2026-09-22T23:37:16.929Z",
+  "updated_at": "2026-09-22T23:37:23.893Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -72170,6 +72170,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2023-06-30.json"
+    },
+    "2023-06-29": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-22T23:37:23.893Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20230629/",
+          "title": "2023年06月29日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 77382,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20230629",
+          "title": "レース一覧 | 2023年6月29日 レース情報(JRA) - netkeiba",
+          "html_length": 43284,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2023-06-29.json"
     }
   },
   "rescheduled_meetings": {
