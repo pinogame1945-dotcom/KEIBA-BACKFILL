@@ -5,6 +5,8 @@ const day=await readFile(".github/workflows/historical-day-production.yml","utf8
 const week=await readFile(".github/workflows/historical-week-production.yml","utf8");
 const control=JSON.parse(await readFile(".backfill/control.json","utf8"));
 const oddsSwitch=(await readFile(".backfill/odds-auto-enabled","utf8")).trim();
+const odds=await readFile(".github/workflows/historical-odds-backfill.yml","utf8");
+const pushHelper=await readFile("scripts/push-main-with-retry.sh","utf8");
 
 assert.ok(day.includes("workflow_dispatch:"),"day backfill must be manual-dispatch capable");
 assert.ok(!day.includes("\n  push:\n"),"day backfill must not auto-run on repository push");
@@ -39,6 +41,11 @@ for(const token of [
   assert.ok(week.includes(token),"week staged-safety token missing: "+token);
 }
 assert.ok(!week.includes("\n  push:\n"),"week backfill must not auto-run on repository push");
+assert.ok(week.includes("bash scripts/push-main-with-retry.sh"),"week writes must use retry-safe main push");
+assert.ok(odds.includes("bash scripts/push-main-with-retry.sh"),"odds writes must use retry-safe main push");
+assert.ok(pushHelper.includes("git fetch \"$REMOTE\" \"$BRANCH\""),"push helper must refresh remote before push");
+assert.ok(pushHelper.includes("git rebase \"$REMOTE/$BRANCH\""),"push helper must rebase onto latest main");
+assert.ok(pushHelper.includes("Rebase conflict detected. Refusing automatic conflict resolution."),"push helper must fail closed on data conflicts");
 assert.ok(
   week.indexOf('node src/verify-range.mjs "$DATE" "$DATE"')<
   week.indexOf("git add data/manifest.json data/daily/ data/horses/ data/debug/"),

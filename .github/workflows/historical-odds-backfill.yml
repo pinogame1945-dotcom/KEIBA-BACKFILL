@@ -48,6 +48,7 @@ jobs:
         run: |
           npm run smoke:odds
           npm run smoke:odds-plan
+          bash -n scripts/push-main-with-retry.sh
 
       - name: Plan pending odds days
         id: plan
@@ -143,8 +144,7 @@ jobs:
             exit 0
           fi
           git commit -m "data: historical odds backfill batch"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          bash scripts/push-main-with-retry.sh
 
       - name: Self-chain next odds batch
         shell: bash

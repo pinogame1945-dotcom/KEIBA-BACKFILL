@@ -63,6 +63,7 @@ jobs:
           npm run smoke:lap
           npm run smoke:schedule
           npm run smoke:workflow-safety
+          bash -n scripts/push-main-with-retry.sh
 
       - name: Resolve range
         id: input
@@ -202,8 +203,7 @@ jobs:
             git add data/manifest.json data/daily/ data/horses/ data/debug/ 2>/dev/null || true
             if ! git diff --cached --quiet; then
               git commit -m "data: backfill historical day $DATE"
-              git pull --rebase origin main
-              git push
+              bash scripts/push-main-with-retry.sh
             else
               echo "No data changes for $DATE."
             fi
@@ -313,8 +313,7 @@ jobs:
             git add .backfill/state.json
             if ! git diff --cached --quiet; then
               git commit -m "ci: mark historical backfill terminal range"
-              git pull --rebase origin main
-              git push
+              bash scripts/push-main-with-retry.sh
             fi
             echo "Historical backfill reached configured stop date."
             exit 0
@@ -353,5 +352,4 @@ jobs:
           node src/chain-next-range.mjs mark-dispatched "$START" "$END" "$GITHUB_RUN_ID"
           git add .backfill/state.json
           git commit -m "ci: mark next historical range dispatched $NEXT_START to $NEXT_END"
-          git pull --rebase origin main
-          git push
+          bash scripts/push-main-with-retry.sh
