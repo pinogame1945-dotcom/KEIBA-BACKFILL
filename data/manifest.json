@@ -16742,7 +16742,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2021/2021/7/0731.html"
     }
   },
-  "updated_at": "2026-09-23T15:18:38.774Z",
+  "updated_at": "2026-09-23T15:18:46.377Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -104846,6 +104846,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2021-07-28.json"
+    },
+    "2021-07-27": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T15:18:46.377Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20210727/",
+          "title": "2021年07月27日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 71411,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20210727",
+          "title": "レース一覧 | 2021年7月27日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2021-07-27.json"
     }
   },
   "rescheduled_meetings": {
