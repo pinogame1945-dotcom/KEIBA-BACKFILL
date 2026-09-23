@@ -1566,10 +1566,12 @@
       "source_run_id": "35869694880",
       "next_start": "2021-08-27",
       "next_end": "2021-08-14",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-23T14:23:51.856Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-23T14:23:56.968Z",
+      "dispatch_source_run_id": "35869694880"
     }
   }
 }
