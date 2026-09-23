@@ -13532,7 +13532,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2022/2022/7/0730.html"
     }
   },
-  "updated_at": "2026-09-23T07:07:26.041Z",
+  "updated_at": "2026-09-23T07:08:13.808Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -87842,6 +87842,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2022-08-01.json"
+    },
+    "2022-07-29": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T07:08:13.808Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20220729/",
+          "title": "2022年07月29日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 64958,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20220729",
+          "title": "レース一覧 | 2022年7月29日 レース情報(JRA) - netkeiba",
+          "html_length": 42670,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2022-07-29.json"
     }
   },
   "rescheduled_meetings": {
