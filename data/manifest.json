@@ -13472,7 +13472,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2022/2022/8/0806.html"
     }
   },
-  "updated_at": "2026-09-23T06:59:15.309Z",
+  "updated_at": "2026-09-23T06:59:23.354Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -87537,6 +87537,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2022-08-08.json"
+    },
+    "2022-08-05": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T06:59:23.354Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20220805/",
+          "title": "2022年08月05日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 66537,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20220805",
+          "title": "レース一覧 | 2022年8月5日 レース情報(JRA) - netkeiba",
+          "html_length": 42666,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2022-08-05.json"
     }
   },
   "rescheduled_meetings": {
