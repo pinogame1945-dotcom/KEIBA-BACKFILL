@@ -15900,9 +15900,39 @@
       "file": "data/daily/2021-10-31.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2021/2021/10/1031.html"
+    },
+    "2021-10-30": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 465,
+        "finish_time_present": 465,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 441,
+        "flat_finish_time_present": 441,
+        "last3f_present": 441,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 34,
+        "obstacle_races": 2,
+        "flat_lap_target_races": 34,
+        "flat_lap_complete_races": 34,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2021-10-30.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2021/2021/10/1030.html"
     }
   },
-  "updated_at": "2026-09-23T13:00:12.869Z",
+  "updated_at": "2026-09-23T13:03:13.414Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -71245,6 +71275,55 @@
         "average_profile_fetch_ms": 1865,
         "average_pedigree_fetch_ms": 2393,
         "measured_horses": 35
+      }
+    },
+    "horse-2021-10-30-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 26,
+      "file": "data/horses/horse-2021-10-30-001.jsonl.gz",
+      "source_dates": [
+        "2021-10-30"
+      ],
+      "source_horse_ids": [
+        "2014100159",
+        "2014101558",
+        "2014105275",
+        "2014110117",
+        "2015103663",
+        "2015103670",
+        "2015103949",
+        "2015105200",
+        "2015105928",
+        "2016103754",
+        "2017100247",
+        "2017100402",
+        "2017101802",
+        "2017105065",
+        "2018101250",
+        "2018101640",
+        "2018103769",
+        "2018105335",
+        "2018106799",
+        "2018106841",
+        "2019100365",
+        "2019101254",
+        "2019101492",
+        "2019101494",
+        "2019101921",
+        "2019104394"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 102887,
+        "average_ms_per_horse": 3957,
+        "median_ms_per_horse": 4060,
+        "min_ms_per_horse": 2379,
+        "max_ms_per_horse": 4876,
+        "average_profile_fetch_ms": 1775,
+        "average_pedigree_fetch_ms": 2166,
+        "measured_horses": 26
       }
     }
   },
