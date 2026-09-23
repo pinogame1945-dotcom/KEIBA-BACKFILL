@@ -18062,7 +18062,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2021/2021/2/0227.html"
     }
   },
-  "updated_at": "2026-09-23T19:23:37.720Z",
+  "updated_at": "2026-09-23T19:23:46.338Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -112385,6 +112385,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2021-02-23.json"
+    },
+    "2021-02-22": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T19:23:46.339Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20210222/",
+          "title": "2021年02月22日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 61850,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20210222",
+          "title": "レース一覧 | 2021年2月22日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2021-02-22.json"
     }
   },
   "rescheduled_meetings": {
