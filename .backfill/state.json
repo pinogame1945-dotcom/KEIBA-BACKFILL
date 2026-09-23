@@ -1014,10 +1014,12 @@
       "source_run_id": "35800127818",
       "next_start": "2023-06-02",
       "next_end": "2023-05-20",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-23T00:20:01.231Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-23T00:20:04.994Z",
+      "dispatch_source_run_id": "35800127818"
     }
   }
 }
