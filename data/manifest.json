@@ -16502,7 +16502,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2021/2021/8/0828.html"
     }
   },
-  "updated_at": "2026-09-23T14:24:26.423Z",
+  "updated_at": "2026-09-23T14:24:33.467Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -103159,6 +103159,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2021-08-27.json"
+    },
+    "2021-08-26": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T14:24:33.467Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20210826/",
+          "title": "2021年08月26日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 64498,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20210826",
+          "title": "レース一覧 | 2021年8月26日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2021-08-26.json"
     }
   },
   "rescheduled_meetings": {
