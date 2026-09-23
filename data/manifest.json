@@ -14372,7 +14372,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2022/2022/4/0423.html"
     }
   },
-  "updated_at": "2026-09-23T09:38:42.678Z",
+  "updated_at": "2026-09-23T09:38:49.000Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -92830,6 +92830,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2022-04-20.json"
+    },
+    "2022-04-19": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T09:38:49.000Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20220419/",
+          "title": "2022年04月19日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 74772,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20220419",
+          "title": "レース一覧 | 2022年4月19日 レース情報(JRA) - netkeiba",
+          "html_length": 43284,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2022-04-19.json"
     }
   },
   "rescheduled_meetings": {
