@@ -17942,7 +17942,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2021/2021/3/0313.html"
     }
   },
-  "updated_at": "2026-09-23T19:02:56.904Z",
+  "updated_at": "2026-09-23T19:03:44.117Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -111618,6 +111618,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2021-03-15.json"
+    },
+    "2021-03-12": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T19:03:44.117Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20210312/",
+          "title": "2021年03月12日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 71558,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20210312",
+          "title": "レース一覧 | 2021年3月12日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2021-03-12.json"
     }
   },
   "rescheduled_meetings": {
