@@ -11582,7 +11582,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2023/2023/3/0304.html"
     }
   },
-  "updated_at": "2026-09-23T02:22:39.613Z",
+  "updated_at": "2026-09-23T02:22:46.587Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -77843,6 +77843,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2023-03-06.json"
+    },
+    "2023-03-03": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-23T02:22:46.588Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20230303/",
+          "title": "2023年03月03日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 56801,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20230303",
+          "title": "レース一覧 | 2023年3月3日 レース情報(JRA) - netkeiba",
+          "html_length": 42666,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2023-03-03.json"
     }
   },
   "rescheduled_meetings": {
