@@ -100,17 +100,31 @@ async function sleep(ms) {
   await new Promise(resolve => setTimeout(resolve, ms));
 }
 async function politeFetch(url) {
-  const wait = delayMs - (Date.now() - lastFetchAt);
-  if (wait > 0) await sleep(wait);
+  const maxAttempts = 3;
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const response = await fetch(url, {
-      headers: {
-        "Accept-Language": "ja,en;q=0.5",
-        "User-Agent": USER_AGENT
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const wait = delayMs - (Date.now() - lastFetchAt);
+    if (wait > 0) await sleep(wait);
+
+    let response;
+    try {
+      response = await fetch(url, {
+        headers: {
+          "Accept-Language": "ja,en;q=0.5",
+          "User-Agent": USER_AGENT
+        }
+      });
+      lastFetchAt = Date.now();
+    } catch (error) {
+      lastFetchAt = Date.now();
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt === maxAttempts) {
+        throw new Error(`NETWORK_FETCH_FAILED after ${maxAttempts} attempts ${url}: ${message}`);
       }
-    });
-    lastFetchAt = Date.now();
+      console.warn(`[fetch] transient network failure attempt ${attempt}/${maxAttempts} ${url}: ${message}`);
+      await sleep(5000 * attempt);
+      continue;
+    }
 
     if (response.status === 403 || response.status === 429) {
       throw new Error(`RATE_LIMIT HTTP ${response.status} ${url}`);
@@ -124,10 +138,10 @@ async function politeFetch(url) {
       return text;
     }
 
-    if (attempt === 2 || response.status < 500) {
+    if (attempt === maxAttempts || response.status < 500) {
       throw new Error(`HTTP ${response.status} ${url}`);
     }
-    await sleep(5000);
+    await sleep(5000 * attempt);
   }
   throw new Error(`fetch failed ${url}`);
 }
