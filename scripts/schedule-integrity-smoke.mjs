@@ -45,6 +45,24 @@ assert.equal(partialCancellation.meetings[0].status,"ACTIVE");
 assert.equal(partialCancellation.raceIds.length,11);
 assert.equal(cancellationEventFromMeeting(partialCancellation.meetings[0]),null);
 
+const legacyRLabels=parseJraMeetingScheduleText(
+  [
+    "2回東京5日",
+    "1R 2R 3R 4R 5R 6R 7R 8R 9R",
+    "東京競馬は第10レース以降を取りやめ。",
+    "3回京都5日",
+    "1R 2R 3R 4R 5R 6R 7R 8R 9R 10R 11R 12R",
+    "1回新潟3日",
+    "1R 2R 3R 4R 5R 6R 7R 8R 9R 10R 11R 12R",
+  ].join(" "),
+  {year:2019,date:"2019-05-04",venueCodes:venues},
+);
+assert.equal(legacyRLabels.raceIds.length,33);
+const tokyo20190504=legacyRLabels.meetings.find(m=>m.venue_code==="05");
+assert.equal(tokyo20190504.status,"ACTIVE");
+assert.deepEqual(tokyo20190504.race_nos,[1,2,3,4,5,6,7,8,9]);
+assert.equal(cancellationEventFromMeeting(tokyo20190504),null);
+
 const sep22=["4回中山7日","レース番号",races].join(" ");
 const day22=parseJraMeetingScheduleText(sep22,{
   year:2026,date:"2026-09-22",venueCodes:venues,

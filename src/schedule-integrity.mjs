@@ -41,11 +41,10 @@ export function parseJraMeetingScheduleText(text,{year,date,venueCodes}){
     const start=m.index??0;
     const end=i+1<matches.length?(matches[i+1].index??String(text).length):String(text).length;
     const chunk=String(text).slice(start,end);
-    const raceNos=[...new Set(
-      [...chunk.matchAll(/(?:^|[^\d第])(\d{1,2})レース/g)]
-        .map(x=>Number(x[1]))
-        .filter(n=>n>=1&&n<=12)
-    )].sort((a,b)=>a-b);
+    const raceNos=[...new Set([
+      ...[...chunk.matchAll(/(?:^|[^\d第])(\d{1,2})レース/g)].map(x=>Number(x[1])),
+      ...[...chunk.matchAll(/(?:^|[^\d])(\d{1,2})R(?:\b|(?=\s|[^A-Za-z0-9]))/g)].map(x=>Number(x[1])),
+    ].filter(n=>n>=1&&n<=12))].sort((a,b)=>a-b);
     const moved=chunk.match(/(?:代替競馬|代替開催|代替)[\s\S]{0,80}?(\d{1,2})月\s*(\d{1,2})日/);
     // A meeting can be only partially moved while some races are held as planned.
     // Meeting-level RESCHEDULED is safe only when no race numbers remain on the
