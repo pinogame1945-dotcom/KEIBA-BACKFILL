@@ -22503,7 +22503,11 @@
       "races_parsed": 12,
       "file": "data/daily/2019-10-15.jsonl.gz",
       "request_delay_ms": 1500,
-      "discovery_url": "https://www.jra.go.jp/keiba/calendar2019/2019/10/1015.html"
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2019/2019/10/1015.html",
+      "reschedule_repaired_at": "2026-09-24T09:00:15.537Z",
+      "rescheduled_meetings": [
+        "2019050403"
+      ]
     },
     "2019-10-14": {
       "status": "SUCCESS",
@@ -22567,9 +22571,42 @@
       "rescheduled_meetings": [
         "2019050404"
       ]
+    },
+    "2019-10-12": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 146,
+        "finish_time_present": 146,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 146,
+        "flat_finish_time_present": 146,
+        "last3f_present": 146,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 12,
+        "obstacle_races": 0,
+        "flat_lap_target_races": 12,
+        "flat_lap_complete_races": 12,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 12,
+      "races_parsed": 12,
+      "file": "data/daily/2019-10-12.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2019/2019/10/1012.html",
+      "rescheduled_meetings": [
+        "2019050403"
+      ]
     }
   },
-  "updated_at": "2026-09-24T08:59:47.665Z",
+  "updated_at": "2026-09-24T09:00:37.800Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -94396,6 +94433,34 @@
         "average_pedigree_fetch_ms": 2047,
         "measured_horses": 7
       }
+    },
+    "horse-2019-10-12-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 5,
+      "file": "data/horses/horse-2019-10-12-001.jsonl.gz",
+      "source_dates": [
+        "2019-10-12"
+      ],
+      "source_horse_ids": [
+        "2013100724",
+        "2013101861",
+        "2014102119",
+        "2016100530",
+        "2017102805"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 20755,
+        "average_ms_per_horse": 4150,
+        "median_ms_per_horse": 4357,
+        "min_ms_per_horse": 2940,
+        "max_ms_per_horse": 4643,
+        "average_profile_fetch_ms": 1842,
+        "average_pedigree_fetch_ms": 2274,
+        "measured_horses": 5
+      }
     }
   },
   "race_pack_version": 3,
@@ -135366,6 +135431,26 @@
     }
   },
   "rescheduled_meetings": {
+    "2019050403": {
+      "meeting_key": "2019050403",
+      "venue_code": "05",
+      "meeting_no": 4,
+      "meeting_day": 3,
+      "scheduled_date": "2019-10-12",
+      "actual_date": "2019-10-15",
+      "status": "RESCHEDULED",
+      "scope": "FULL",
+      "source": "JRA_SCHEDULE",
+      "history": [
+        {
+          "scheduled_date": "2019-10-12",
+          "actual_date": "2019-10-15",
+          "source": "JRA_SCHEDULE",
+          "scope": "FULL"
+        }
+      ],
+      "updated_at": "2026-09-24T09:00:15.532Z"
+    },
     "2019050404": {
       "meeting_key": "2019050404",
       "venue_code": "05",
