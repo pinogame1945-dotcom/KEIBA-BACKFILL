@@ -23716,7 +23716,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20190608/"
     }
   },
-  "updated_at": "2026-09-24T12:23:48.923Z",
+  "updated_at": "2026-09-24T12:23:55.438Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -142040,6 +142040,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2019-06-07.json"
+    },
+    "2019-06-06": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-24T12:23:55.438Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20190606/",
+          "title": "2019年06月06日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 70577,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20190606",
+          "title": "レース一覧 | 2019年6月6日 レース情報(JRA) - netkeiba",
+          "html_length": 43280,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2019-06-06.json"
     }
   },
   "rescheduled_meetings": {
