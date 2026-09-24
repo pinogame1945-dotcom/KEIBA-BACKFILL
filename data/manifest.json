@@ -23744,9 +23744,39 @@
       "file": "data/daily/2019-06-02.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20190602/"
+    },
+    "2019-06-01": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 332,
+        "finish_time_present": 332,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 323,
+        "flat_finish_time_present": 323,
+        "last3f_present": 323,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 23,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 23,
+        "flat_lap_complete_races": 23,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 24,
+      "races_parsed": 24,
+      "file": "data/daily/2019-06-01.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20190601/"
     }
   },
-  "updated_at": "2026-09-24T12:27:41.348Z",
+  "updated_at": "2026-09-24T12:32:20.402Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -99090,6 +99120,106 @@
         "average_profile_fetch_ms": 1899,
         "average_pedigree_fetch_ms": 2355,
         "measured_horses": 35
+      }
+    },
+    "horse-2019-06-01-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 50,
+      "file": "data/horses/horse-2019-06-01-001.jsonl.gz",
+      "source_dates": [
+        "2019-06-01"
+      ],
+      "source_horse_ids": [
+        "2011100416",
+        "2011103567",
+        "2012104648",
+        "2013100786",
+        "2013101628",
+        "2013103250",
+        "2013106187",
+        "2013109025",
+        "2014105059",
+        "2014105858",
+        "2014106054",
+        "2015101251",
+        "2015101686",
+        "2015102454",
+        "2015103364",
+        "2015104640",
+        "2015105098",
+        "2015105608",
+        "2016100115",
+        "2016100189",
+        "2016100606",
+        "2016100720",
+        "2016100851",
+        "2016101066",
+        "2016101287",
+        "2016101623",
+        "2016101864",
+        "2016101884",
+        "2016101926",
+        "2016102252",
+        "2016102951",
+        "2016103021",
+        "2016103036",
+        "2016103251",
+        "2016103362",
+        "2016103874",
+        "2016103999",
+        "2016104001",
+        "2016104082",
+        "2016104086",
+        "2016104565",
+        "2016104621",
+        "2016104922",
+        "2016104925",
+        "2016105003",
+        "2016105168",
+        "2016105267",
+        "2016105922",
+        "2016105966",
+        "2016106418"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 209605,
+        "average_ms_per_horse": 4192,
+        "median_ms_per_horse": 4247,
+        "min_ms_per_horse": 2622,
+        "max_ms_per_horse": 5022,
+        "average_profile_fetch_ms": 1837,
+        "average_pedigree_fetch_ms": 2339,
+        "measured_horses": 50
+      }
+    },
+    "horse-2019-06-01-002": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 4,
+      "file": "data/horses/horse-2019-06-01-002.jsonl.gz",
+      "source_dates": [
+        "2019-06-01"
+      ],
+      "source_horse_ids": [
+        "2016106533",
+        "2016106571",
+        "2016110066",
+        "2016110149"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 14967,
+        "average_ms_per_horse": 3739,
+        "median_ms_per_horse": 3922,
+        "min_ms_per_horse": 2389,
+        "max_ms_per_horse": 4722,
+        "average_profile_fetch_ms": 1513,
+        "average_pedigree_fetch_ms": 2183,
+        "measured_horses": 4
       }
     }
   },
