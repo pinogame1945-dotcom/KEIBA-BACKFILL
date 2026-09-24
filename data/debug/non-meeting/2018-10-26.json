@@ -1,0 +1,108 @@
+{
+  "date": "2018-10-26",
+  "confirmed": true,
+  "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+  "discoveryDiagnostics": [
+    {
+      "url": "https://www.jra.go.jp/keiba/calendar2018/2018/10/1026.html",
+      "source": "JRA_SCHEDULE",
+      "error": "RATE_LIMIT HTTP 403 https://www.jra.go.jp/keiba/calendar2018/2018/10/1026.html"
+    },
+    {
+      "url": "https://db.netkeiba.com/race/list/20181026/",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "2018年10月26日のレース情報 | 競馬データベース - netkeiba",
+      "html_length": 66777,
+      "race_ids_found": 0,
+      "venue_summary_urls": [
+        "https://db.netkeiba.com/race/sum/01/20181026/"
+      ],
+      "venue_diagnostics": [
+        {
+          "url": "https://db.netkeiba.com/race/sum/01/20181026/",
+          "race_ids_found": 0,
+          "html_length": 43574
+        }
+      ],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "https://race.netkeiba.com/top/?rf=navi",
+        "https://race.netkeiba.com/AI/AI.html?rf=navi",
+        "https://db.netkeiba.com/race/top.html",
+        "https://db.netkeiba.com/race/201842102601/",
+        "https://db.netkeiba.com/race/201842102602/",
+        "https://db.netkeiba.com/race/201842102603/",
+        "https://db.netkeiba.com/race/201842102604/",
+        "https://db.netkeiba.com/race/201842102605/",
+        "https://db.netkeiba.com/race/201842102606/",
+        "https://db.netkeiba.com/race/201842102607/",
+        "https://db.netkeiba.com/race/201842102608/",
+        "https://db.netkeiba.com/race/201842102609/",
+        "https://db.netkeiba.com/race/201842102610/",
+        "https://db.netkeiba.com/race/201842102611/",
+        "https://db.netkeiba.com/race/201848102601/",
+        "https://db.netkeiba.com/race/201848102602/",
+        "https://db.netkeiba.com/race/201848102603/",
+        "https://db.netkeiba.com/race/201848102604/",
+        "https://db.netkeiba.com/race/201848102605/",
+        "https://db.netkeiba.com/race/201848102606/",
+        "https://db.netkeiba.com/race/201848102607/",
+        "https://db.netkeiba.com/race/201848102608/",
+        "https://db.netkeiba.com/race/201848102609/",
+        "https://db.netkeiba.com/race/201848102610/",
+        "https://db.netkeiba.com/race/201848102611/",
+        "https://db.netkeiba.com/race/201848102612/",
+        "https://db.netkeiba.com/race/201850102601/",
+        "https://db.netkeiba.com/race/201850102602/",
+        "https://db.netkeiba.com/race/201850102603/",
+        "https://db.netkeiba.com/race/201850102604/",
+        "https://db.netkeiba.com/race/201850102605/",
+        "https://db.netkeiba.com/race/201850102606/",
+        "https://db.netkeiba.com/race/201850102607/",
+        "https://db.netkeiba.com/race/201850102608/",
+        "https://db.netkeiba.com/race/201850102609/",
+        "https://db.netkeiba.com/race/201850102610/",
+        "https://db.netkeiba.com/race/201850102611/",
+        "https://db.netkeiba.com/race/201850102612/",
+        "https://db.netkeiba.com/race/2018A8a02c01/",
+        "https://db.netkeiba.com/race/2018A8a04002/",
+        "https://db.netkeiba.com/race/2018B6a02d03/",
+        "https://db.netkeiba.com/race/2018B6a02d07/",
+        "https://db.netkeiba.com/race/2018C7a01004/",
+        "https://db.netkeiba.com/race/2018F3a00b06/",
+        "https://db.netkeiba.com/race/list/20181026/",
+        "https://db.netkeiba.com/race/sum/01/20181026/",
+        "https://db.netkeiba.com/race/pay/01/20181026/",
+        "https://db.netkeiba.com/race/list/20181026/"
+      ]
+    },
+    {
+      "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20181026",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "レース一覧 | 2018年10月26日 レース情報(JRA) - netkeiba",
+      "html_length": 43254,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "schedule.html?rf=race_list",
+        "race_list.html",
+        "pdf.html?rf=race_list",
+        "/race/track.html",
+        "../top/race_trend.html?rf=sidemenu",
+        "../race/search.html?rf=sidemenu",
+        "https://race.netkeiba.com?pid=bookmark&rf=sidemenu",
+        "https://race.sp.netkeiba.com/barometer/?rf=sidemenu",
+        "../race/compatibility.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_column",
+        "../race/training_best_time.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_banner",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    }
+  ]
+}
