@@ -25940,10 +25940,14 @@
       "races_parsed": 12,
       "file": "data/daily/2018-10-02.jsonl.gz",
       "request_delay_ms": 1500,
-      "discovery_url": "https://www.jra.go.jp/keiba/calendar2018/2018/10/1002.html"
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2018/2018/10/1002.html",
+      "reschedule_repaired_at": "2026-09-24T18:42:45.274Z",
+      "rescheduled_meetings": [
+        "2018090409"
+      ]
     }
   },
-  "updated_at": "2026-09-24T18:42:38.183Z",
+  "updated_at": "2026-09-24T18:42:45.260Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -153033,6 +153037,26 @@
     }
   },
   "rescheduled_meetings": {
+    "2018090409": {
+      "meeting_key": "2018090409",
+      "venue_code": "09",
+      "meeting_no": 4,
+      "meeting_day": 9,
+      "scheduled_date": "2018-10-01",
+      "actual_date": "2018-10-02",
+      "status": "RESCHEDULED",
+      "scope": "FULL",
+      "source": "JRA_SCHEDULE",
+      "history": [
+        {
+          "scheduled_date": "2018-10-01",
+          "actual_date": "2018-10-02",
+          "source": "JRA_SCHEDULE",
+          "scope": "FULL"
+        }
+      ],
+      "updated_at": "2026-09-24T18:42:45.260Z"
+    },
     "2019050105": {
       "meeting_key": "2019050105",
       "venue_code": "05",
@@ -153165,6 +153189,15 @@
       ],
       "cancelled_meetings": [],
       "updated_at": "2026-09-22T01:20:02.069Z"
+    },
+    "2018-10-01": {
+      "status": "NO_RACES_HELD",
+      "schedule_contract_version": 1,
+      "rescheduled_meetings": [
+        "2018090409"
+      ],
+      "cancelled_meetings": [],
+      "updated_at": "2026-09-24T18:42:45.274Z"
     }
   }
 }
