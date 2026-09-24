@@ -47,13 +47,18 @@ export function parseJraMeetingScheduleText(text,{year,date,venueCodes}){
         .filter(n=>n>=1&&n<=12)
     )].sort((a,b)=>a-b);
     const moved=chunk.match(/(?:代替競馬|代替開催|代替)[\s\S]{0,80}?(\d{1,2})月\s*(\d{1,2})日/);
-    // A chunk may contain an individual-race cancellation (e.g. 第4競走中止)
-    // while the rest of the meeting is held normally. If race numbers are present,
-    // treat the meeting as active unless there is an explicit reschedule.
+    // A meeting can be only partially moved while some races are held as planned.
+    // Meeting-level RESCHEDULED is safe only when no race numbers remain on the
+    // scheduled day. Partial moves are inferred race-by-race from result dates.
     const cancelled=/中止|延期|取りやめ/.test(chunk);
-    const wholeMeetingCancelled=cancelled&&raceNos.length===0;
-    const actualDate=moved?isoFromMonthDay(year,moved[1],moved[2],date):(wholeMeetingCancelled?null:date);
-    const status=moved?"RESCHEDULED":raceNos.length?"ACTIVE":wholeMeetingCancelled?"CANCELLED":"UNKNOWN";
+    const wholeMeetingCancelled=cancelled&&raceNos.length===0&&!moved;
+    const wholeMeetingRescheduled=Boolean(moved)&&raceNos.length===0;
+    const actualDate=wholeMeetingRescheduled
+      ?isoFromMonthDay(year,moved[1],moved[2],date)
+      :(wholeMeetingCancelled?null:date);
+    const status=wholeMeetingRescheduled
+      ?"RESCHEDULED"
+      :raceNos.length?"ACTIVE":wholeMeetingCancelled?"CANCELLED":"UNKNOWN";
     const meeting={
       meeting_key:key,venue_name:venueName,venue_code:venueCode,
       meeting_no:meetingNo,day_no:dayNo,race_nos:raceNos,
@@ -93,13 +98,18 @@ export function rescheduleEventFromMeeting(meeting,source="JRA_SCHEDULE"){
     scheduled_date:meeting.scheduled_date,
     actual_date:meeting.actual_date,
     status:"RESCHEDULED",
+    scope:"FULL",
     source,
   };
 }
 
 export function rescheduleEventFromRaceDates(raceId,scheduledDate,actualDate,source="RESULT_DATE_MISMATCH"){
   const key=meetingKeyFromRaceId(raceId);
-  if(!key||!actualDate||actualDate===scheduledDate)return null;
+  const raceNo=Number(String(raceId??"").slice(10,12));
+  if(
+    !key||!actualDate||actualDate===scheduledDate||
+    !Number.isInteger(raceNo)||raceNo<1||raceNo>12
+  )return null;
   return {
     meeting_key:key,
     venue_code:raceId.slice(4,6),
@@ -108,31 +118,93 @@ export function rescheduleEventFromRaceDates(raceId,scheduledDate,actualDate,sou
     scheduled_date:scheduledDate,
     actual_date:actualDate,
     status:"RESCHEDULED",
+    scope:"PARTIAL",
+    race_nos:[raceNo],
     source,
   };
+}
+
+function normalizedRescheduleScope(event){
+  return event?.scope==="PARTIAL"||Array.isArray(event?.race_nos)?"PARTIAL":"FULL";
+}
+
+function normalizedRescheduleRaceNos(event){
+  return [...new Set(
+    (Array.isArray(event?.race_nos)?event.race_nos:[])
+      .map(Number)
+      .filter(n=>Number.isInteger(n)&&n>=1&&n<=12)
+  )].sort((a,b)=>a-b);
+}
+
+export function rescheduleAppliesToRace(event,raceId){
+  if(event?.status!=="RESCHEDULED")return false;
+  if(normalizedRescheduleScope(event)==="FULL")return true;
+  const value=String(raceId??"");
+  if(!/^\d{12}$/.test(value))return false;
+  return normalizedRescheduleRaceNos(event).includes(Number(value.slice(10,12)));
 }
 
 export function upsertRescheduleEvents(manifest,events,now=new Date().toISOString()){
   manifest.rescheduled_meetings??={};
   for(const event of events.filter(Boolean)){
     const current=manifest.rescheduled_meetings[event.meeting_key]??null;
+    const incomingScope=normalizedRescheduleScope(event);
+    const currentScope=current?normalizedRescheduleScope(current):null;
+    if(
+      current&&currentScope==="PARTIAL"&&incomingScope==="PARTIAL"&&
+      (
+        String(current.scheduled_date)!==String(event.scheduled_date)||
+        String(current.actual_date)!==String(event.actual_date)
+      )
+    ){
+      throw new Error(
+        "AMBIGUOUS_PARTIAL_RESCHEDULE "+event.meeting_key+" "+
+        String(current.scheduled_date)+"->"+String(current.actual_date)+" / "+
+        String(event.scheduled_date)+"->"+String(event.actual_date)
+      );
+    }
+
     const scheduledDate=current?.scheduled_date&&current.scheduled_date<event.scheduled_date
       ?current.scheduled_date:event.scheduled_date;
     const actualDate=current?.actual_date&&current.actual_date>event.actual_date
       ?current.actual_date:event.actual_date;
     const history=Array.isArray(current?.history)?[...current.history]:[];
-    const pair={scheduled_date:event.scheduled_date,actual_date:event.actual_date,source:event.source};
+    const pair={
+      scheduled_date:event.scheduled_date,
+      actual_date:event.actual_date,
+      source:event.source,
+      scope:incomingScope,
+      ...(incomingScope==="PARTIAL"?{race_nos:normalizedRescheduleRaceNos(event)}:{}),
+    };
     if(!history.some(item=>
-      item.scheduled_date===pair.scheduled_date&&item.actual_date===pair.actual_date&&item.source===pair.source
+      item.scheduled_date===pair.scheduled_date&&
+      item.actual_date===pair.actual_date&&
+      item.source===pair.source&&
+      normalizedRescheduleScope(item)===pair.scope&&
+      JSON.stringify(normalizedRescheduleRaceNos(item))===JSON.stringify(normalizedRescheduleRaceNos(pair))
     ))history.push(pair);
+
+    const scope=current
+      ?(currentScope==="FULL"||incomingScope==="FULL"?"FULL":"PARTIAL")
+      :incomingScope;
+    const raceNos=scope==="PARTIAL"
+      ?[...new Set([
+          ...normalizedRescheduleRaceNos(current),
+          ...normalizedRescheduleRaceNos(event),
+        ])].sort((a,b)=>a-b)
+      :[];
+
     manifest.rescheduled_meetings[event.meeting_key]={
       ...event,
       scheduled_date:scheduledDate,
       actual_date:actualDate,
       status:"RESCHEDULED",
+      scope,
+      ...(scope==="PARTIAL"?{race_nos:raceNos}:{}),
       history,
       updated_at:now,
     };
+    if(scope==="FULL")delete manifest.rescheduled_meetings[event.meeting_key].race_nos;
   }
   return manifest;
 }
@@ -165,7 +237,11 @@ export function upsertCancellationEvents(manifest,events,now=new Date().toISOStr
 export function scheduleForRace(manifest,raceId,actualDate){
   const key=meetingKeyFromRaceId(raceId);
   const event=key?manifest?.rescheduled_meetings?.[key]:null;
-  if(event?.status==="RESCHEDULED"&&event.actual_date===actualDate){
+  if(
+    event?.status==="RESCHEDULED"&&
+    event.actual_date===actualDate&&
+    rescheduleAppliesToRace(event,raceId)
+  ){
     return {scheduledDate:event.scheduled_date,status:"RESCHEDULED"};
   }
   return {scheduledDate:actualDate,status:"ACTIVE"};
