@@ -126,7 +126,11 @@ const requiresScheduleContract=Boolean(
 );
 
 const existing=oddsManifest.days[date];
+const repairedAt=String(raceDayEntry?.reschedule_repaired_at??"");
+const oddsUpdatedAt=String(existing?.updated_at??"");
+const scheduleRepairFresh=!repairedAt||Boolean(oddsUpdatedAt&&oddsUpdatedAt>=repairedAt);
 if(existing?.status==="SUCCESS"&&
+   scheduleRepairFresh&&
    Number(existing.odds_pack_version)===ODDS_PACK_VERSION&&
    Number(existing.decoder_contract_version)===ODDS_DECODER_CONTRACT_VERSION&&
    (!requiresScheduleContract||
