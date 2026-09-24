@@ -22262,7 +22262,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2019/2019/11/1109.html"
     }
   },
-  "updated_at": "2026-09-24T08:33:52.678Z",
+  "updated_at": "2026-09-24T08:33:59.787Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -134276,6 +134276,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2019-11-07.json"
+    },
+    "2019-11-06": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-24T08:33:59.788Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20191106/",
+          "title": "2019年11月06日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 69348,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20191106",
+          "title": "レース一覧 | 2019年11月6日 レース情報(JRA) - netkeiba",
+          "html_length": 43284,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2019-11-06.json"
     }
   },
   "rescheduled_meetings": {
