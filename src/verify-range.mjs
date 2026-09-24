@@ -2,7 +2,7 @@ import {readFile} from "node:fs/promises";
 import {gunzipSync} from "node:zlib";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
-  meetingKeyFromRaceId,rescheduleCoversScheduledDate,scheduleIntegrityEnabled,validateRaceOwnership,
+  meetingKeyFromRaceId,rescheduleAppliesToRace,rescheduleCoversScheduledDate,scheduleIntegrityEnabled,validateRaceOwnership,
 } from "./schedule-integrity.mjs";
 import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments} from "./lap-parser.mjs";
@@ -34,6 +34,16 @@ if(scheduleIntegrity){
       throw new Error("invalid reschedule dates: "+key+" "+scheduled+" -> "+actual);
     }
 
+    const partial=event?.scope==="PARTIAL"||Array.isArray(event?.race_nos);
+    const movedRaceNos=partial
+      ?[...new Set((event.race_nos??[]).map(Number))]
+        .filter(n=>Number.isInteger(n)&&n>=1&&n<=12)
+        .sort((a,b)=>a-b)
+      :[];
+    if(partial&&!movedRaceNos.length){
+      throw new Error("partial reschedule missing race_nos: "+key);
+    }
+
     const scheduledEntry=manifest.days?.[scheduled];
     if(scheduledEntry?.file){
       let rows=dayRowsCache.get(scheduled);
@@ -42,8 +52,15 @@ if(scheduleIntegrity){
         rows=text?text.split("\n").map(JSON.parse):[];
         dayRowsCache.set(scheduled,rows);
       }
-      if(rows.some(row=>meetingKeyFromRaceId(row?.race?.race_id)===key)){
-        throw new Error("rescheduled meeting still owned by scheduled day: "+key+" / "+scheduled);
+      const illegallyOwned=rows.filter(row=>{
+        const raceId=String(row?.race?.race_id??"");
+        return meetingKeyFromRaceId(raceId)===key&&rescheduleAppliesToRace(event,raceId);
+      });
+      if(illegallyOwned.length){
+        throw new Error(
+          "rescheduled race still owned by scheduled day: "+
+          String(illegallyOwned[0]?.race?.race_id??key)+" / "+scheduled
+        );
       }
     }
 
@@ -55,9 +72,24 @@ if(scheduleIntegrity){
         rows=text?text.split("\n").map(JSON.parse):[];
         dayRowsCache.set(actual,rows);
       }
-      const moved=rows.filter(row=>meetingKeyFromRaceId(row?.race?.race_id)===key);
+      const moved=rows.filter(row=>{
+        const raceId=String(row?.race?.race_id??"");
+        return meetingKeyFromRaceId(raceId)===key&&rescheduleAppliesToRace(event,raceId);
+      });
       if(!moved.length){
         throw new Error("rescheduled meeting missing from actual day: "+key+" / "+actual);
+      }
+      if(partial){
+        const actualRaceNos=new Set(moved.map(row=>
+          Number(String(row?.race?.race_id??"").slice(10,12))
+        ));
+        const missing=movedRaceNos.filter(raceNo=>!actualRaceNos.has(raceNo));
+        if(missing.length){
+          throw new Error(
+            "partial reschedule races missing from actual day: "+
+            key+" / "+actual+" / "+missing.join(",")
+          );
+        }
       }
       for(const row of moved){
         if(
@@ -215,7 +247,8 @@ for(const date of rangeDates){
             !event||
             event.status!=="RESCHEDULED"||
             event.scheduled_date!==scheduledDate||
-            event.actual_date!==actualDate
+            event.actual_date!==actualDate||
+            !rescheduleAppliesToRace(event,raceId)
           ){
             throw new Error(`missing reschedule ledger for ${raceId}: ${scheduledDate} -> ${actualDate}`);
           }
