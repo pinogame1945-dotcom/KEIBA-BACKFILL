@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,rescheduleEventFromMeeting,
-  rescheduleEventFromRaceDates,rescheduleCoversScheduledDate,scheduleForRace,scheduleIntegrityEnabled,
+  rescheduleAppliesToRace,rescheduleEventFromRaceDates,rescheduleCoversScheduledDate,scheduleForRace,scheduleIntegrityEnabled,
   upsertRescheduleEvents,validateRaceOwnership,
 } from "../src/schedule-integrity.mjs";
 
@@ -80,6 +80,40 @@ assert.equal(chainedEvent.actual_date,"2026-02-10");
 assert.equal(rescheduleCoversScheduledDate(chainedEvent,"2026-02-08"),true);
 assert.equal(rescheduleCoversScheduledDate(chainedEvent,"2026-02-09"),true);
 assert.equal(rescheduleCoversScheduledDate(chainedEvent,"2026-02-10"),false);
+
+const partialManifest={days:{},rescheduled_meetings:{}};
+for(let raceNo=3;raceNo<=12;raceNo+=1){
+  const raceId="2020060302"+String(raceNo).padStart(2,"0");
+  upsertRescheduleEvents(partialManifest,[
+    rescheduleEventFromRaceDates(raceId,"2020-03-29","2020-03-31"),
+  ],"2020-03-31T00:00:00.000Z");
+}
+const partialEvent=partialManifest.rescheduled_meetings["2020060302"];
+assert.equal(partialEvent.scope,"PARTIAL");
+assert.deepEqual(partialEvent.race_nos,[3,4,5,6,7,8,9,10,11,12]);
+assert.equal(rescheduleAppliesToRace(partialEvent,"202006030201"),false);
+assert.equal(rescheduleAppliesToRace(partialEvent,"202006030203"),true);
+assert.deepEqual(
+  scheduleForRace(partialManifest,"202006030201","2020-03-29"),
+  {scheduledDate:"2020-03-29",status:"ACTIVE"},
+);
+assert.deepEqual(
+  scheduleForRace(partialManifest,"202006030203","2020-03-31"),
+  {scheduledDate:"2020-03-29",status:"RESCHEDULED"},
+);
+
+const partialMeetingText=[
+  "3回中山2日",
+  "1レース 2レース",
+  "中山競馬は第3レース以降を中止。",
+  "代替競馬は3月31日に実施。",
+].join(" ");
+const partialMeeting=parseJraMeetingScheduleText(partialMeetingText,{
+  year:2020,date:"2020-03-29",venueCodes:venues,
+});
+assert.equal(partialMeeting.meetings[0].status,"ACTIVE");
+assert.deepEqual(partialMeeting.meetings[0].race_nos,[1,2]);
+assert.equal(rescheduleEventFromMeeting(partialMeeting.meetings[0]),null);
 
 const inferred=rescheduleEventFromRaceDates(
   "202606040701","2026-09-21","2026-09-22",
