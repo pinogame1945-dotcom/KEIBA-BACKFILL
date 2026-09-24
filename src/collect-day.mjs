@@ -14,7 +14,7 @@ import {classifyRaceDiscipline,selectRaceMeta} from "./race-meta.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
-  rescheduleEventFromMeeting,rescheduleEventFromRaceDates,scheduleForRace,
+  rescheduleAppliesToRace,rescheduleEventFromMeeting,rescheduleEventFromRaceDates,scheduleForRace,
   scheduleIntegrityEnabled,upsertCancellationEvents,upsertRescheduleEvents,
   validateRaceOwnership,
 } from "./schedule-integrity.mjs";
@@ -436,8 +436,11 @@ async function repairRescheduledTargetPacks(manifest,events){
     const rows=text?text.split("\n").map(JSON.parse):[];
     let changed=false;
     for(const row of rows){
-      const key=meetingKeyFromRaceId(row?.race?.race_id);
-      const event=dateEvents.find(item=>item.meeting_key===key);
+      const raceId=String(row?.race?.race_id??"");
+      const key=meetingKeyFromRaceId(raceId);
+      const event=dateEvents.find(item=>
+        item.meeting_key===key&&rescheduleAppliesToRace(item,raceId)
+      );
       if(!event)continue;
       if(String(row?.race?.actual_date??"")!==actualDate){
         throw new Error("target pack actual_date mismatch during reschedule repair: "+actualDate+" / "+String(row?.race?.race_id??""));
