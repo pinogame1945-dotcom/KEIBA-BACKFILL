@@ -109,7 +109,7 @@ jobs:
                 throw new Error("odds unavailable race details mismatch: "+date);
               }
               for(const item of details){
-                if(!/^\\d{12}$/.test(String(item?.race_id??""))||!item?.source_status){
+                if(!/^\d{12}$/.test(String(item?.race_id??""))||!item?.source_status){
                   throw new Error("invalid unavailable odds race detail: "+date);
                 }
               }
