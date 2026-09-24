@@ -45,6 +45,9 @@ const completed=new Set(
         Number(entry?.decoder_contract_version??0)<1
       )return false;
       const raceEntry=raceManifest.days?.[date];
+      const repairedAt=String(raceEntry?.reschedule_repaired_at??"");
+      const oddsUpdatedAt=String(entry?.updated_at??"");
+      if(repairedAt&&(!oddsUpdatedAt||oddsUpdatedAt<repairedAt))return false;
       if(
         scheduleIntegrity&&
         Number(raceEntry?.schedule_contract_version??0)>=SCHEDULE_CONTRACT_VERSION
