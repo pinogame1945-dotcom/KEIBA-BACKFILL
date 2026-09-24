@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {
-  archiveHistoricalOddsPayload,finalOddsTuple,parseNetkeibaOddsResponse,summarizeOddsGroups,
+  archiveHistoricalOddsPayload,finalOddsTuple,nonFinalHistoricalOddsStatus,parseNetkeibaOddsResponse,summarizeOddsGroups,
 } from "../src/historical-odds-pack.mjs";
 
 assert.deepEqual(
@@ -54,6 +54,10 @@ const parsed=parseNetkeibaOddsResponse(JSON.stringify(payload));
 assert.equal(parsed.status,"result");
 const jsonp=parseNetkeibaOddsResponse("callback("+JSON.stringify(payload)+");");
 assert.equal(jsonp.data.odds["4"]["0616"][3],"7.1");
+assert.equal(nonFinalHistoricalOddsStatus({status:"result"}),null);
+assert.equal(nonFinalHistoricalOddsStatus({status:"yoso"}),"yoso");
+assert.equal(nonFinalHistoricalOddsStatus({status:"middle"}),"middle");
+assert.equal(nonFinalHistoricalOddsStatus({}),null);
 
 assert.throws(()=>archiveHistoricalOddsPayload({
   raceId:"201005050810",

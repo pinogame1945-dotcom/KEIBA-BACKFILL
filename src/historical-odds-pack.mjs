@@ -27,6 +27,13 @@ export function parseNetkeibaOddsResponse(text){
   }
 }
 
+export function nonFinalHistoricalOddsStatus(payload){
+  if(!payload||typeof payload!=="object")return null;
+  if(!Object.prototype.hasOwnProperty.call(payload,"status"))return null;
+  const status=String(payload.status??"missing").trim()||"missing";
+  return status==="result"?null:status;
+}
+
 export function summarizeOddsGroups(odds){
   const summary={};
   for(const [group,map] of Object.entries(odds??{})){

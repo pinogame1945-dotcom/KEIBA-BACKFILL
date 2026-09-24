@@ -3,7 +3,7 @@ import {gunzipSync,gzipSync} from "node:zlib";
 import path from "node:path";
 import {
   NETKEIBA_ODDS_START_DATE,ODDS_DECODER_CONTRACT_VERSION,ODDS_PACK_VERSION,
-  archiveHistoricalOddsPayload,parseNetkeibaOddsResponse,
+  archiveHistoricalOddsPayload,nonFinalHistoricalOddsStatus,parseNetkeibaOddsResponse,
 } from "./historical-odds-pack.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,scheduleIntegrityEnabled,
@@ -176,6 +176,7 @@ const raceOwners=readRaceOwnersFromDay(await readFile(dayPath),date);
 if(!raceOwners.length)throw new Error("race pack has no races: "+dayPath);
 
 const records=[];
+const unavailableRaces=[];
 let rawResponseBytes=0;
 for(let i=0;i<raceOwners.length;i+=1){
   const owner=raceOwners[i];
@@ -185,12 +186,33 @@ for(let i=0;i<raceOwners.length;i+=1){
   const text=await politeFetch(url);
   rawResponseBytes+=Buffer.byteLength(text);
   const payload=parseNetkeibaOddsResponse(text);
+  const nonFinalStatus=nonFinalHistoricalOddsStatus(payload);
+  if(nonFinalStatus){
+    const unavailable={
+      race_id:raceId,
+      source_status:nonFinalStatus,
+      reason:"FINAL_ODDS_UNAVAILABLE_FROM_SOURCE",
+    };
+    unavailableRaces.push(unavailable);
+    console.warn(
+      "[odds] final odds unavailable; quarantine race "+raceId+
+      " status="+nonFinalStatus
+    );
+    continue;
+  }
   records.push(archiveHistoricalOddsPayload({
     raceId,payload,sourceUrl:url,fetchedAt:new Date().toISOString(),
     actualDate:requiresScheduleContract?owner.actualDate:null,
     scheduledDate:requiresScheduleContract?owner.scheduledDate:null,
     scheduleContractVersion:requiresScheduleContract?SCHEDULE_CONTRACT_VERSION:null,
   }));
+}
+
+if(!records.length){
+  throw new Error(
+    "historical odds source returned no final races for "+date+
+    "; refusing empty odds pack"
+  );
 }
 
 const jsonl=records.map(row=>JSON.stringify(row)).join("\n")+"\n";
@@ -213,7 +235,10 @@ oddsManifest.odds_pack_version=ODDS_PACK_VERSION;
 oddsManifest.decoder_contract_version=ODDS_DECODER_CONTRACT_VERSION;
 oddsManifest.days[date]={
   status:"SUCCESS",
+  source_races:raceOwners.length,
   races:records.length,
+  unavailable_races:unavailableRaces.length,
+  ...(unavailableRaces.length?{unavailable_race_details:unavailableRaces}:{}),
   file:oddsDailyPath,
   odds_pack_version:ODDS_PACK_VERSION,
   decoder_contract_version:ODDS_DECODER_CONTRACT_VERSION,
@@ -227,6 +252,7 @@ oddsManifest.days[date]={
 await atomicWrite(oddsManifestPath,Buffer.from(JSON.stringify(oddsManifest,null,2)+"\n"));
 
 console.log(JSON.stringify({
-  date,races:records.length,file:oddsDailyPath,
+  date,source_races:raceOwners.length,races:records.length,
+  unavailable_races:unavailableRaces,file:oddsDailyPath,
   raw_response_bytes:rawResponseBytes,compressed_bytes:zipped.length,groups,
 },null,2));

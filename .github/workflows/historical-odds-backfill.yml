@@ -95,6 +95,25 @@ jobs:
             const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
             const rows=text?text.split("\n").map(JSON.parse):[];
             if(rows.length!==Number(day.races??0))throw new Error("odds race count mismatch: "+date);
+            const sourceRaces=Number(day.source_races??day.races??0);
+            const unavailableRaces=Number(day.unavailable_races??0);
+            if(sourceRaces!==rows.length+unavailableRaces){
+              throw new Error(
+                "odds source coverage mismatch: "+date+
+                " source="+sourceRaces+" final="+rows.length+" unavailable="+unavailableRaces
+              );
+            }
+            if(unavailableRaces>0){
+              const details=Array.isArray(day.unavailable_race_details)?day.unavailable_race_details:[];
+              if(details.length!==unavailableRaces){
+                throw new Error("odds unavailable race details mismatch: "+date);
+              }
+              for(const item of details){
+                if(!/^\\d{12}$/.test(String(item?.race_id??""))||!item?.source_status){
+                  throw new Error("invalid unavailable odds race detail: "+date);
+                }
+              }
+            }
             for(const row of rows){
               if(row.source_status!=="result")throw new Error("non-final odds row: "+date);
               if(!row.odds||typeof row.odds!=="object"||Array.isArray(row.odds)){
