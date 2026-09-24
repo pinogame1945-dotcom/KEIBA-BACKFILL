@@ -2370,10 +2370,12 @@
       "source_run_id": "36026053190",
       "next_start": "2019-01-26",
       "next_end": "2019-01-13",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-24T16:30:34.517Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-24T16:30:40.180Z",
+      "dispatch_source_run_id": "36026053190"
     }
   }
 }
