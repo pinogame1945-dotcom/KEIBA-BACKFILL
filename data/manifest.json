@@ -21302,7 +21302,7 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2020/2020/2/0229.html"
     }
   },
-  "updated_at": "2026-09-24T06:27:09.785Z",
+  "updated_at": "2026-09-24T06:27:50.291Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -129583,6 +129583,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2020-03-02.json"
+    },
+    "2020-02-28": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-24T06:27:50.291Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20200228/",
+          "title": "2020年02月28日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 55978,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20200228",
+          "title": "レース一覧 | 2020年2月28日 レース情報(JRA) - netkeiba",
+          "html_length": 42670,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2020-02-28.json"
     }
   },
   "rescheduled_meetings": {
