@@ -35469,7 +35469,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20151107/"
     }
   },
-  "updated_at": "2026-09-25T19:03:44.136Z",
+  "updated_at": "2026-09-25T19:03:52.197Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -202426,6 +202426,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2015-11-09.json"
+    },
+    "2015-11-06": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-25T19:03:52.197Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20151106/",
+          "title": "2015年11月06日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 63232,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20151106",
+          "title": "レース一覧 | 2015年11月6日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2015-11-06.json"
     }
   },
   "rescheduled_meetings": {
