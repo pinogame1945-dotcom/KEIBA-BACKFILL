@@ -112,7 +112,9 @@ export function normalizePayoutRows({
   );
   const popularities=alignedIntegers(
     popularityLines,combinations.length,arity,"popularity",
-  );
+  ).map(value=>(
+    Number.isInteger(value)&&Number(value)>0?Number(value):null
+  ));
 
   return combinations.map((combination,index)=>({
     race_id:raceId,

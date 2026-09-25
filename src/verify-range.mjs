@@ -281,6 +281,12 @@ for(const date of rangeDates){
         const count=(String(payout.combination??"").match(/\d+/g)??[]).length;
         if(count!==arity)throw new Error(`invalid payout combination ${row.race.race_id} ${payout.bet_type}: ${payout.combination}`);
         if(!Number.isFinite(Number(payout.payout_yen)))throw new Error(`invalid payout amount ${row.race.race_id} ${payout.bet_type}`);
+        if(payout.popularity!=null){
+          const popularity=Number(payout.popularity);
+          if(!Number.isInteger(popularity)||popularity<=0){
+            throw new Error(`invalid payout popularity ${row.race.race_id} ${payout.bet_type}: ${payout.combination} / ${payout.popularity}`);
+          }
+        }
       }
       for(const entry of row.entries??[]){
         if(entry.horse_id&&!horseIds.has(String(entry.horse_id))){

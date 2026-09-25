@@ -27,6 +27,12 @@ assert.deepEqual(
 );
 
 assert.deepEqual(
+  rows("PLACE",["18","17","2"],["240円","190円","170円"],["0人気","3人気","-1人気"])
+    .map(x=>[x.combination,x.payout_yen,x.popularity]),
+  [["18",240,null],["17",190,3],["2",170,null]],
+);
+
+assert.deepEqual(
   rows("BRACKET_QUINELLA",["3","5"],["370円","370円"],["2人気","2人気"]),
   [{race_id:"202609090101",bet_type:"BRACKET_QUINELLA",combination:"3-5",payout_yen:370,popularity:2}],
 );
