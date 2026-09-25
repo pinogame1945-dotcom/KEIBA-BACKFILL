@@ -31839,7 +31839,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20161223/"
     }
   },
-  "updated_at": "2026-09-25T09:54:35.473Z",
+  "updated_at": "2026-09-25T09:54:41.863Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -183770,6 +183770,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2016-12-22.json"
+    },
+    "2016-12-21": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-25T09:54:41.863Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20161221/",
+          "title": "2016年12月21日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 68902,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20161221",
+          "title": "レース一覧 | 2016年12月21日 レース情報(JRA) - netkeiba",
+          "html_length": 43288,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2016-12-21.json"
     }
   },
   "rescheduled_meetings": {
