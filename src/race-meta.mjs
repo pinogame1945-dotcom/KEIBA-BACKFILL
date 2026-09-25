@@ -3,6 +3,7 @@ function cleanMeta(value){
 }
 
 export const RACE_META_CONTRACT_VERSION=1;
+export const RACE_META_SAFE_RACE_PACK_VERSION=4;
 
 export function raceMetaFields(value){
   const meta=cleanMeta(value);
