@@ -11,7 +11,8 @@ import {findLast3fColumn,parseLast3fSeconds,RESULT_PARSER_VERSION} from "./resul
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./result-quality.mjs";
 import {
-  RACE_META_CONTRACT_VERSION,classifyRaceDiscipline,raceMetaFields,selectRaceMeta,
+  RACE_META_CONTRACT_VERSION,RACE_META_SAFE_RACE_PACK_VERSION,
+  classifyRaceDiscipline,raceMetaFields,selectRaceMeta,
 } from "./race-meta.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
@@ -32,9 +33,11 @@ const MIN_DELAY_MS = 1000;
 const delayMs = Math.max(MIN_DELAY_MS, Number(process.env.REQUEST_DELAY_MS || 1500));
 let lastFetchAt = 0;
 const scheduleIntegrity=scheduleIntegrityEnabled();
-const effectiveRacePackVersion=scheduleIntegrity
-  ?SCHEDULE_SAFE_RACE_PACK_VERSION
-  :RACE_PACK_VERSION;
+const effectiveRacePackVersion=Math.max(
+  RACE_PACK_VERSION,
+  RACE_META_SAFE_RACE_PACK_VERSION,
+  scheduleIntegrity?SCHEDULE_SAFE_RACE_PACK_VERSION:0,
+);
 
 function clean(v) {
   return (v ?? "").replace(/\s+/g, " ").trim();
@@ -509,6 +512,12 @@ const scheduleUpgradeExisting=Boolean(
     Number(existingDay.schedule_contract_version??0)<SCHEDULE_CONTRACT_VERSION
   )
 );
+const raceMetaUpgradeExisting=Boolean(
+  existingDay?.status==="SUCCESS"&&(
+    Number(existingDay.race_pack_version??0)<RACE_META_SAFE_RACE_PACK_VERSION||
+    Number(existingDay.race_meta_contract_version??0)<RACE_META_CONTRACT_VERSION
+  )
+);
 const resultParserUpgradeExisting=Boolean(
   existingDay?.status==="SUCCESS"&&
   Number(existingDay.result_parser_version??1)<RESULT_PARSER_VERSION
@@ -519,10 +528,12 @@ const lapParserUpgradeExisting=Boolean(
 );
 if (existingDay?.status === "SUCCESS" &&
     !forceRecollectCurrent &&
+    !raceMetaUpgradeExisting &&
     !resultParserUpgradeExisting &&
     !lapParserUpgradeExisting &&
     Number(existingDay.race_pack_version ?? 1) >= effectiveRacePackVersion &&
     Number(existingDay.payout_parser_version ?? 1) >= PAYOUT_PARSER_VERSION &&
+    Number(existingDay.race_meta_contract_version??0)>=RACE_META_CONTRACT_VERSION &&
     (!scheduleIntegrity||
       Number(existingDay.schedule_contract_version??0)>=SCHEDULE_CONTRACT_VERSION)) {
   if (!dailyFileExists) {
@@ -533,7 +544,8 @@ if (existingDay?.status === "SUCCESS" &&
 }
 if(
   forceRecollectCurrent&&existingDay?.status==="SUCCESS"&&
-  !resultParserUpgradeExisting&&!lapParserUpgradeExisting&&!scheduleUpgradeExisting
+  !raceMetaUpgradeExisting&&!resultParserUpgradeExisting&&
+  !lapParserUpgradeExisting&&!scheduleUpgradeExisting
 ){
   if(!dailyFileExists){
     throw new Error(`cannot force-recollect missing current pack: ${dailyPath}`);
@@ -555,7 +567,8 @@ if (legacyExisting && !rebuildLegacy) {
 }
 if (
   dailyFileExists&&!forceRecollectCurrent&&!legacyExisting&&
-  !scheduleUpgradeExisting&&!resultParserUpgradeExisting&&!lapParserUpgradeExisting
+  !scheduleUpgradeExisting&&!raceMetaUpgradeExisting&&
+  !resultParserUpgradeExisting&&!lapParserUpgradeExisting
 ) {
   throw new Error(`daily race pack already exists without compatible manifest metadata: ${dailyPath}`);
 }
@@ -564,6 +577,11 @@ if (legacyExisting && rebuildLegacy) {
 }
 if(scheduleUpgradeExisting){
   console.log(`[repair] upgrading race pack to schedule contract v${SCHEDULE_CONTRACT_VERSION} for ${date}`);
+}
+if(raceMetaUpgradeExisting){
+  console.log(
+    `[repair] upgrading race pack to metadata contract v${RACE_META_CONTRACT_VERSION} for ${date}`
+  );
 }
 if(resultParserUpgradeExisting){
   console.log(`[repair] rebuilding result parser v${Number(existingDay.result_parser_version??1)} pack with result parser v${RESULT_PARSER_VERSION} for ${date}`);
@@ -1024,6 +1042,7 @@ manifest.days[date]={
   repaired_for_schedule_integrity:scheduleUpgradeExisting||undefined,
   repaired_from_result_parser_v1:resultParserUpgradeExisting||undefined,
   repaired_from_lap_parser_v1:lapParserUpgradeExisting||undefined,
+  repaired_from_missing_race_meta:raceMetaUpgradeExisting||undefined,
   races_discovered:raceIds.length,
   races_rescheduled_away:rescheduledAway||undefined,
   races_parsed:records.length,
