@@ -65,6 +65,65 @@ jobs:
           npm run smoke:workflow-safety
           bash -n scripts/push-main-with-retry.sh
 
+      - name: Repair pending race day before normal range
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPAIR_FILE=".backfill/repair-race-day-kick"
+          if [ ! -f "$REPAIR_FILE" ]; then
+            echo "No pending race-day repair request."
+            exit 0
+          fi
+          STATUS=$(sed -n 's/^status=//p' "$REPAIR_FILE" | tail -1)
+          if [ "$STATUS" = "completed" ]; then
+            echo "Race-day repair already completed."
+            exit 0
+          fi
+          DATE=$(sed -n 's/^date=//p' "$REPAIR_FILE" | tail -1)
+          REASON=$(sed -n 's/^reason=//p' "$REPAIR_FILE" | tail -1)
+          if [[ ! "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Invalid pending repair date: $DATE"
+            exit 1
+          fi
+
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+
+          echo "========================================"
+          echo "REPAIR PENDING RACE DAY $DATE ($REASON)"
+          echo "========================================"
+          FORCE_RECOLLECT_CURRENT=1 node src/collect-day.mjs "$DATE"
+
+          node --input-type=module - "$DATE" "$REASON" <<'NODE'
+          import {readFile,writeFile} from "node:fs/promises";
+          const [date,reason]=process.argv.slice(2);
+          const path="data/manifest.json";
+          const manifest=JSON.parse(await readFile(path,"utf8"));
+          const day=manifest.days?.[date];
+          if(!day||day.status!=="SUCCESS")throw new Error("repaired day not SUCCESS: "+date);
+          day.updated_at=new Date().toISOString();
+          day.repair_reason=reason||"MANUAL_REPAIR";
+          await writeFile(path,JSON.stringify(manifest,null,2)+"\n");
+          NODE
+
+          node src/verify-range.mjs "$DATE" "$DATE"
+
+          COMPLETED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat > "$REPAIR_FILE" <<EOF
+          date=$DATE
+          reason=$REASON
+          status=completed
+          completed_at=$COMPLETED_AT
+          EOF
+
+          git add "data/daily/$DATE.jsonl.gz" data/manifest.json "$REPAIR_FILE"
+          if git diff --cached --quiet; then
+            echo "Repair produced no changes; refusing to mark silently."
+            exit 1
+          fi
+          git commit -m "data: repair race pack $DATE"
+          bash scripts/push-main-with-retry.sh
       - name: Resolve range
         id: input
         shell: bash
