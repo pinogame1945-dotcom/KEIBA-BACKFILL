@@ -2646,10 +2646,12 @@
       "source_run_id": "36074341602",
       "next_start": "2018-03-10",
       "next_end": "2018-02-25",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-25T00:03:27.443Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-25T00:03:31.344Z",
+      "dispatch_source_run_id": "36074341602"
     }
   }
 }
