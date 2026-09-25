@@ -33189,7 +33189,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20160723/"
     }
   },
-  "updated_at": "2026-09-25T13:36:50.920Z",
+  "updated_at": "2026-09-25T13:36:58.976Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -191215,6 +191215,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2016-07-19.json"
+    },
+    "2016-07-18": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-25T13:36:58.976Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20160718/",
+          "title": "2016年07月18日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 83207,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20160718",
+          "title": "レース一覧 | 2016年7月18日 レース情報(JRA) - netkeiba",
+          "html_length": 43284,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2016-07-18.json"
     }
   },
   "rescheduled_meetings": {
