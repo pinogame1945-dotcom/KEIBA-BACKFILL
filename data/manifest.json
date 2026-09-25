@@ -30579,7 +30579,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20170506/"
     }
   },
-  "updated_at": "2026-09-25T07:13:53.556Z",
+  "updated_at": "2026-09-25T07:14:01.161Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -177977,6 +177977,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2017-05-08.json"
+    },
+    "2017-05-05": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-25T07:14:01.161Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20170505/",
+          "title": "2017年05月05日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 63847,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20170505",
+          "title": "レース一覧 | 2017年5月5日 レース情報(JRA) - netkeiba",
+          "html_length": 42666,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2017-05-05.json"
     }
   },
   "rescheduled_meetings": {
