@@ -58088,6 +58088,82 @@
         }
       },
       "updated_at": "2026-09-25T00:48:13.535Z"
+    },
+    "2018-02-10": {
+      "status": "SUCCESS",
+      "source_races": 24,
+      "races": 22,
+      "unavailable_races": 2,
+      "unavailable_race_details": [
+        {
+          "race_id": "201808020512",
+          "source_status": "yoso",
+          "reason": "FINAL_ODDS_UNAVAILABLE_FROM_SOURCE"
+        },
+        {
+          "race_id": "201810010112",
+          "source_status": "yoso",
+          "reason": "FINAL_ODDS_UNAVAILABLE_FROM_SOURCE"
+        }
+      ],
+      "file": "data/odds/daily/2018-02-10.jsonl.gz",
+      "odds_pack_version": 1,
+      "decoder_contract_version": 1,
+      "schedule_contract_version": 1,
+      "request_delay_ms": 1500,
+      "raw_response_bytes": 2776354,
+      "compressed_bytes": 581729,
+      "groups": {
+        "1": {
+          "races": 22,
+          "rows": 329,
+          "priced_rows": 327,
+          "unavailable_races": 0
+        },
+        "2": {
+          "races": 22,
+          "rows": 329,
+          "priced_rows": 327,
+          "unavailable_races": 0
+        },
+        "3": {
+          "races": 22,
+          "rows": 763,
+          "priced_rows": 761,
+          "unavailable_races": 0
+        },
+        "4": {
+          "races": 22,
+          "rows": 2332,
+          "priced_rows": 2302,
+          "unavailable_races": 0
+        },
+        "5": {
+          "races": 22,
+          "rows": 2332,
+          "priced_rows": 2302,
+          "unavailable_races": 0
+        },
+        "6": {
+          "races": 22,
+          "rows": 4664,
+          "priced_rows": 4604,
+          "unavailable_races": 0
+        },
+        "7": {
+          "races": 22,
+          "rows": 10421,
+          "priced_rows": 10211,
+          "unavailable_races": 0
+        },
+        "8": {
+          "races": 22,
+          "rows": 62526,
+          "priced_rows": 60778,
+          "unavailable_races": 0
+        }
+      },
+      "updated_at": "2026-09-25T00:49:43.622Z"
     }
   }
 }
