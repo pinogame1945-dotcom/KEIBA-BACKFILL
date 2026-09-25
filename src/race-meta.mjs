@@ -2,6 +2,17 @@ function cleanMeta(value){
   return String(value??"").replace(/\s+/g," ").trim();
 }
 
+export const RACE_META_CONTRACT_VERSION=1;
+
+export function raceMetaFields(value){
+  const meta=cleanMeta(value);
+  return {
+    course_raw:meta||null,
+    conditions_raw:meta||null,
+    race_meta_raw:meta||null,
+  };
+}
+
 export function selectRaceMeta($){
   const legacyIntro=cleanMeta($(".data_intro").first().text());
   if(legacyIntro)return legacyIntro;
