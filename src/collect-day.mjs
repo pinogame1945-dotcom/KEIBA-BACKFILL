@@ -10,7 +10,9 @@ import {
 import {findLast3fColumn,parseLast3fSeconds,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./result-quality.mjs";
-import {classifyRaceDiscipline,selectRaceMeta} from "./race-meta.mjs";
+import {
+  RACE_META_CONTRACT_VERSION,classifyRaceDiscipline,raceMetaFields,selectRaceMeta,
+} from "./race-meta.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
@@ -379,6 +381,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     payout_parser_version: PAYOUT_PARSER_VERSION,
     result_parser_version: RESULT_PARSER_VERSION,
     lap_parser_version: LAP_PARSER_VERSION,
+    race_meta_contract_version:RACE_META_CONTRACT_VERSION,
     ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
     race: {
       race_id: raceId,
@@ -392,6 +395,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
       race_status: "COMPLETED",
       discipline, surface, distance_m: distance, direction,
       weather, track_condition: track, actual_start_time: startTime,
+      ...raceMetaFields(meta),
       source_url: sourceUrl
     },
     entries, results, payouts, laps, corners
@@ -881,6 +885,16 @@ const completeLapRaces=flatLapTargets.filter(row=>
 ).length;
 const flatRaceCount=records.filter(row=>row?.race?.discipline==="FLAT").length;
 const obstacleRaceCount=records.filter(row=>row?.race?.discipline==="OBSTACLE").length;
+const raceMetaMissing=records.filter(row=>
+  !String(row?.race?.conditions_raw??"").trim()||
+  !String(row?.race?.race_meta_raw??"").trim()
+);
+if(raceMetaMissing.length){
+  throw new Error(
+    "RESULT_QUALITY_RACE_META_MISSING "+date+
+    ": races="+raceMetaMissing.slice(0,10).map(row=>row?.race?.race_id).join(",")
+  );
+}
 const resultQuality={
   finished_results:finishedResults.length,
   finish_time_present:timedResults.length,
@@ -899,6 +913,8 @@ const resultQuality={
   flat_lap_coverage_pct:flatLapTargets.length
     ?Number((completeLapRaces/flatLapTargets.length*100).toFixed(1))
     :100,
+  race_meta_contract_version:RACE_META_CONTRACT_VERSION,
+  race_meta_present:records.length-raceMetaMissing.length,
 };
 if(flatLast3f.timedResults>=8&&flatLast3f.finishTimeCoverage>=0.8&&flatLast3f.last3fCoverage<0.9){
   throw new Error(
@@ -996,10 +1012,12 @@ if(manifest.schedule_exception_days)delete manifest.schedule_exception_days[date
 if(manifest.non_meeting_days)delete manifest.non_meeting_days[date];
 manifest.days[date]={
   status:"SUCCESS",
+  updated_at:new Date().toISOString(),
   race_pack_version:effectiveRacePackVersion,
   payout_parser_version:PAYOUT_PARSER_VERSION,
   result_parser_version:RESULT_PARSER_VERSION,
   lap_parser_version:LAP_PARSER_VERSION,
+  race_meta_contract_version:RACE_META_CONTRACT_VERSION,
   result_quality:resultQuality,
   ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
   repaired_from_legacy_payout_v1:legacyExisting||undefined,
