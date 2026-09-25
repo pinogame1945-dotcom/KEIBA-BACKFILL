@@ -7,6 +7,7 @@ const control=JSON.parse(await readFile(".backfill/control.json","utf8"));
 const oddsSwitch=(await readFile(".backfill/odds-auto-enabled","utf8")).trim();
 const odds=await readFile(".github/workflows/historical-odds-backfill.yml","utf8");
 const pushHelper=await readFile("scripts/push-main-with-retry.sh","utf8");
+const raceMetaRepair=await readFile(".github/workflows/repair-race-meta.yml","utf8");
 
 assert.ok(day.includes("workflow_dispatch:"),"day backfill must be manual-dispatch capable");
 assert.ok(!day.includes("\n  push:\n"),"day backfill must not auto-run on repository push");
@@ -70,5 +71,24 @@ assert.equal(typeof control.enabled,"boolean","historical self-chain repository 
 assert.ok(["enabled","disabled"].includes(oddsSwitch),"historical odds auto-follow repository switch must be enabled or disabled");
 assert.equal(control.stop_date,"2006-09-01","historical self-chain stop date changed unexpectedly");
 assert.equal(control.range_days,14,"historical self-chain batch size changed unexpectedly");
+
+assert.ok(
+  raceMetaRepair.includes("workflow_dispatch:"),
+  "race metadata repair must be explicit manual dispatch only",
+);
+assert.ok(
+  !raceMetaRepair.includes("\n  push:\n")&&
+  !raceMetaRepair.includes("workflow_run:"),
+  "race metadata repair must never auto-start or self-chain",
+);
+assert.ok(
+  raceMetaRepair.includes('max_repairs:')&&
+  raceMetaRepair.includes('default: "10"'),
+  "race metadata repair must stay bounded by explicit batch size",
+);
+assert.ok(
+  raceMetaRepair.includes("bash scripts/push-main-with-retry.sh"),
+  "race metadata repair writes must use retry-safe main push",
+);
 
 console.log("workflow production safety smoke ok");
