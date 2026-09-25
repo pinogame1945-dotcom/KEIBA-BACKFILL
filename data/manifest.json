@@ -34357,9 +34357,39 @@
       "file": "data/daily/2016-03-12.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20160312/"
+    },
+    "2016-03-06": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 513,
+        "finish_time_present": 513,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 499,
+        "flat_finish_time_present": 499,
+        "last3f_present": 499,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2016-03-06.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20160306/"
     }
   },
-  "updated_at": "2026-09-25T16:42:49.762Z",
+  "updated_at": "2026-09-25T16:46:21.127Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -135194,6 +135224,62 @@
         "average_profile_fetch_ms": 1898,
         "average_pedigree_fetch_ms": 2220,
         "measured_horses": 42
+      }
+    },
+    "horse-2016-03-06-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 33,
+      "file": "data/horses/horse-2016-03-06-001.jsonl.gz",
+      "source_dates": [
+        "2016-03-06"
+      ],
+      "source_horse_ids": [
+        "2010100815",
+        "2010103776",
+        "2010104300",
+        "2011101007",
+        "2011101202",
+        "2011101564",
+        "2011101584",
+        "2012100651",
+        "2012101313",
+        "2012102023",
+        "2012102243",
+        "2012103935",
+        "2012106139",
+        "2013100512",
+        "2013100638",
+        "2013100792",
+        "2013100909",
+        "2013100992",
+        "2013101805",
+        "2013101958",
+        "2013102116",
+        "2013102701",
+        "2013103225",
+        "2013103369",
+        "2013103706",
+        "2013103870",
+        "2013104242",
+        "2013104787",
+        "2013105371",
+        "2013105600",
+        "2013106269",
+        "2013109005",
+        "2013109096"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 134681,
+        "average_ms_per_horse": 4081,
+        "median_ms_per_horse": 4035,
+        "min_ms_per_horse": 2277,
+        "max_ms_per_horse": 5224,
+        "average_profile_fetch_ms": 1817,
+        "average_pedigree_fetch_ms": 2246,
+        "measured_horses": 33
       }
     }
   },
