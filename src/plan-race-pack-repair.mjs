@@ -2,6 +2,9 @@ import {readFile} from "node:fs/promises";
 import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION} from "./lap-parser.mjs";
 import {SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION} from "./schedule-integrity.mjs";
+import {
+  RACE_META_CONTRACT_VERSION,RACE_META_SAFE_RACE_PACK_VERSION,
+} from "./race-meta.mjs";
 
 const [newest="9999-12-31",oldest="0000-01-01",limitRaw="10"]=process.argv.slice(2);
 const dateRe=/^\d{4}-\d{2}-\d{2}$/;
@@ -16,7 +19,12 @@ for(const [date,entry] of Object.entries(manifest.days??{})){
   if(date>newest||date<oldest)continue;
   if(entry?.status!=="SUCCESS")continue;
   const reasons=[];
-  if(Number(entry.race_pack_version??1)<SCHEDULE_SAFE_RACE_PACK_VERSION)reasons.push("race_pack");
+  if(Number(entry.race_pack_version??1)<Math.max(
+    SCHEDULE_SAFE_RACE_PACK_VERSION,RACE_META_SAFE_RACE_PACK_VERSION,
+  ))reasons.push("race_pack");
+  if(Number(entry.race_meta_contract_version??0)<RACE_META_CONTRACT_VERSION){
+    reasons.push("race_meta");
+  }
   if(Number(entry.result_parser_version??1)<RESULT_PARSER_VERSION)reasons.push("result_parser");
   if(Number(entry.lap_parser_version??1)<LAP_PARSER_VERSION)reasons.push("lap_parser");
   if(Number(entry.schedule_contract_version??0)<SCHEDULE_CONTRACT_VERSION)reasons.push("schedule_contract");
@@ -29,7 +37,10 @@ console.log(JSON.stringify({
   newest,
   oldest,
   current_contract:{
-    race_pack_version:SCHEDULE_SAFE_RACE_PACK_VERSION,
+    race_pack_version:Math.max(
+      SCHEDULE_SAFE_RACE_PACK_VERSION,RACE_META_SAFE_RACE_PACK_VERSION,
+    ),
+    race_meta_contract_version:RACE_META_CONTRACT_VERSION,
     result_parser_version:RESULT_PARSER_VERSION,
     lap_parser_version:LAP_PARSER_VERSION,
     schedule_contract_version:SCHEDULE_CONTRACT_VERSION,
