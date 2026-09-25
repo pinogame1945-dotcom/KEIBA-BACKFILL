@@ -1,0 +1,99 @@
+name: Repair race metadata manually
+
+on:
+  workflow_dispatch:
+    inputs:
+      newest_date:
+        description: "Newest existing SUCCESS day eligible for metadata repair"
+        required: true
+        default: "2026-09-20"
+      oldest_date:
+        description: "Oldest existing SUCCESS day eligible for metadata repair"
+        required: true
+        default: "2006-09-01"
+      max_repairs:
+        description: "Maximum meeting days to repair in this run (1-20)"
+        required: true
+        default: "10"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keiba-race-meta-manual-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
+      SKIP_EMPTY: "1"
+      REPAIR_NEWEST: ${{ github.event.inputs.newest_date }}
+      REPAIR_OLDEST: ${{ github.event.inputs.oldest_date }}
+      REPAIR_MAX: ${{ github.event.inputs.max_repairs }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate metadata repair source
+        run: |
+          set -euo pipefail
+          node --check src/collect-day.mjs
+          node --check src/plan-race-meta-repair.mjs
+          npm run smoke:race-meta
+
+      - name: Plan bounded metadata repair
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          node src/plan-race-meta-repair.mjs "$REPAIR_NEWEST" "$REPAIR_OLDEST" "$REPAIR_MAX" \
+            | tee /tmp/race-meta-repair-plan.json
+          SELECTED=$(jq -r '.selected_days' /tmp/race-meta-repair-plan.json)
+          echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
+
+      - name: Repair selected meeting days
+        if: ${{ steps.plan.outputs.selected != '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          mapfile -t DATES < <(jq -r '.dates[].date' /tmp/race-meta-repair-plan.json)
+          for DATE in "${DATES[@]}"; do
+            echo "========================================"
+            echo "RACE META REPAIR $DATE"
+            echo "========================================"
+
+            git pull --rebase origin main
+            node src/collect-day.mjs "$DATE"
+            node src/verify-range.mjs "$DATE" "$DATE"
+
+            git add "data/daily/$DATE.jsonl.gz" data/manifest.json data/debug/ 2>/dev/null || true
+            if git diff --cached --quiet; then
+              echo "No metadata repair changes for $DATE."
+              continue
+            fi
+            git commit -m "data: repair race metadata $DATE"
+            git pull --rebase origin main
+            git push
+          done
+
+      - name: Report remaining metadata gaps
+        shell: bash
+        run: |
+          set -euo pipefail
+          node src/plan-race-meta-repair.mjs "$REPAIR_NEWEST" "$REPAIR_OLDEST" "20"
