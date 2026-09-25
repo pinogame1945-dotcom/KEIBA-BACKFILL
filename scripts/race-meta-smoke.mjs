@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import {load} from "cheerio";
-import {classifyRaceDiscipline,selectRaceMeta} from "../src/race-meta.mjs";
+import {
+  RACE_META_CONTRACT_VERSION,classifyRaceDiscipline,raceMetaFields,selectRaceMeta,
+} from "../src/race-meta.mjs";
 
 const flatLive=load(`
 <html><body>
@@ -12,6 +14,12 @@ const flatLive=load(`
 `);
 const flatMeta=selectRaceMeta(flatLive);
 assert.match(flatMeta,/芝1600m/);
+assert.equal(RACE_META_CONTRACT_VERSION,1);
+assert.deepEqual(raceMetaFields(flatMeta),{
+  course_raw:flatMeta,
+  conditions_raw:flatMeta,
+  race_meta_raw:flatMeta,
+});
 assert.ok(!flatMeta.includes("障害特集"),"live meta must not fall back to polluted page text");
 assert.equal(
   classifyRaceDiscipline(flatMeta,flatLive(".RaceName").first().text()),
