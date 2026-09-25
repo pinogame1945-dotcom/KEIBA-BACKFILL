@@ -3186,10 +3186,12 @@
       "source_run_id": "36144828343",
       "next_start": "2016-06-18",
       "next_end": "2016-06-05",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-25T14:20:41.374Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-25T14:20:45.984Z",
+      "dispatch_source_run_id": "36144828343"
     }
   }
 }
