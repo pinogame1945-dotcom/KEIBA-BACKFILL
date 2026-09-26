@@ -185,7 +185,9 @@ manifest.margin_parser_version=Math.max(
 day.race_meta_parser_version=RACE_META_PARSER_VERSION;
 day.margin_parser_version=MARGIN_PARSER_VERSION;
 day.race_meta_coverage=coverage;
-day.race_meta_updated_at=new Date().toISOString();
+const updatedAt=new Date().toISOString();
+if(!dayRaceMetaCurrent)day.race_meta_updated_at=updatedAt;
+day.margin_updated_at=updatedAt;
 await writeFile(manifestPath,JSON.stringify(manifest,null,2)+"\n");
 
 console.log(JSON.stringify({
