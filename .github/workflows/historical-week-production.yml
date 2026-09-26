@@ -390,8 +390,7 @@ jobs:
           git add .backfill/state.json
           if ! git diff --cached --quiet; then
             git commit -m "ci: prepare next historical range $NEXT_START to $NEXT_END"
-            git pull --rebase origin main
-            git push
+            bash scripts/push-main-with-retry.sh
           fi
 
           OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/historical-week-production.yml/runs?per_page=30" \
