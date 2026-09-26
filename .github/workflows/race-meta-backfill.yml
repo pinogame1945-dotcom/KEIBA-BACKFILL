@@ -51,9 +51,11 @@ jobs:
       - name: Validate race meta parser
         run: |
           node --check src/race-meta.mjs
+          node --check src/margin-normalization.mjs
           node --check src/race-meta-backfill.mjs
           node --check src/plan-race-meta-backfill.mjs
           npm run smoke:race-meta
+          npm run smoke:margin
           bash -n scripts/push-main-with-retry.sh
 
       - name: Resolve plan

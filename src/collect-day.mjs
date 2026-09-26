@@ -8,6 +8,7 @@ import {
   normalizePayoutRows,PAYOUT_PARSER_VERSION,RACE_PACK_VERSION,
 } from "./payout-normalization.mjs";
 import {findLast3fColumn,parseLast3fSeconds,RESULT_PARSER_VERSION} from "./result-columns.mjs";
+import {MARGIN_PARSER_VERSION,normalizeMarginRaw} from "./margin-normalization.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./result-quality.mjs";
 import {
@@ -341,6 +342,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
       result_status: status,
       finish_time_ms: finishTimeMs(cellText(idx.time)),
       margin_raw: marginRaw || null,
+      ...normalizeMarginRaw(marginRaw),
       last_3f: parseLast3fSeconds(cellText(idx.last3f)),
       corner_raw: cellText(idx.corner) || null,
       win_odds: floatOrNull(cellText(idx.odds)),
@@ -386,6 +388,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     race_pack_version: effectiveRacePackVersion,
     payout_parser_version: PAYOUT_PARSER_VERSION,
     result_parser_version: RESULT_PARSER_VERSION,
+    margin_parser_version:MARGIN_PARSER_VERSION,
     lap_parser_version: LAP_PARSER_VERSION,
     race_meta_parser_version:RACE_META_PARSER_VERSION,
     ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
@@ -1002,6 +1005,9 @@ manifest.payout_parser_version=Math.max(
 manifest.result_parser_version=Math.max(
   Number(manifest.result_parser_version??1),RESULT_PARSER_VERSION,
 );
+manifest.margin_parser_version=Math.max(
+  Number(manifest.margin_parser_version??0),MARGIN_PARSER_VERSION,
+);
 manifest.lap_parser_version=Math.max(
   Number(manifest.lap_parser_version??1),LAP_PARSER_VERSION,
 );
@@ -1015,6 +1021,7 @@ manifest.days[date]={
   race_pack_version:effectiveRacePackVersion,
   payout_parser_version:PAYOUT_PARSER_VERSION,
   result_parser_version:RESULT_PARSER_VERSION,
+  margin_parser_version:MARGIN_PARSER_VERSION,
   lap_parser_version:LAP_PARSER_VERSION,
   race_meta_parser_version:RACE_META_PARSER_VERSION,
   race_meta_coverage:raceMetaCoverage,

@@ -58,6 +58,7 @@ jobs:
           node --check src/verify-range.mjs
           node --check src/plan-race-pack-repair.mjs
           npm run smoke:result-columns
+          npm run smoke:margin
           npm run smoke:result-quality
           npm run smoke:race-meta
           npm run smoke:lap
