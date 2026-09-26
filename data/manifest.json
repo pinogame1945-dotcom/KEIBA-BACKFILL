@@ -42099,7 +42099,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20131102/"
     }
   },
-  "updated_at": "2026-09-26T11:39:54.178Z",
+  "updated_at": "2026-09-26T11:40:00.933Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -236168,6 +236168,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2013-10-31.json"
+    },
+    "2013-10-30": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-26T11:40:00.933Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20131030/",
+          "title": "2013年10月30日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 68952,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20131030",
+          "title": "レース一覧 | 2013年10月30日 レース情報(JRA) - netkeiba",
+          "html_length": 43288,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2013-10-30.json"
     }
   },
   "rescheduled_meetings": {
