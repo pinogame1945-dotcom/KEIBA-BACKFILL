@@ -1,0 +1,131 @@
+name: ML opponent large holdout
+
+on:
+  push:
+    branches:
+      - pc-ml-dataset-v1
+    paths:
+      - ".github/workflows/ml-opponent-large-holdout.yml"
+      - "scripts/ml-large-dataset.mjs"
+      - "ml/**"
+      - "src/ml-dataset.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dataset leakage smoke
+        run: npm run smoke:ml-dataset
+
+      - name: Build 2022-2025 real-data dataset
+        run: node scripts/ml-large-dataset.mjs /tmp/keiba-ml-large.jsonl.gz
+
+      - name: Install ML dependencies
+        run: python -m pip install --disable-pip-version-check -r ml/requirements.txt
+
+      - name: Train BASE
+        run: |
+          python ml/train_lightgbm.py \
+            --dataset /tmp/keiba-ml-large.jsonl.gz \
+            --feature-set base \
+            --train-start 2022-01-01 \
+            --train-end 2024-12-31 \
+            --valid-start 2025-01-01 \
+            --valid-end 2025-12-31 \
+            --model-out /tmp/base-large.txt \
+            --meta-out /tmp/base-large.json
+
+      - name: Train OPPONENT V1
+        run: |
+          python ml/train_lightgbm.py \
+            --dataset /tmp/keiba-ml-large.jsonl.gz \
+            --feature-set opponent \
+            --train-start 2022-01-01 \
+            --train-end 2024-12-31 \
+            --valid-start 2025-01-01 \
+            --valid-end 2025-12-31 \
+            --model-out /tmp/opponent-large.txt \
+            --meta-out /tmp/opponent-large.json
+
+      - name: Train NETWORK V2
+        run: |
+          python ml/train_lightgbm.py \
+            --dataset /tmp/keiba-ml-large.jsonl.gz \
+            --feature-set network \
+            --train-start 2022-01-01 \
+            --train-end 2024-12-31 \
+            --valid-start 2025-01-01 \
+            --valid-end 2025-12-31 \
+            --model-out /tmp/network-large.txt \
+            --meta-out /tmp/network-large.json
+
+      - name: Compare 2025 holdout
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          models={
+              'base': json.loads(Path('/tmp/base-large.json').read_text()),
+              'opponent_v1': json.loads(Path('/tmp/opponent-large.json').read_text()),
+              'network_v2': json.loads(Path('/tmp/network-large.json').read_text()),
+          }
+          split=models['base']['split']
+          for model in models.values():
+              assert model['ability_uses_odds'] is False
+              assert model['split']==split
+
+          keys=[
+              'top1_winner_capture',
+              'top3_winner_capture',
+              'top6_winner_capture',
+              'mean_winner_rank',
+              'mean_reciprocal_winner_rank',
+              'race_normalized_nll',
+              'raw_logloss',
+              'raw_brier',
+              'raw_roc_auc',
+          ]
+          metrics={
+              name:{k:model['metrics'][k] for k in keys}
+              for name,model in models.items()
+          }
+          result={
+              'split':split,
+              **metrics,
+              'delta_network_minus_base':{
+                  k:(metrics['network_v2'][k]-metrics['base'][k])
+                  if metrics['network_v2'][k] is not None and metrics['base'][k] is not None else None
+                  for k in keys
+              },
+              'delta_network_minus_opponent_v1':{
+                  k:(metrics['network_v2'][k]-metrics['opponent_v1'][k])
+                  if metrics['network_v2'][k] is not None and metrics['opponent_v1'][k] is not None else None
+                  for k in keys
+              },
+              'network_features':[
+                  item for item in models['network_v2']['feature_importance_gain']
+                  if item['feature'].startswith('network_')
+              ],
+          }
+          print('ML_OPPONENT_LARGE_HOLDOUT_RESULT')
+          print(json.dumps(result, indent=2))
+          PY
