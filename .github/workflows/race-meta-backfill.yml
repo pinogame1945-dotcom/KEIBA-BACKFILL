@@ -1,1 +1,136 @@
-name: Race Meta Backfill\n\non:\n  workflow_dispatch:\n    inputs:\n      max_days:\n        description: "Race days per batch"\n        required: true\n        default: "6"\n      min_date:\n        description: "Oldest supported race date"\n        required: true\n        default: "2006-09-01"\n      allow_self_chain:\n        description: "Continue automatically"\n        required: true\n        type: boolean\n        default: true\n  push:\n    branches: [main]\n    paths:\n      - ".backfill/race-meta-kick"\n\npermissions:\n  contents: write\n  actions: write\n\nconcurrency:\n  group: keiba-race-meta-backfill\n  cancel-in-progress: false\n\njobs:\n  backfill:\n    runs-on: ubuntu-latest\n    timeout-minutes: 180\n    env:\n      REQUEST_DELAY_MS: "1500"\n\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n\n      - uses: actions/setup-node@v4\n        with:\n          node-version: "24"\n\n      - name: Install\n        run: npm install --no-audit --no-fund\n\n      - name: Validate race meta parser\n        run: |\n          node --check src/race-meta.mjs\n          node --check src/race-meta-backfill.mjs\n          node --check src/plan-race-meta-backfill.mjs\n          npm run smoke:race-meta\n          bash -n scripts/push-main-with-retry.sh\n\n      - name: Resolve plan\n        id: plan\n        shell: bash\n        run: |\n          set -euo pipefail\n          MAX_DAYS="${{ inputs.max_days }}"\n          MIN_DATE="${{ inputs.min_date }}"\n          MAX_DAYS="${MAX_DAYS:-6}"\n          MIN_DATE="${MIN_DATE:-2006-09-01}"\n          PLAN=$(node src/plan-race-meta-backfill.mjs plan "$MAX_DAYS" "$MIN_DATE")\n          echo "$PLAN"\n          printf '%s' "$PLAN" | jq -r '.selected_dates[]' > /tmp/race-meta-dates.txt\n          echo "max_days=$MAX_DAYS" >> "$GITHUB_OUTPUT"\n          echo "min_date=$MIN_DATE" >> "$GITHUB_OUTPUT"\n\n      - name: Backfill race meta days\n        shell: bash\n        run: |\n          set -euo pipefail\n          git config user.name "keiba-backfill-bot"\n          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"\n\n          while IFS= read -r DATE; do\n            [ -n "$DATE" ] || continue\n            echo "========================================"\n            echo "RACE META BACKFILL $DATE"\n            echo "========================================"\n\n            git pull --rebase origin main\n            node src/race-meta-backfill.mjs "$DATE"\n\n            git add "data/daily/$DATE.jsonl.gz" data/manifest.json\n            if git diff --cached --quiet; then\n              echo "No race meta changes for $DATE"\n              continue\n            fi\n            git commit -m "data: race meta backfill $DATE"\n            bash scripts/push-main-with-retry.sh\n          done < /tmp/race-meta-dates.txt\n\n      - name: Coverage summary\n        shell: bash\n        run: |\n          set -euo pipefail\n          git pull --rebase origin main\n          node src/plan-race-meta-backfill.mjs plan 6 "${{ steps.plan.outputs.min_date }}"\n\n      - name: Self-chain\n        shell: bash\n        env:\n          GH_TOKEN: ${{ github.token }}\n        run: |\n          set -euo pipefail\n          AUTO=$(cat .backfill/race-meta-auto-enabled 2>/dev/null || true)\n          ALLOW="${{ inputs.allow_self_chain }}"\n          ALLOW="${ALLOW:-true}"\n          if [ "$AUTO" != "enabled" ] || [ "$ALLOW" != "true" ]; then\n            echo "Race Meta auto-chain disabled."\n            exit 0\n          fi\n\n          git pull --rebase origin main\n          MAX_DAYS="${{ steps.plan.outputs.max_days }}"\n          MIN_DATE="${{ steps.plan.outputs.min_date }}"\n          PLAN=$(node src/plan-race-meta-backfill.mjs plan "$MAX_DAYS" "$MIN_DATE")\n          PENDING=$(printf '%s' "$PLAN" | jq -r '.pending_days')\n          if [ "$PENDING" = "0" ]; then\n            echo "Race Meta Backfill complete."\n            exit 0\n          fi\n\n          OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/race-meta-backfill.yml/runs?per_page=30" \\n            --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID and (.status == \"queued\" or .status == \"in_progress\"))] | length")\n          if [ "$OTHER_ACTIVE" != "0" ]; then\n            echo "Another Race Meta Backfill run is already active/queued; skip duplicate."\n            exit 0\n          fi\n\n          gh workflow run race-meta-backfill.yml \\n            --ref main \\n            -f max_days="$MAX_DAYS" \\n            -f min_date="$MIN_DATE" \\n            -f allow_self_chain="true"\n
+name: Race Meta Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_days:
+        description: "Race days per batch"
+        required: true
+        default: "6"
+      min_date:
+        description: "Oldest supported race date"
+        required: true
+        default: "2006-09-01"
+      allow_self_chain:
+        description: "Continue automatically"
+        required: true
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - ".backfill/race-meta-kick"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: keiba-race-meta-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      REQUEST_DELAY_MS: "1500"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Validate race meta parser
+        run: |
+          node --check src/race-meta.mjs
+          node --check src/race-meta-backfill.mjs
+          node --check src/plan-race-meta-backfill.mjs
+          npm run smoke:race-meta
+          bash -n scripts/push-main-with-retry.sh
+
+      - name: Resolve plan
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAX_DAYS="${{ inputs.max_days }}"
+          MIN_DATE="${{ inputs.min_date }}"
+          MAX_DAYS="${MAX_DAYS:-6}"
+          MIN_DATE="${MIN_DATE:-2006-09-01}"
+          PLAN=$(node src/plan-race-meta-backfill.mjs plan "$MAX_DAYS" "$MIN_DATE")
+          echo "$PLAN"
+          printf '%s' "$PLAN" | jq -r '.selected_dates[]' > /tmp/race-meta-dates.txt
+          echo "max_days=$MAX_DAYS" >> "$GITHUB_OUTPUT"
+          echo "min_date=$MIN_DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Backfill race meta days
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          while IFS= read -r DATE; do
+            [ -n "$DATE" ] || continue
+            echo "========================================"
+            echo "RACE META BACKFILL $DATE"
+            echo "========================================"
+
+            git pull --rebase origin main
+            node src/race-meta-backfill.mjs "$DATE"
+
+            git add "data/daily/$DATE.jsonl.gz" data/manifest.json
+            if git diff --cached --quiet; then
+              echo "No race meta changes for $DATE"
+              continue
+            fi
+            git commit -m "data: race meta backfill $DATE"
+            bash scripts/push-main-with-retry.sh
+          done < /tmp/race-meta-dates.txt
+
+      - name: Coverage summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          node src/plan-race-meta-backfill.mjs plan 6 "${{ steps.plan.outputs.min_date }}"
+
+      - name: Self-chain
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          AUTO=$(cat .backfill/race-meta-auto-enabled 2>/dev/null || true)
+          ALLOW="${{ inputs.allow_self_chain }}"
+          ALLOW="${ALLOW:-true}"
+          if [ "$AUTO" != "enabled" ] || [ "$ALLOW" != "true" ]; then
+            echo "Race Meta auto-chain disabled."
+            exit 0
+          fi
+
+          git pull --rebase origin main
+          MAX_DAYS="${{ steps.plan.outputs.max_days }}"
+          MIN_DATE="${{ steps.plan.outputs.min_date }}"
+          PLAN=$(node src/plan-race-meta-backfill.mjs plan "$MAX_DAYS" "$MIN_DATE")
+          PENDING=$(printf '%s' "$PLAN" | jq -r '.pending_days')
+          if [ "$PENDING" = "0" ]; then
+            echo "Race Meta Backfill complete."
+            exit 0
+          fi
+
+          OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/race-meta-backfill.yml/runs?per_page=30" --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID and (.status == \"queued\" or .status == \"in_progress\"))] | length")
+          if [ "$OTHER_ACTIVE" != "0" ]; then
+            echo "Another Race Meta Backfill run is already active/queued; skip duplicate."
+            exit 0
+          fi
+
+          gh workflow run race-meta-backfill.yml --ref main -f max_days="$MAX_DAYS" -f min_date="$MIN_DATE" -f allow_self_chain="true"
