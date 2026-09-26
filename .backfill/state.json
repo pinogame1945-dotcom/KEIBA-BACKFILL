@@ -3588,6 +3588,16 @@
       "range_days": 14,
       "dispatched_at": "2026-09-26T00:50:31.017Z",
       "dispatch_source_run_id": "36205250048"
+    },
+    "2015-03-14..2015-03-01": {
+      "completed_at": "2026-09-26T01:05:12.309Z",
+      "source_run_id": "36206315841",
+      "next_start": "2015-02-28",
+      "next_end": "2015-02-15",
+      "next_dispatched": false,
+      "dispatch_prepared_at": "2026-09-26T01:05:12.309Z",
+      "stop_date": "2006-09-01",
+      "range_days": 14
     }
   }
 }
