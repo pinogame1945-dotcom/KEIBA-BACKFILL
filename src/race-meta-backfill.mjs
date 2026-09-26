@@ -8,7 +8,7 @@ import {
 } from "./race-meta.mjs";
 
 const [date]=process.argv.slice(2);
-if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date??"")){
+if(!/^\d{4}-\d{2}-\d{2}$/.test(date??"")){
   throw new Error("Usage: node src/race-meta-backfill.mjs YYYY-MM-DD");
 }
 
@@ -17,7 +17,7 @@ const USER_AGENT="KEIBA-BACKFILL/0.1 (+https://github.com/pinogame1945-dotcom/KE
 const delayMs=Math.max(1000,Number(process.env.REQUEST_DELAY_MS||1500));
 let lastFetchAt=0;
 
-const clean=value=>String(value??"").replace(/\\s+/g," ").trim();
+const clean=value=>String(value??"").replace(/\s+/g," ").trim();
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 function decode(bytes){
@@ -67,7 +67,7 @@ async function politeFetch(url){
 
 async function fetchNormalizedMeta(row){
   const raceId=String(row?.race?.race_id??"");
-  if(!/^\\d{12}$/.test(raceId))throw new Error("invalid race_id in race meta pack: "+raceId);
+  if(!/^\d{12}$/.test(raceId))throw new Error("invalid race_id in race meta pack: "+raceId);
   const urls=[
     "https://race.netkeiba.com/race/result.html?race_id="+raceId,
     DB_BASE+"/race/"+raceId+"/",
@@ -112,7 +112,7 @@ if(!day||day.status!=="SUCCESS"||!day.file){
 
 const zipped=await readFile(day.file);
 const text=gunzipSync(zipped).toString("utf8").trim();
-const rows=text?text.split("\\n").map(JSON.parse):[];
+const rows=text?text.split("\n").map(JSON.parse):[];
 if(rows.length!==Number(day.races_parsed??0)){
   throw new Error("race meta source pack count mismatch "+date);
 }
@@ -145,7 +145,7 @@ for(let i=0;i<rows.length;i++){
 const coverage=summarizeRaceMetaCoverage(updated);
 for(const row of updated)validateRaceMetaFields(row.race);
 
-const lines=updated.map(row=>JSON.stringify(row)).join("\\n")+(updated.length?"\\n":"");
+const lines=updated.map(row=>JSON.stringify(row)).join("\n")+(updated.length?"\n":"");
 const tempPath=day.file+".race-meta.tmp";
 await writeFile(tempPath,gzipSync(Buffer.from(lines,"utf8"),{level:9}));
 await rename(tempPath,day.file);
@@ -157,7 +157,7 @@ manifest.race_meta_parser_version=Math.max(
 day.race_meta_parser_version=RACE_META_PARSER_VERSION;
 day.race_meta_coverage=coverage;
 day.race_meta_updated_at=new Date().toISOString();
-await writeFile(manifestPath,JSON.stringify(manifest,null,2)+"\\n");
+await writeFile(manifestPath,JSON.stringify(manifest,null,2)+"\n");
 
 console.log(JSON.stringify({
   ok:true,date,skipped:false,races:updated.length,
