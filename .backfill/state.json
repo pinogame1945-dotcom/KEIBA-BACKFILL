@@ -3894,10 +3894,12 @@
       "source_run_id": "36230946462",
       "next_start": "2014-03-15",
       "next_end": "2014-03-02",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-26T09:09:59.074Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-26T09:10:03.508Z",
+      "dispatch_source_run_id": "36230946462"
     }
   }
 }
