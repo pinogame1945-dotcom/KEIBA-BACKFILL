@@ -1005,6 +1005,9 @@ manifest.payout_parser_version=Math.max(
 manifest.result_parser_version=Math.max(
   Number(manifest.result_parser_version??1),RESULT_PARSER_VERSION,
 );
+manifest.margin_parser_version=Math.max(
+  Number(manifest.margin_parser_version??0),MARGIN_PARSER_VERSION,
+);
 manifest.lap_parser_version=Math.max(
   Number(manifest.lap_parser_version??1),LAP_PARSER_VERSION,
 );
@@ -1018,6 +1021,7 @@ manifest.days[date]={
   race_pack_version:effectiveRacePackVersion,
   payout_parser_version:PAYOUT_PARSER_VERSION,
   result_parser_version:RESULT_PARSER_VERSION,
+  margin_parser_version:MARGIN_PARSER_VERSION,
   lap_parser_version:LAP_PARSER_VERSION,
   race_meta_parser_version:RACE_META_PARSER_VERSION,
   race_meta_coverage:raceMetaCoverage,
