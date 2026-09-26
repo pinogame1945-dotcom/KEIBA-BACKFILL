@@ -25,6 +25,8 @@
     "smoke:workflow-safety": "node scripts/workflow-safety-smoke.mjs",
     "smoke:result-quality": "node scripts/result-quality-smoke.mjs",
     "smoke:race-meta": "node scripts/race-meta-smoke.mjs",
-    "smoke:repair-plan": "node scripts/race-pack-repair-plan-smoke.mjs"
+    "smoke:repair-plan": "node scripts/race-pack-repair-plan-smoke.mjs",
+    "build:ml-dataset": "node src/build-ml-dataset.mjs",
+    "smoke:ml-dataset": "node scripts/ml-dataset-smoke.mjs"
   }
 }

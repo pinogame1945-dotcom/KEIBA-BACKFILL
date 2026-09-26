@@ -1,0 +1,116 @@
+name: ML dataset real-data audit
+
+on:
+  push:
+    branches:
+      - pc-ml-dataset-v1
+    paths:
+      - ".github/workflows/ml-dataset-realdata-audit.yml"
+      - "src/ml-dataset.mjs"
+      - "src/build-ml-dataset.mjs"
+      - "scripts/ml-dataset-smoke.mjs"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Synthetic leakage smoke
+        run: npm run smoke:ml-dataset
+
+      - name: Audit real BACKFILL packs
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          import { gunzipSync } from "node:zlib";
+          import { buildMlDataset, buildRaceOutcomes } from "./src/ml-dataset.mjs";
+
+          const dates = [
+            "2022-09-17",
+            "2022-09-18",
+            "2022-09-19",
+            "2022-09-24",
+            "2022-09-25",
+            "2022-10-01",
+          ];
+          const rows = [];
+          for (const date of dates) {
+            const buf = await readFile(`data/daily/${date}.jsonl.gz`);
+            const text = gunzipSync(buf).toString("utf8").trim();
+            if (text) rows.push(...text.split("\n").map(JSON.parse));
+          }
+
+          const dataset = buildMlDataset(rows, {
+            startDate: "2022-09-24",
+            endDate: "2022-10-01",
+            historyLimit: 5,
+          });
+          const outcomes = buildRaceOutcomes(rows, {
+            startDate: "2022-09-24",
+            endDate: "2022-10-01",
+          });
+
+          const forbidden = new Set([
+            "win_odds","popularity","official_finish_position","finish_time_ms",
+            "last_3f","prize_money","payouts"
+          ]);
+          const leaks = [];
+          for (const row of dataset) {
+            for (const key of Object.keys(row.features ?? {})) {
+              if (forbidden.has(key)) leaks.push({race_id:row.race_id,horse_id:row.horse_id,key});
+            }
+          }
+          if (leaks.length) throw new Error("feature leakage: "+JSON.stringify(leaks.slice(0,10)));
+
+          const withHistory = dataset.filter(row => Number(row.features?.prior_starts ?? 0) > 0);
+          const marketPresent = dataset.filter(row =>
+            row.market_outcome?.final_win_odds != null &&
+            row.market_outcome?.final_popularity != null
+          );
+          const targetsPresent = dataset.filter(row =>
+            row.target?.finish_position != null ||
+            row.target?.result_status != null
+          );
+          const payoutRaces = outcomes.filter(row => (row.payouts ?? []).length > 0);
+          const priorStarts = dataset.map(row => Number(row.features?.prior_starts ?? 0));
+
+          const summary = {
+            source_dates: dates,
+            source_races: rows.length,
+            output_rows: dataset.length,
+            output_races: new Set(dataset.map(row => row.race_id)).size,
+            unique_horses: new Set(dataset.map(row => row.horse_id)).size,
+            rows_with_prior_history: withHistory.length,
+            history_coverage: dataset.length ? withHistory.length / dataset.length : 0,
+            max_prior_starts: priorStarts.length ? Math.max(...priorStarts) : 0,
+            target_rows_present: targetsPresent.length,
+            market_rows_present: marketPresent.length,
+            race_outcome_rows: outcomes.length,
+            races_with_payouts: payoutRaces.length,
+            feature_leaks: leaks.length,
+            sample_with_history: withHistory[0] ?? null,
+            sample_race_outcome: payoutRaces[0] ?? null,
+          };
+
+          if (!dataset.length) throw new Error("real-data audit produced zero rows");
+          if (!withHistory.length) throw new Error("real-data audit found no historical features");
+          if (targetsPresent.length !== dataset.length) throw new Error("target coverage mismatch");
+          if (marketPresent.length === 0) throw new Error("market outcome missing");
+          if (payoutRaces.length === 0) throw new Error("race payout outcome missing");
+
+          console.log("ML_REAL_DATA_AUDIT");
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
