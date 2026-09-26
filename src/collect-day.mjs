@@ -10,7 +10,10 @@ import {
 import {findLast3fColumn,parseLast3fSeconds,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./result-quality.mjs";
-import {classifyRaceDiscipline,selectRaceMeta} from "./race-meta.mjs";
+import {
+  RACE_META_PARSER_VERSION,classifyRaceDiscipline,normalizeRaceMeta,
+  selectRaceMetaParts,summarizeRaceMetaCoverage,
+} from "./race-meta.mjs";
 import {
   SCHEDULE_CONTRACT_VERSION,SCHEDULE_SAFE_RACE_PACK_VERSION,
   cancellationEventFromMeeting,meetingKeyFromRaceId,parseJraMeetingScheduleText,
@@ -236,7 +239,12 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     ? `${dm[1]}-${String(Number(dm[2])).padStart(2,"0")}-${String(Number(dm[3])).padStart(2,"0")}`
     : fallbackDate;
 
-  const meta = selectRaceMeta($);
+  const metaParts = selectRaceMetaParts($);
+  const meta = metaParts.race_meta_raw ?? "";
+  const normalizedRaceMeta = normalizeRaceMeta({
+    ...metaParts,
+    race_name:raceName,
+  });
 
   const distance = intOrNull(meta.match(/(\d{3,4})m/)?.[1]);
   const discipline = classifyRaceDiscipline(meta,raceName);
@@ -379,6 +387,7 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
     payout_parser_version: PAYOUT_PARSER_VERSION,
     result_parser_version: RESULT_PARSER_VERSION,
     lap_parser_version: LAP_PARSER_VERSION,
+    race_meta_parser_version:RACE_META_PARSER_VERSION,
     ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
     race: {
       race_id: raceId,
@@ -391,6 +400,8 @@ function parseRaceResult(html, raceId, fallbackDate, sourceUrl) {
       race_name: raceName,
       race_status: "COMPLETED",
       discipline, surface, distance_m: distance, direction,
+      ...normalizedRaceMeta,
+      race_meta_source_url:sourceUrl,
       weather, track_condition: track, actual_start_time: startTime,
       source_url: sourceUrl
     },
@@ -928,6 +939,8 @@ if(flatLapTargets.length>0&&completeLapRaces!==flatLapTargets.length){
   );
 }
 
+const raceMetaCoverage=summarizeRaceMetaCoverage(records);
+
 const manifest = await loadManifest();
 manifest.schema_version=1;
 manifest.days=manifest.days??{};
@@ -992,6 +1005,9 @@ manifest.result_parser_version=Math.max(
 manifest.lap_parser_version=Math.max(
   Number(manifest.lap_parser_version??1),LAP_PARSER_VERSION,
 );
+manifest.race_meta_parser_version=Math.max(
+  Number(manifest.race_meta_parser_version??0),RACE_META_PARSER_VERSION,
+);
 if(manifest.schedule_exception_days)delete manifest.schedule_exception_days[date];
 if(manifest.non_meeting_days)delete manifest.non_meeting_days[date];
 manifest.days[date]={
@@ -1000,6 +1016,8 @@ manifest.days[date]={
   payout_parser_version:PAYOUT_PARSER_VERSION,
   result_parser_version:RESULT_PARSER_VERSION,
   lap_parser_version:LAP_PARSER_VERSION,
+  race_meta_parser_version:RACE_META_PARSER_VERSION,
+  race_meta_coverage:raceMetaCoverage,
   result_quality:resultQuality,
   ...(scheduleIntegrity?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
   repaired_from_legacy_payout_v1:legacyExisting||undefined,
@@ -1025,6 +1043,6 @@ console.log(JSON.stringify({
   ok:true,date,races:records.length,rescheduledAway,
   entries:records.reduce((n,r)=>n+r.entries.length,0),
   payouts:records.reduce((n,r)=>n+r.payouts.length,0),
-  resultQuality,
+  resultQuality,raceMetaCoverage,
   output:outPath,
 },null,2));

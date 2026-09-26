@@ -7,6 +7,9 @@ import {
 import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments} from "./lap-parser.mjs";
 import {flatLast3fDayQuality,raceFlatLast3fQuality} from "./result-quality.mjs";
+import {
+  RACE_META_PARSER_VERSION,summarizeRaceMetaCoverage,validateRaceMetaFields,
+} from "./race-meta.mjs";
 
 const [startDate,endDate]=process.argv.slice(2);
 const dateRe=/^\d{4}-\d{2}-\d{2}$/;
@@ -195,6 +198,16 @@ for(const date of rangeDates){
     const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
     const rows=text?text.split("\n").map(JSON.parse):[];
     if(rows.length!==day.races_parsed)throw new Error(`daily race count mismatch ${date}`);
+    const dayRaceMetaVersion=Number(day.race_meta_parser_version??0);
+    if(dayRaceMetaVersion>=RACE_META_PARSER_VERSION){
+      const recomputedRaceMetaCoverage=summarizeRaceMetaCoverage(rows);
+      if(
+        day.race_meta_coverage&&
+        JSON.stringify(day.race_meta_coverage)!==JSON.stringify(recomputedRaceMetaCoverage)
+      ){
+        throw new Error(`race meta coverage mismatch: ${date}`);
+      }
+    }
     const flatRaceCount=rows.filter(row=>row?.race?.discipline==="FLAT").length;
     const obstacleRaceCount=rows.filter(row=>row?.race?.discipline==="OBSTACLE").length;
     if(rows.length>=8&&flatRaceCount===0){
@@ -260,6 +273,12 @@ for(const date of rangeDates){
       }
       if(Number(row.lap_parser_version??1)<LAP_PARSER_VERSION){
         throw new Error(`legacy lap parser row ${row.race.race_id}`);
+      }
+      if(dayRaceMetaVersion>=RACE_META_PARSER_VERSION){
+        if(Number(row.race_meta_parser_version??0)<RACE_META_PARSER_VERSION){
+          throw new Error(`legacy race meta row ${row.race.race_id}`);
+        }
+        validateRaceMetaFields(row.race);
       }
       if(!Array.isArray(row.entries)||!Array.isArray(row.results)||!Array.isArray(row.payouts)||!Array.isArray(row.laps)){
         throw new Error(`invalid race arrays ${row.race.race_id}`);
