@@ -1,0 +1,58 @@
+name: Debug historical odds HTTP 400
+
+on:
+  push:
+    branches:
+      - debug/odds-2013-400
+    paths:
+      - ".github/workflows/debug-old-odds.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Probe old and known-good odds endpoints
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const races=[
+            ["failing-2013-02-24","201306020201"],
+            ["previous-window-2013-03-03","201306020801"],
+            ["modern-control","202606040201"],
+          ];
+          const types=["all","1","2","3","4","5","6","7","8"];
+          const base="https://race.netkeiba.com/api/api_get_jra_odds.html";
+          const headers={
+            "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+            "Referer":"https://race.netkeiba.com/",
+            "Accept":"application/json, text/javascript, */*",
+            "Accept-Language":"ja,en;q=0.5",
+          };
+          for(const [label,raceId] of races){
+            for(const type of types){
+              const url=new URL(base);
+              for(const [k,v] of Object.entries({
+                pid:"api_get_jra_odds",race_id:raceId,type,action:"init",
+                sort:"odds",compress:"0",output:"json",
+              }))url.searchParams.set(k,v);
+              let status="ERR",body="";
+              try{
+                const r=await fetch(url,{headers,signal:AbortSignal.timeout(15000)});
+                status=String(r.status);
+                body=(await r.text()).replace(/\s+/g," ").slice(0,180);
+              }catch(e){
+                body=String(e?.message??e);
+              }
+              console.log(JSON.stringify({label,raceId,type,status,body}));
+              await new Promise(r=>setTimeout(r,1500));
+            }
+          }
+          NODE
