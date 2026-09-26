@@ -43777,9 +43777,39 @@
       "file": "data/daily/2013-04-28.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20130428/"
+    },
+    "2013-04-27": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "result_quality": {
+        "finished_results": 534,
+        "finish_time_present": 534,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 510,
+        "flat_finish_time_present": 510,
+        "last3f_present": 510,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 34,
+        "obstacle_races": 2,
+        "flat_lap_target_races": 34,
+        "flat_lap_complete_races": 34,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2013-04-27.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20130427/"
     }
   },
-  "updated_at": "2026-09-26T16:37:55.860Z",
+  "updated_at": "2026-09-26T16:44:17.540Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -166766,6 +166796,106 @@
         "average_profile_fetch_ms": 1864,
         "average_pedigree_fetch_ms": 2312,
         "measured_horses": 49
+      }
+    },
+    "horse-2013-04-27-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 50,
+      "file": "data/horses/horse-2013-04-27-001.jsonl.gz",
+      "source_dates": [
+        "2013-04-27"
+      ],
+      "source_horse_ids": [
+        "2002110227",
+        "2004105617",
+        "2005102013",
+        "2006100919",
+        "2006103486",
+        "2006104223",
+        "2007103137",
+        "2007103866",
+        "2007104109",
+        "2007104872",
+        "2007105242",
+        "2007109058",
+        "2008100955",
+        "2008101365",
+        "2008101417",
+        "2008101849",
+        "2008102209",
+        "2008110098",
+        "2009100513",
+        "2009100595",
+        "2009100725",
+        "2009101730",
+        "2009103624",
+        "2009103667",
+        "2009104126",
+        "2010100166",
+        "2010100608",
+        "2010100614",
+        "2010100771",
+        "2010101599",
+        "2010101791",
+        "2010102209",
+        "2010102410",
+        "2010102468",
+        "2010102839",
+        "2010102891",
+        "2010102962",
+        "2010103243",
+        "2010103447",
+        "2010103674",
+        "2010103902",
+        "2010104150",
+        "2010104550",
+        "2010104610",
+        "2010104859",
+        "2010105094",
+        "2010105305",
+        "2010105408",
+        "2010105614",
+        "2010105874"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 206617,
+        "average_ms_per_horse": 4132,
+        "median_ms_per_horse": 4202,
+        "min_ms_per_horse": 2553,
+        "max_ms_per_horse": 4975,
+        "average_profile_fetch_ms": 1785,
+        "average_pedigree_fetch_ms": 2330,
+        "measured_horses": 50
+      }
+    },
+    "horse-2013-04-27-002": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 4,
+      "file": "data/horses/horse-2013-04-27-002.jsonl.gz",
+      "source_dates": [
+        "2013-04-27"
+      ],
+      "source_horse_ids": [
+        "2010105903",
+        "2010106422",
+        "2010106438",
+        "2010106560"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 15213,
+        "average_ms_per_horse": 3803,
+        "median_ms_per_horse": 4161,
+        "min_ms_per_horse": 2190,
+        "max_ms_per_horse": 4699,
+        "average_profile_fetch_ms": 1380,
+        "average_pedigree_fetch_ms": 2380,
+        "measured_horses": 4
       }
     }
   },
