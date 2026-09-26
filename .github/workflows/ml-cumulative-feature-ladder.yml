@@ -1,0 +1,133 @@
+name: ML cumulative feature ladder
+
+on:
+  push:
+    branches:
+      - pc-ml-dataset-v1
+    paths:
+      - ".github/workflows/ml-cumulative-feature-ladder.yml"
+      - "research/**"
+
+permissions:
+  contents: read
+
+jobs:
+  ladder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Environment before
+        run: |
+          echo "=== MEMORY ==="
+          free -h
+          echo "=== DISK ==="
+          df -h .
+          du -sh data || true
+
+      - name: Dataset leakage smoke
+        run: npm run smoke:ml-dataset
+
+      - name: Build cumulative staged dataset
+        run: |
+          /usr/bin/time -v -o /tmp/time-build.txt \
+            node research/build-staged-dataset.mjs /tmp/keiba-ml-staged.jsonl.gz
+          echo "=== BUILD RESOURCE ==="
+          cat /tmp/time-build.txt
+          echo "=== DATASET FILE ==="
+          ls -lh /tmp/keiba-ml-staged.jsonl.gz
+          echo "=== DISK AFTER BUILD ==="
+          df -h .
+
+      - name: Install ML dependencies
+        run: python -m pip install --disable-pip-version-check -r ml/requirements.txt
+
+      - name: Train cumulative stages
+        shell: bash
+        run: |
+          set -euo pipefail
+          stages=(base opponent_v1 opponent_both lap style pedigree distance)
+          for stage in "${stages[@]}"; do
+            echo "===== STAGE $stage ====="
+            /usr/bin/time -v -o "/tmp/time-$stage.txt" \
+              python research/train-staged-lightgbm.py \
+                --dataset /tmp/keiba-ml-staged.jsonl.gz \
+                --stage "$stage" \
+                --train-start 2022-01-01 \
+                --train-end 2024-12-31 \
+                --valid-start 2025-01-01 \
+                --valid-end 2025-12-31 \
+                --model-out "/tmp/$stage.txt" \
+                --meta-out "/tmp/$stage.json"
+            echo "=== RESOURCE $stage ==="
+            cat "/tmp/time-$stage.txt"
+          done
+
+      - name: Compare ladder
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          stages=['base','opponent_v1','opponent_both','lap','style','pedigree','distance']
+          data={s:json.loads(Path(f'/tmp/{s}.json').read_text()) for s in stages}
+          split=data['base']['split']
+          for s in stages:
+              assert data[s]['split']==split
+              assert data[s]['ability_uses_odds'] is False
+
+          keys=[
+              'top1_winner_capture','top3_winner_capture','top6_winner_capture',
+              'mean_winner_rank','mean_reciprocal_winner_rank',
+              'race_normalized_nll','raw_logloss','raw_brier','raw_roc_auc'
+          ]
+          rows=[]
+          prev=None
+          for s in stages:
+              m=data[s]['metrics']
+              row={
+                  'stage':s,
+                  'feature_count':data[s]['feature_count'],
+                  **{k:m[k] for k in keys},
+              }
+              if prev is not None:
+                  pm=data[prev]['metrics']
+                  row['delta_vs_previous']={
+                      k:(m[k]-pm[k]) for k in keys
+                  }
+              rows.append(row)
+              prev=s
+
+          final=data['distance']
+          added_prefixes=['opponent_','network_','lap_','style_','pedigree_','distx_']
+          important_added=[
+              x for x in final['feature_importance_gain']
+              if any(x['feature'].startswith(p) for p in added_prefixes)
+          ][:30]
+          print('ML_CUMULATIVE_LADDER_RESULT')
+          print(json.dumps({
+              'split':split,
+              'stages':rows,
+              'final_added_feature_importance':important_added,
+          }, indent=2))
+          PY
+
+      - name: Environment after
+        run: |
+          echo "=== MEMORY ==="
+          free -h
+          echo "=== DISK ==="
+          df -h .
