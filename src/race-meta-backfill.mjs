@@ -6,6 +6,7 @@ import {
   RACE_META_PARSER_VERSION,normalizeRaceMeta,selectRaceMetaParts,
   summarizeRaceMetaCoverage,validateRaceMetaFields,
 } from "./race-meta.mjs";
+import {MARGIN_PARSER_VERSION,normalizeMarginRaw,validateMarginFields} from "./margin-normalization.mjs";
 
 const [date]=process.argv.slice(2);
 if(!/^\d{4}-\d{2}-\d{2}$/.test(date??"")){
@@ -117,10 +118,14 @@ if(rows.length!==Number(day.races_parsed??0)){
   throw new Error("race meta source pack count mismatch "+date);
 }
 
-if(
+const dayRaceMetaCurrent=
   Number(day.race_meta_parser_version??0)>=RACE_META_PARSER_VERSION&&
-  rows.every(row=>Number(row?.race_meta_parser_version??0)>=RACE_META_PARSER_VERSION)
-){
+  rows.every(row=>Number(row?.race_meta_parser_version??0)>=RACE_META_PARSER_VERSION);
+const dayMarginCurrent=
+  Number(day.margin_parser_version??0)>=MARGIN_PARSER_VERSION&&
+  rows.every(row=>Number(row?.margin_parser_version??0)>=MARGIN_PARSER_VERSION);
+
+if(dayRaceMetaCurrent&&dayMarginCurrent){
   console.log(JSON.stringify({ok:true,date,skipped:true,races:rows.length},null,2));
   process.exit(0);
 }
@@ -129,21 +134,40 @@ const updated=[];
 for(let i=0;i<rows.length;i++){
   const row=rows[i];
   const raceId=String(row?.race?.race_id??"");
-  console.log("[race-meta "+(i+1)+"/"+rows.length+"] "+raceId);
-  const {normalized,sourceUrl}=await fetchNormalizedMeta(row);
-  updated.push({
-    ...row,
-    race_meta_parser_version:RACE_META_PARSER_VERSION,
-    race:{
+  const needsRaceMeta=Number(row?.race_meta_parser_version??0)<RACE_META_PARSER_VERSION;
+  console.log("[race-meta "+(i+1)+"/"+rows.length+"] "+raceId+(needsRaceMeta?" fetch":" local-margin-only"));
+
+  let nextRace=row.race;
+  if(needsRaceMeta){
+    const {normalized,sourceUrl}=await fetchNormalizedMeta(row);
+    nextRace={
       ...row.race,
       ...normalized,
       race_meta_source_url:sourceUrl,
-    },
+    };
+  }
+
+  const results=(row?.results??[]).map(result=>{
+    const normalizedMargin=normalizeMarginRaw(result?.margin_raw);
+    const next={...result,...normalizedMargin};
+    validateMarginFields(next);
+    return next;
+  });
+
+  updated.push({
+    ...row,
+    race_meta_parser_version:RACE_META_PARSER_VERSION,
+    margin_parser_version:MARGIN_PARSER_VERSION,
+    race:nextRace,
+    results,
   });
 }
 
 const coverage=summarizeRaceMetaCoverage(updated);
-for(const row of updated)validateRaceMetaFields(row.race);
+for(const row of updated){
+  validateRaceMetaFields(row.race);
+  for(const result of row?.results??[])validateMarginFields(result);
+}
 
 const lines=updated.map(row=>JSON.stringify(row)).join("\n")+(updated.length?"\n":"");
 const tempPath=day.file+".race-meta.tmp";
@@ -154,7 +178,12 @@ manifest.race_meta_parser_version=Math.max(
   Number(manifest.race_meta_parser_version??0),
   RACE_META_PARSER_VERSION,
 );
+manifest.margin_parser_version=Math.max(
+  Number(manifest.margin_parser_version??0),
+  MARGIN_PARSER_VERSION,
+);
 day.race_meta_parser_version=RACE_META_PARSER_VERSION;
+day.margin_parser_version=MARGIN_PARSER_VERSION;
 day.race_meta_coverage=coverage;
 day.race_meta_updated_at=new Date().toISOString();
 await writeFile(manifestPath,JSON.stringify(manifest,null,2)+"\n");
@@ -162,5 +191,6 @@ await writeFile(manifestPath,JSON.stringify(manifest,null,2)+"\n");
 console.log(JSON.stringify({
   ok:true,date,skipped:false,races:updated.length,
   race_meta_parser_version:RACE_META_PARSER_VERSION,
+  margin_parser_version:MARGIN_PARSER_VERSION,
   coverage,
 },null,2));
