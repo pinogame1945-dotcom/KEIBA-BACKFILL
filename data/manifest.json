@@ -20785,7 +20785,54 @@
       "races_parsed": 36,
       "file": "data/daily/2024-03-24.jsonl.gz",
       "request_delay_ms": 1500,
-      "discovery_url": "https://www.jra.go.jp/keiba/calendar2024/2024/3/0324.html"
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2024/2024/3/0324.html",
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-26T23:26:07.369Z",
+      "margin_updated_at": "2026-09-26T23:26:07.369Z"
     },
     "2024-03-23": {
       "status": "SUCCESS",
