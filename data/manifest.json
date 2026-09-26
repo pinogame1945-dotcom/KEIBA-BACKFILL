@@ -40029,7 +40029,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20140614/"
     }
   },
-  "updated_at": "2026-09-26T07:07:35.011Z",
+  "updated_at": "2026-09-26T07:07:41.922Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -226550,6 +226550,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2014-06-11.json"
+    },
+    "2014-06-10": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-26T07:07:41.922Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20140610/",
+          "title": "2014年06月10日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 54838,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20140610",
+          "title": "レース一覧 | 2014年6月10日 レース情報(JRA) - netkeiba",
+          "html_length": 42670,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2014-06-10.json"
     }
   },
   "rescheduled_meetings": {
