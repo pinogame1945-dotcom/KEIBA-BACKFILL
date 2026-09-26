@@ -36,6 +36,11 @@ async function politeFetch(url){
       throw new Error("RATE_LIMIT HTTP "+response.status+" "+url);
     }
     if(response.ok)return text;
+    if(response.status===400&&attempt<2){
+      console.warn("[odds] transient HTTP 400; retrying once "+url);
+      await sleep(5000);
+      continue;
+    }
     if(attempt===2||response.status<500){
       throw new Error("HTTP "+response.status+" "+url+" body="+text.slice(0,120));
     }
