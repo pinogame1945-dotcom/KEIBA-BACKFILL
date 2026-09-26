@@ -11,7 +11,7 @@ const SEX_CONDITIONS=new Set(["ANY","FEMALE_ONLY","MALE_ONLY","OTHER","UNKNOWN"]
 const WEIGHT_RULES=new Set(["WEIGHT_FOR_AGE","SET_WEIGHT","SPECIAL_WEIGHT","HANDICAP","UNKNOWN"]);
 
 function cleanMeta(value){
-  return String(value??"").replace(/\\s+/g," ").trim();
+  return String(value??"").replace(/\s+/g," ").trim();
 }
 
 function normalizedText(value){
@@ -27,10 +27,10 @@ export function extractCourseMetaRaw(value){
   const text=cleanMeta(value);
   if(!text)return null;
   const direct=text.match(
-    /(?:障害?\\s*)?(?:芝|ダート|ダ)(?:\\s*(?:左|右|直線))?(?:\\s*(?:内|外)(?:回り)?)?(?:\\s*\\d+\\s*周)?\\s*\\d{3,4}\\s*m/u
+    /(?:障害?\s*)?(?:芝|ダート|ダ)(?:\s*(?:左|右|直線))?(?:\s*(?:内|外)(?:回り)?)?(?:\s*\d+\s*周)?\s*\d{3,4}\s*m/u
   );
   if(direct)return cleanMeta(direct[0]);
-  const chunk=text.split(/\\s*\\/\\s*/).find(part=>/\\d{3,4}\\s*m/i.test(part));
+  const chunk=text.split(/\s*\/\s*/).find(part=>/\d{3,4}\s*m/i.test(part));
   return nullIfEmpty(chunk);
 }
 
@@ -39,18 +39,18 @@ export function extractRaceConditionRaw(value){
   if(!text)return null;
 
   const afterMeeting=text.match(
-    /(?:19|20)\\d{2}年\\s*\\d{1,2}月\\s*\\d{1,2}日\\s+\\d+回\\S+?\\d+日目\\s*(.+)$/u
+    /(?:19|20)\d{2}年\s*\d{1,2}月\s*\d{1,2}日\s+\d+回\S+?\d+日目\s*(.+)$/u
   )?.[1];
   let condition=afterMeeting?cleanMeta(afterMeeting):"";
 
   if(!condition){
     const normalized=normalizedText(text);
-    const index=normalized.search(/(?:障害\\s*)?[2-4]歳(?:以上)?/u);
+    const index=normalized.search(/(?:障害\s*)?[2-4]歳(?:以上)?/u);
     if(index>=0)condition=normalized.slice(index);
   }
 
   if(!condition)return null;
-  condition=condition.split(/(?:結果\\/払戻|掲示板|着\\s*順)/u)[0];
+  condition=condition.split(/(?:結果\/払戻|掲示板|着\s*順)/u)[0];
   return nullIfEmpty(condition);
 }
 
@@ -84,7 +84,7 @@ export function classifyRaceDiscipline(meta,raceName=null){
   const text=cleanMeta(meta);
   const name=cleanMeta(raceName);
   if(name.includes("障害"))return "OBSTACLE";
-  if(/(?:障害|障)\\s*(?:芝|ダート|ダ)?\\s*\\d{3,4}\\s*m/u.test(text)){
+  if(/(?:障害|障)\s*(?:芝|ダート|ダ)?\s*\d{3,4}\s*m/u.test(text)){
     return "OBSTACLE";
   }
   return "FLAT";
@@ -106,13 +106,13 @@ function rawRaceClass(condition){
   const text=normalizedText(condition);
   if(!text)return null;
   const match=text.match(
-    /(?:障害\\s*)?(?:[2-4]歳(?:以上)?\\s*)?(?:新馬|未勝利|[123]勝クラス|500万下|900万下|1000万下|1600万下|オープン)/u
+    /(?:障害\s*)?(?:[2-4]歳(?:以上)?\s*)?(?:新馬|未勝利|[123]勝クラス|500万下|900万下|1000万下|1600万下|オープン)/u
   );
   return match?cleanMeta(match[0]):null;
 }
 
 function normalizedGrade(raceName,condition,raceMetaRaw){
-  const source=normalizedText([raceName,condition,raceMetaRaw].filter(Boolean).join(" ")).toUpperCase().replace(/\\s+/g,"");
+  const source=normalizedText([raceName,condition,raceMetaRaw].filter(Boolean).join(" ")).toUpperCase().replace(/\s+/g,"");
   if(!source)return "UNKNOWN";
   if(source.includes("JPNIII")||source.includes("JPN3"))return "JPN3";
   if(source.includes("JPNII")||source.includes("JPN2"))return "JPN2";
@@ -157,7 +157,7 @@ function sexFields(condition){
   if(/牝馬限定/u.test(text)){
     return {sex_condition_raw:"牝馬限定",sex_condition:"FEMALE_ONLY"};
   }
-  if(/(?:^|[\\s　])牝(?=$|[\\s　(\\[])/u.test(text)){
+  if(/(?:^|[\s　])牝(?=$|[\s　(\[])/u.test(text)){
     return {sex_condition_raw:"牝",sex_condition:"FEMALE_ONLY"};
   }
   if(/牡馬限定/u.test(text)){
@@ -199,7 +199,7 @@ export function normalizeRaceMeta({
       :course.includes("内")
         ?"INNER"
         :"NORMAL";
-  const lapsMatch=normalizedText(course).match(/(\\d+)\\s*周/u);
+  const lapsMatch=normalizedText(course).match(/(\d+)\s*周/u);
   const courseLaps=lapsMatch?Number(lapsMatch[1]):null;
   const age=ageFields(condition);
   const sex=sexFields(condition);
@@ -215,10 +215,10 @@ export function normalizeRaceMeta({
     ...age,
     ...sex,
     ...weight,
-    mixed:restrictionFlag(condition,/\\(混\\)/u),
-    international:restrictionFlag(condition,/\\(国際\\)/u),
-    special_designated:restrictionFlag(condition,/\\(特指\\)/u),
-    designated:restrictionFlag(condition,/\\[指\\]/u),
+    mixed:restrictionFlag(condition,/\(混\)/u),
+    international:restrictionFlag(condition,/\(国際\)/u),
+    special_designated:restrictionFlag(condition,/\(特指\)/u),
+    designated:restrictionFlag(condition,/\[指\]/u),
     race_condition_raw:nullIfEmpty(raceConditionRaw),
     race_meta_raw:nullIfEmpty(raceMetaRaw),
   };
