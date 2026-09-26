@@ -1,5 +1,7 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
-import { gunzipSync, gzipSync } from "node:zlib";
+import { readFile, readdir } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { once } from "node:events";
+import { gunzipSync, createGzip } from "node:zlib";
 import { buildMlDataset } from "../src/ml-dataset.mjs";
 
 const output = process.argv[2] || "/tmp/keiba-ml-staged.jsonl.gz";
@@ -286,8 +288,16 @@ const staged = base.map(row => {
   };
 });
 
-const lines = staged.map(row => JSON.stringify(row)).join("\n") + "\n";
-await writeFile(output, gzipSync(Buffer.from(lines, "utf8"), { level: 6 }));
+const gzip = createGzip({ level: 6 });
+const sink = createWriteStream(output);
+gzip.pipe(sink);
+for (const row of staged) {
+  if (!gzip.write(JSON.stringify(row) + "\n")) {
+    await once(gzip, "drain");
+  }
+}
+gzip.end();
+await once(sink, "close");
 
 console.log("ML_STAGED_DATASET_READY");
 console.log(JSON.stringify({
