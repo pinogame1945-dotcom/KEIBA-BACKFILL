@@ -44107,9 +44107,83 @@
       "file": "data/daily/2013-03-23.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20130323/"
+    },
+    "2013-03-17": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 509,
+        "finish_time_present": 509,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 499,
+        "flat_finish_time_present": 499,
+        "last3f_present": 499,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2013-03-17.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20130317/"
     }
   },
-  "updated_at": "2026-09-26T17:35:36.223Z",
+  "updated_at": "2026-09-26T17:39:18.513Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -167789,6 +167863,62 @@
         "average_pedigree_fetch_ms": 2448,
         "measured_horses": 34
       }
+    },
+    "horse-2013-03-17-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 33,
+      "file": "data/horses/horse-2013-03-17-001.jsonl.gz",
+      "source_dates": [
+        "2013-03-17"
+      ],
+      "source_horse_ids": [
+        "2005106501",
+        "2005106677",
+        "2005106795",
+        "2007100396",
+        "2007101890",
+        "2007102846",
+        "2007103535",
+        "2007105827",
+        "2007109144",
+        "2008100791",
+        "2008102101",
+        "2008102295",
+        "2008105556",
+        "2009100755",
+        "2009104665",
+        "2009105730",
+        "2010100670",
+        "2010101080",
+        "2010101286",
+        "2010101351",
+        "2010101451",
+        "2010101717",
+        "2010101728",
+        "2010101993",
+        "2010103761",
+        "2010103817",
+        "2010103869",
+        "2010103900",
+        "2010104286",
+        "2010104609",
+        "2010105113",
+        "2010105470",
+        "2010105512"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 143045,
+        "average_ms_per_horse": 4334,
+        "median_ms_per_horse": 4396,
+        "min_ms_per_horse": 2462,
+        "max_ms_per_horse": 5113,
+        "average_profile_fetch_ms": 1862,
+        "average_pedigree_fetch_ms": 2454,
+        "measured_horses": 33
+      }
     }
   },
   "race_pack_version": 3,
@@ -247633,5 +247763,6 @@
       "cancelled_meetings": [],
       "updated_at": "2026-09-24T18:42:45.274Z"
     }
-  }
+  },
+  "race_meta_parser_version": 2
 }
