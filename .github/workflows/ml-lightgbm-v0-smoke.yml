@@ -1,4 +1,4 @@
-name: ML LightGBM opponent A/B
+name: ML opponent three-way fight
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
             --model-out /tmp/base.txt \
             --meta-out /tmp/base.json
 
-      - name: Train OPPONENT
+      - name: Train OPPONENT V1
         run: |
           python ml/train_lightgbm.py \
             --dataset /tmp/keiba-ml-smoke.jsonl.gz \
@@ -64,6 +64,18 @@ jobs:
             --model-out /tmp/opponent.txt \
             --meta-out /tmp/opponent.json
 
+      - name: Train NETWORK V2
+        run: |
+          python ml/train_lightgbm.py \
+            --dataset /tmp/keiba-ml-smoke.jsonl.gz \
+            --feature-set network \
+            --train-start 2022-07-23 \
+            --train-end 2022-09-11 \
+            --valid-start 2022-09-17 \
+            --valid-end 2022-10-01 \
+            --model-out /tmp/network.txt \
+            --meta-out /tmp/network.json
+
       - name: Compare identical holdout
         shell: bash
         run: |
@@ -71,13 +83,18 @@ jobs:
           import json
           from pathlib import Path
 
-          base=json.loads(Path('/tmp/base.json').read_text())
-          opp=json.loads(Path('/tmp/opponent.json').read_text())
-          assert base['feature_set']=='base'
-          assert opp['feature_set']=='opponent'
-          assert base['ability_uses_odds'] is False
-          assert opp['ability_uses_odds'] is False
-          assert base['split']==opp['split']
+          models={
+              'base': json.loads(Path('/tmp/base.json').read_text()),
+              'opponent_v1': json.loads(Path('/tmp/opponent.json').read_text()),
+              'network_v2': json.loads(Path('/tmp/network.json').read_text()),
+          }
+          assert models['base']['feature_set']=='base'
+          assert models['opponent_v1']['feature_set']=='opponent'
+          assert models['network_v2']['feature_set']=='network'
+          split=models['base']['split']
+          for model in models.values():
+              assert model['ability_uses_odds'] is False
+              assert model['split']==split
 
           keys=[
               'top1_winner_capture',
@@ -90,20 +107,28 @@ jobs:
               'raw_brier',
               'raw_roc_auc',
           ]
+          metrics={
+              name:{k:model['metrics'][k] for k in keys}
+              for name,model in models.items()
+          }
           result={
-              'split': base['split'],
-              'base': {k:base['metrics'][k] for k in keys},
-              'opponent': {k:opp['metrics'][k] for k in keys},
-              'delta_opponent_minus_base': {
-                  k:(opp['metrics'][k]-base['metrics'][k])
-                  if base['metrics'][k] is not None and opp['metrics'][k] is not None else None
+              'split':split,
+              **metrics,
+              'delta_network_minus_base':{
+                  k:(metrics['network_v2'][k]-metrics['base'][k])
+                  if metrics['network_v2'][k] is not None and metrics['base'][k] is not None else None
                   for k in keys
               },
-              'opponent_features': [
-                  item for item in opp['feature_importance_gain']
-                  if item['feature'].startswith('opponent_')
+              'delta_network_minus_opponent_v1':{
+                  k:(metrics['network_v2'][k]-metrics['opponent_v1'][k])
+                  if metrics['network_v2'][k] is not None and metrics['opponent_v1'][k] is not None else None
+                  for k in keys
+              },
+              'network_features':[
+                  item for item in models['network_v2']['feature_importance_gain']
+                  if item['feature'].startswith('network_')
               ],
           }
-          print('ML_OPPONENT_AB_RESULT')
+          print('ML_OPPONENT_THREE_WAY_RESULT')
           print(json.dumps(result, indent=2))
           PY

@@ -72,3 +72,8 @@ Full historical odds groups remain in the existing historical-odds packs. They a
 ## Opponent-strength features
 
 Feature schema v2 adds `opponent_*` fields. They summarize how the opponents from a horse's recent prior races had performed up to, but not including, the current target date. Same-day results are never committed before feature generation, so opponent strength obeys the same `STRICT_PRIOR_DATE_ONLY` boundary.
+
+
+## Opponent network v2
+
+Feature schema v3 adds `network_*` fields: the horse's point-in-time Elo-style rating, number of rated prior starts, the current field's rating level/spread, the horse's rating gap versus the field, and the expected pairwise score versus current opponents. Rating updates use only completed prior dates; target-day results never affect target-day features.

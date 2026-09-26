@@ -13,8 +13,9 @@ from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
 MODEL_VERSION_BASE = "LIGHTGBM_WIN_V0_BASE"
 MODEL_VERSION_OPPONENT = "LIGHTGBM_WIN_V0_OPPONENT"
+MODEL_VERSION_NETWORK = "LIGHTGBM_WIN_V0_NETWORK"
 EXPECTED_DATASET_VERSION = 2
-EXPECTED_FEATURE_SCHEMA_VERSION = 2
+EXPECTED_FEATURE_SCHEMA_VERSION = 3
 EXPECTED_LEAKAGE_POLICY = "STRICT_PRIOR_DATE_ONLY"
 
 CATEGORICAL_FEATURES = [
@@ -40,7 +41,7 @@ def parse_args():
     parser.add_argument("--model-out", required=True)
     parser.add_argument("--meta-out", required=True)
     parser.add_argument("--predictions-out")
-    parser.add_argument("--feature-set", choices=["base", "opponent"], default="opponent")
+    parser.add_argument("--feature-set", choices=["base", "opponent", "network"], default="network")
     return parser.parse_args()
 
 
@@ -90,6 +91,18 @@ def flatten(rows, feature_set):
     for row in rows:
         features = dict(row["features"])
         if feature_set == "base":
+            features = {
+                key: value
+                for key, value in features.items()
+                if not key.startswith("opponent_") and not key.startswith("network_")
+            }
+        elif feature_set == "opponent":
+            features = {
+                key: value
+                for key, value in features.items()
+                if not key.startswith("network_")
+            }
+        elif feature_set == "network":
             features = {
                 key: value
                 for key, value in features.items()
@@ -327,7 +340,11 @@ def main():
         reverse=True,
     )
 
-    model_version = MODEL_VERSION_BASE if args.feature_set == "base" else MODEL_VERSION_OPPONENT
+    model_version = {
+        "base": MODEL_VERSION_BASE,
+        "opponent": MODEL_VERSION_OPPONENT,
+        "network": MODEL_VERSION_NETWORK,
+    }[args.feature_set]
 
     metadata = {
         "model_version": model_version,

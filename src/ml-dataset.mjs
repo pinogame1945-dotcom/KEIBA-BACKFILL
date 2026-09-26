@@ -1,5 +1,5 @@
 export const ML_DATASET_VERSION = 2;
-export const ML_FEATURE_SCHEMA_VERSION = 2;
+export const ML_FEATURE_SCHEMA_VERSION = 3;
 export const ML_LEAKAGE_POLICY = "STRICT_PRIOR_DATE_ONLY";
 
 function finite(value) {
@@ -107,6 +107,98 @@ function opponentSnapshot(history, horseStatsById, limit) {
   };
 }
 
+const ELO_BASE = 1500;
+const ELO_SCALE = 400;
+const ELO_K = 24;
+
+function currentStarterIds(row) {
+  return (row?.entries ?? [])
+    .filter(entry => {
+      const status = String(entry?.entry_status ?? "").toUpperCase();
+      return status !== "SCRATCHED" && status !== "EXCLUDED";
+    })
+    .map(entry => String(entry?.horse_id ?? ""))
+    .filter(Boolean);
+}
+
+function eloState(eloByHorse, horseId) {
+  return eloByHorse.get(String(horseId ?? "")) ?? { rating: ELO_BASE, starts: 0 };
+}
+
+function eloExpected(ratingA, ratingB) {
+  return 1 / (1 + 10 ** ((ratingB - ratingA) / ELO_SCALE));
+}
+
+function networkSnapshot(row, horseId, eloByHorse) {
+  const own = eloState(eloByHorse, horseId);
+  const opponentIds = currentStarterIds(row).filter(id => id !== String(horseId));
+  if (!opponentIds.length) {
+    return {
+      network_elo_rating: own.rating,
+      network_elo_starts: own.starts,
+      network_field_known_count: 0,
+      network_field_avg_elo: null,
+      network_field_max_elo: null,
+      network_field_elo_spread: null,
+      network_elo_vs_field_avg: null,
+      network_expected_pairwise_score: null,
+    };
+  }
+
+  const opponentStates = opponentIds.map(id => eloState(eloByHorse, id));
+  const opponentRatings = opponentStates.map(state => state.rating);
+  const avg = mean(opponentRatings);
+  return {
+    network_elo_rating: own.rating,
+    network_elo_starts: own.starts,
+    network_field_known_count: opponentStates.filter(state => state.starts > 0).length,
+    network_field_avg_elo: avg,
+    network_field_max_elo: Math.max(...opponentRatings),
+    network_field_elo_spread: Math.max(...opponentRatings) - Math.min(...opponentRatings),
+    network_elo_vs_field_avg: avg != null ? own.rating - avg : null,
+    network_expected_pairwise_score: mean(
+      opponentRatings.map(rating => eloExpected(own.rating, rating)),
+    ),
+  };
+}
+
+function raceEloUpdates(row, eloByHorse) {
+  const results = resultMap(row);
+  const runners = (row?.entries ?? [])
+    .map(entry => {
+      const horseId = String(entry?.horse_id ?? "");
+      const result = results.get(horseId) ?? null;
+      const finish = finite(result?.official_finish_position);
+      if (!horseId || !result || !isEligibleStarter(entry, result)) return null;
+      if (String(result?.result_status ?? "").toUpperCase() !== "FINISHED" || finish == null) return null;
+      const state = eloState(eloByHorse, horseId);
+      return { horseId, finish, rating: state.rating };
+    })
+    .filter(Boolean);
+
+  if (runners.length < 2) return [];
+  const deltas = new Map(runners.map(runner => [runner.horseId, 0]));
+  const pairK = ELO_K / (runners.length - 1);
+
+  for (let i = 0; i < runners.length; i += 1) {
+    for (let j = i + 1; j < runners.length; j += 1) {
+      const a = runners[i];
+      const b = runners[j];
+      const scoreA = a.finish < b.finish ? 1 : a.finish > b.finish ? 0 : 0.5;
+      const expectedA = eloExpected(a.rating, b.rating);
+      const delta = pairK * (scoreA - expectedA);
+      deltas.set(a.horseId, deltas.get(a.horseId) + delta);
+      deltas.set(b.horseId, deltas.get(b.horseId) - delta);
+    }
+  }
+
+  return runners.map(runner => ({
+    horseId: runner.horseId,
+    delta: deltas.get(runner.horseId),
+    starts: 1,
+  }));
+}
+
 function updateHorseStats(horseStatsById, horseId, result) {
   const key = String(horseId ?? "");
   if (!key) return;
@@ -164,7 +256,7 @@ function historySnapshot(history, current, limit, horseStatsById) {
   };
 }
 
-function currentFeatures(row, entry, historyFeatures) {
+function currentFeatures(row, entry, historyFeatures, networkFeatures) {
   const race = row.race ?? {};
   return {
     race_date: stableRaceDate(row),
@@ -189,6 +281,7 @@ function currentFeatures(row, entry, historyFeatures) {
     body_weight: finite(entry?.body_weight),
     body_weight_diff: finite(entry?.body_weight_diff),
     ...historyFeatures,
+    ...networkFeatures,
   };
 }
 
@@ -252,6 +345,7 @@ export function buildMlDataset(raceRows, {
 
   const historyByHorse = new Map();
   const horseStatsById = new Map();
+  const eloByHorse = new Map();
   const out = [];
   let index = 0;
 
@@ -280,6 +374,7 @@ export function buildMlDataset(raceRows, {
           row,
           entry,
           historySnapshot(history, current, historyLimit, horseStatsById),
+          networkSnapshot(row, horseId, eloByHorse),
         );
         const inRange = (!startDate || date >= startDate) && (!endDate || date <= endDate);
         if (inRange) {
@@ -314,6 +409,32 @@ export function buildMlDataset(raceRows, {
         });
         historyByHorse.set(horseId, history);
       }
+    }
+
+    // Calculate every same-day Elo delta from the day-start ratings, then apply them together.
+    // This preserves STRICT_PRIOR_DATE_ONLY for the network features as well.
+    const eloUpdates = [];
+    for (const row of day) {
+      eloUpdates.push(...raceEloUpdates(row, eloByHorse));
+    }
+    const eloDeltaByHorse = new Map();
+    const eloStartsByHorse = new Map();
+    for (const update of eloUpdates) {
+      eloDeltaByHorse.set(
+        update.horseId,
+        (eloDeltaByHorse.get(update.horseId) ?? 0) + update.delta,
+      );
+      eloStartsByHorse.set(
+        update.horseId,
+        (eloStartsByHorse.get(update.horseId) ?? 0) + update.starts,
+      );
+    }
+    for (const [horseId, delta] of eloDeltaByHorse) {
+      const state = eloState(eloByHorse, horseId);
+      eloByHorse.set(horseId, {
+        rating: state.rating + delta,
+        starts: state.starts + (eloStartsByHorse.get(horseId) ?? 0),
+      });
     }
 
     // Commit daily performance stats only after every feature row for the day was generated.

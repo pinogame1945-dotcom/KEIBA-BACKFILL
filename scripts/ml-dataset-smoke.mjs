@@ -131,3 +131,41 @@ assert.equal(opponentBuilt[0].features.opponent_previous_known_count, 1);
 assert.equal(opponentBuilt[0].features.opponent_previous_avg_starts, 2);
 assert.equal(opponentBuilt[0].features.opponent_previous_avg_win_rate, 1);
 assert.equal(opponentBuilt[0].features.opponent_previous_avg_top3_rate, 1);
+
+
+const networkRace = race({ id: "202405010801", date: "2024-08-01", finish: 1, last3f: 33.0, time: 92000, horse: "NW" });
+networkRace.entries.push({
+  ...networkRace.entries[0],
+  horse_id: "NL",
+  horse_number: 4,
+  jockey_id: "J3",
+});
+networkRace.results.push({
+  ...networkRace.results[0],
+  horse_id: "NL",
+  official_finish_position: 2,
+});
+const networkTarget = race({ id: "202405010901", date: "2024-09-01", finish: 1, last3f: 33.0, time: 92000, horse: "NW" });
+networkTarget.entries.push({
+  ...networkTarget.entries[0],
+  horse_id: "NL",
+  horse_number: 4,
+  jockey_id: "J3",
+});
+networkTarget.results.push({
+  ...networkTarget.results[0],
+  horse_id: "NL",
+  official_finish_position: 2,
+});
+const networkBuilt = buildMlDataset(
+  [networkRace, networkTarget],
+  { startDate: "2024-09-01", endDate: "2024-09-01" },
+);
+assert.equal(networkBuilt.length, 2);
+const networkWinner = networkBuilt.find(row => row.horse_id === "NW");
+const networkLoser = networkBuilt.find(row => row.horse_id === "NL");
+assert.ok(networkWinner.features.network_elo_rating > 1500);
+assert.ok(networkLoser.features.network_elo_rating < 1500);
+assert.equal(networkWinner.features.network_elo_starts, 1);
+assert.ok(networkWinner.features.network_elo_vs_field_avg > 0);
+assert.ok(networkWinner.features.network_expected_pairwise_score > 0.5);

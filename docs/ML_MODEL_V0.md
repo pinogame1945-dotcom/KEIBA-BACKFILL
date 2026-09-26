@@ -72,3 +72,17 @@ The training CLI supports:
 - `--feature-set opponent`: includes them.
 
 This allows an apples-to-apples A/B test with the same rows, date split, model parameters and target. No odds are used by either side.
+
+
+## Opponent network v2
+
+Feature schema v3 adds an Elo-style pairwise opponent network.
+
+Each horse starts at 1500. After a historical race, every finisher is compared pairwise with every other finisher. Beating a highly rated horse gives more credit than beating a weak horse; losing to a highly rated horse costs less than losing to a weak horse. Pairwise updates are normalized by field size.
+
+All races on the same calendar day are scored from the rating state that existed before that day, and their updates are applied only after feature generation. This keeps the network under `STRICT_PRIOR_DATE_ONLY`.
+
+The three feature-set modes are now:
+- `base`: no opponent features.
+- `opponent`: v1 aggregate opponent win/top3 statistics only.
+- `network`: v2 Elo-network features only.
