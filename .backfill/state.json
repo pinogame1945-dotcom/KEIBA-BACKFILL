@@ -4602,10 +4602,12 @@
       "source_run_id": "36314378785",
       "next_start": "2011-12-10",
       "next_end": "2011-11-27",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-27T11:18:59.931Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-27T11:19:04.985Z",
+      "dispatch_source_run_id": "36314378785"
     }
   }
 }
