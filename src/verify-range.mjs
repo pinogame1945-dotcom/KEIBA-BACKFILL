@@ -6,7 +6,7 @@ import {
 } from "./schedule-integrity.mjs";
 import {RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments} from "./lap-parser.mjs";
-import {flatLast3fDayQuality,raceFlatLast3fQuality} from "./result-quality.mjs";
+import {flatLast3fDayQuality,flatLast3fRaceContractViolation} from "./result-quality.mjs";
 import {
   RACE_META_PARSER_VERSION,summarizeRaceMetaCoverage,validateRaceMetaFields,
 } from "./race-meta.mjs";
@@ -289,8 +289,8 @@ for(const date of rangeDates){
           throw new Error(`incomplete flat laps ${row.race.race_id}: ${row.laps.length}/${expected}`);
         }
       }
-      const last3fQuality=raceFlatLast3fQuality(row);
-      if(last3fQuality.eligible&&last3fQuality.timed>=8&&last3fQuality.bad/last3fQuality.timed>0.1){
+      const last3fQuality=flatLast3fRaceContractViolation(row);
+      if(last3fQuality.failed){
         throw new Error(`last3f row quality below contract ${row.race.race_id}: scope=FLAT bad=${last3fQuality.bad}/${last3fQuality.timed}`);
       }
       if(!row.entries.length||!row.results.length)throw new Error(`empty race ${row.race.race_id}`);
