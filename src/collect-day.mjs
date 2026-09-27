@@ -10,7 +10,7 @@ import {
 import {findLast3fColumn,parseLast3fSeconds,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {MARGIN_PARSER_VERSION,normalizeMarginRaw} from "./margin-normalization.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
-import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./result-quality.mjs";
+import {flatLast3fDayQuality,flatLast3fRaceContractViolation,listSuspiciousFlatLast3f} from "./result-quality.mjs";
 import {
   RACE_META_PARSER_VERSION,classifyRaceDiscipline,normalizeRaceMeta,
   selectRaceMetaParts,summarizeRaceMetaCoverage,
@@ -830,6 +830,12 @@ for (let i = 0; i < raceIds.length; i++) {
           if(expected>0&&parsed.laps.length!==expected){
             throw new Error(
               `FLAT_LAPS_INCOMPLETE ${raceId}: expected=${expected} actual=${parsed.laps.length}`
+            );
+          }
+          const last3fQuality=flatLast3fRaceContractViolation(parsed);
+          if(last3fQuality.failed){
+            throw new Error(
+              `FLAT_LAST3F_INCOMPLETE ${raceId}: bad=${last3fQuality.bad}/${last3fQuality.timed}`
             );
           }
         }
