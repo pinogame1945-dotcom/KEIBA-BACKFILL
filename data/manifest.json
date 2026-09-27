@@ -57761,7 +57761,54 @@
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2019/2019/10/1012.html",
       "rescheduled_meetings": [
         "2019050403"
-      ]
+      ],
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 12,
+        "course_layout": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-27T09:39:11.074Z",
+      "margin_updated_at": "2026-09-27T09:39:11.074Z"
     },
     "2019-10-06": {
       "status": "SUCCESS",
