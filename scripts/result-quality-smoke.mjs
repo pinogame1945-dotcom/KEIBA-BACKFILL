@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {flatLast3fDayQuality,raceFlatLast3fQuality,listSuspiciousFlatLast3f} from "../src/result-quality.mjs";
+import {flatLast3fDayQuality,flatLast3fRaceContractViolation,raceFlatLast3fQuality,listSuspiciousFlatLast3f} from "../src/result-quality.mjs";
 
 const obstacle=JSON.parse(await readFile("fixtures/result-quality/obstacle-race.json","utf8"));
 const flat=JSON.parse(await readFile("fixtures/result-quality/flat-race.json","utf8"));
@@ -21,6 +21,14 @@ assert.equal(flatRace.eligible,true,"flat race must be checked");
 assert.equal(flatRace.timed,8,"flat fixture must contribute all timed finishers");
 assert.equal(flatRace.bad,1,"flat last3f exceeding the full race time must fail the physical invariant");
 assert.ok(flatRace.bad/flatRace.timed>0.1,"flat fixture must trip row-quality threshold");
+assert.equal(
+  flatLast3fRaceContractViolation(flat).failed,true,
+  "bad flat fixture must trigger source fallback contract"
+);
+assert.equal(
+  flatLast3fRaceContractViolation(obstacle).failed,false,
+  "obstacle fixture must never trigger flat source fallback"
+);
 
 const mixedDay=flatLast3fDayQuality([flat,obstacle]);
 assert.equal(mixedDay.flatRaces,1,"mixed day must count only flat races for last3f quality");
