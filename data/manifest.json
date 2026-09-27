@@ -60533,7 +60533,54 @@
       "races_parsed": 24,
       "file": "data/daily/2019-06-09.jsonl.gz",
       "request_delay_ms": 1500,
-      "discovery_url": "https://db.netkeiba.com/race/list/20190609/"
+      "discovery_url": "https://db.netkeiba.com/race/list/20190609/",
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 24,
+        "course_layout": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-27T10:26:31.965Z",
+      "margin_updated_at": "2026-09-27T10:26:31.965Z"
     },
     "2019-06-08": {
       "status": "SUCCESS",
