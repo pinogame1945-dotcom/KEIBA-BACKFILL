@@ -71562,7 +71562,54 @@
       "reschedule_repaired_at": "2026-09-25T00:38:56.141Z",
       "rescheduled_meetings": [
         "2018100102"
-      ]
+      ],
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 12,
+        "course_layout": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-27T13:29:51.493Z",
+      "margin_updated_at": "2026-09-27T13:29:51.493Z"
     },
     "2018-02-12": {
       "status": "SUCCESS",
