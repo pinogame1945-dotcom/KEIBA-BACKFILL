@@ -56900,7 +56900,54 @@
       "request_delay_ms": 1500,
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2019/2019/11/1109.html",
       "updated_at": "2026-09-25T04:10:52.300Z",
-      "repair_reason": "PAYOUT_POPULARITY_NONPOSITIVE"
+      "repair_reason": "PAYOUT_POPULARITY_NONPOSITIVE",
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-27T09:26:59.772Z",
+      "margin_updated_at": "2026-09-27T09:26:59.772Z"
     },
     "2019-11-03": {
       "status": "SUCCESS",
