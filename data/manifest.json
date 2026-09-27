@@ -81381,7 +81381,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20120609/"
     }
   },
-  "updated_at": "2026-09-27T07:40:57.508Z",
+  "updated_at": "2026-09-27T07:41:04.954Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -295562,6 +295562,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2012-06-08.json"
+    },
+    "2012-06-07": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-27T07:41:04.954Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20120607/",
+          "title": "2012年06月07日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 61383,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20120607",
+          "title": "レース一覧 | 2012年6月7日 レース情報(JRA) - netkeiba",
+          "html_length": 42666,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2012-06-07.json"
     }
   },
   "rescheduled_meetings": {
