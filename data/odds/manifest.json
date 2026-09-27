@@ -106228,6 +106228,262 @@
         }
       },
       "updated_at": "2026-09-27T18:12:44.247Z"
+    },
+    "2011-03-05": {
+      "status": "SUCCESS",
+      "source_races": 36,
+      "races": 36,
+      "unavailable_races": 0,
+      "file": "data/odds/daily/2011-03-05.jsonl.gz",
+      "odds_pack_version": 1,
+      "decoder_contract_version": 1,
+      "schedule_contract_version": 1,
+      "request_delay_ms": 1500,
+      "raw_response_bytes": 3977073,
+      "compressed_bytes": 849817,
+      "groups": {
+        "1": {
+          "races": 36,
+          "rows": 510,
+          "priced_rows": 509,
+          "unavailable_races": 0
+        },
+        "2": {
+          "races": 36,
+          "rows": 510,
+          "priced_rows": 509,
+          "unavailable_races": 0
+        },
+        "3": {
+          "races": 34,
+          "rows": 1174,
+          "priced_rows": 1173,
+          "unavailable_races": 0
+        },
+        "4": {
+          "races": 36,
+          "rows": 3462,
+          "priced_rows": 3449,
+          "unavailable_races": 0
+        },
+        "5": {
+          "races": 36,
+          "rows": 3462,
+          "priced_rows": 3449,
+          "unavailable_races": 0
+        },
+        "6": {
+          "races": 36,
+          "rows": 6924,
+          "priced_rows": 6898,
+          "unavailable_races": 0
+        },
+        "7": {
+          "races": 36,
+          "rows": 14884,
+          "priced_rows": 14805,
+          "unavailable_races": 0
+        },
+        "8": {
+          "races": 36,
+          "rows": 89304,
+          "priced_rows": 88718,
+          "unavailable_races": 0
+        }
+      },
+      "updated_at": "2026-09-27T18:32:40.282Z"
+    },
+    "2011-02-27": {
+      "status": "SUCCESS",
+      "source_races": 36,
+      "races": 36,
+      "unavailable_races": 0,
+      "file": "data/odds/daily/2011-02-27.jsonl.gz",
+      "odds_pack_version": 1,
+      "decoder_contract_version": 1,
+      "schedule_contract_version": 1,
+      "request_delay_ms": 1500,
+      "raw_response_bytes": 4735593,
+      "compressed_bytes": 982775,
+      "groups": {
+        "1": {
+          "races": 36,
+          "rows": 537,
+          "priced_rows": 536,
+          "unavailable_races": 0
+        },
+        "2": {
+          "races": 36,
+          "rows": 537,
+          "priced_rows": 536,
+          "unavailable_races": 0
+        },
+        "3": {
+          "races": 36,
+          "rows": 1257,
+          "priced_rows": 1256,
+          "unavailable_races": 0
+        },
+        "4": {
+          "races": 36,
+          "rows": 3809,
+          "priced_rows": 3794,
+          "unavailable_races": 0
+        },
+        "5": {
+          "races": 36,
+          "rows": 3809,
+          "priced_rows": 3794,
+          "unavailable_races": 0
+        },
+        "6": {
+          "races": 36,
+          "rows": 7618,
+          "priced_rows": 7588,
+          "unavailable_races": 0
+        },
+        "7": {
+          "races": 36,
+          "rows": 17009,
+          "priced_rows": 16904,
+          "unavailable_races": 0
+        },
+        "8": {
+          "races": 36,
+          "rows": 102054,
+          "priced_rows": 100822,
+          "unavailable_races": 0
+        }
+      },
+      "updated_at": "2026-09-27T18:33:49.123Z"
+    },
+    "2011-02-26": {
+      "status": "SUCCESS",
+      "source_races": 36,
+      "races": 36,
+      "unavailable_races": 0,
+      "file": "data/odds/daily/2011-02-26.jsonl.gz",
+      "odds_pack_version": 1,
+      "decoder_contract_version": 1,
+      "schedule_contract_version": 1,
+      "request_delay_ms": 1500,
+      "raw_response_bytes": 4404052,
+      "compressed_bytes": 928946,
+      "groups": {
+        "1": {
+          "races": 36,
+          "rows": 536,
+          "priced_rows": 534,
+          "unavailable_races": 0
+        },
+        "2": {
+          "races": 36,
+          "rows": 536,
+          "priced_rows": 534,
+          "unavailable_races": 0
+        },
+        "3": {
+          "races": 36,
+          "rows": 1256,
+          "priced_rows": 1254,
+          "unavailable_races": 0
+        },
+        "4": {
+          "races": 36,
+          "rows": 3762,
+          "priced_rows": 3732,
+          "unavailable_races": 0
+        },
+        "5": {
+          "races": 36,
+          "rows": 3762,
+          "priced_rows": 3732,
+          "unavailable_races": 0
+        },
+        "6": {
+          "races": 36,
+          "rows": 7524,
+          "priced_rows": 7464,
+          "unavailable_races": 0
+        },
+        "7": {
+          "races": 36,
+          "rows": 16519,
+          "priced_rows": 16308,
+          "unavailable_races": 0
+        },
+        "8": {
+          "races": 36,
+          "rows": 99114,
+          "priced_rows": 97459,
+          "unavailable_races": 0
+        }
+      },
+      "updated_at": "2026-09-27T18:34:56.897Z"
+    },
+    "2011-02-20": {
+      "status": "SUCCESS",
+      "source_races": 24,
+      "races": 24,
+      "unavailable_races": 0,
+      "file": "data/odds/daily/2011-02-20.jsonl.gz",
+      "odds_pack_version": 1,
+      "decoder_contract_version": 1,
+      "schedule_contract_version": 1,
+      "request_delay_ms": 1500,
+      "raw_response_bytes": 2979984,
+      "compressed_bytes": 656805,
+      "groups": {
+        "1": {
+          "races": 24,
+          "rows": 357,
+          "priced_rows": 357,
+          "unavailable_races": 0
+        },
+        "2": {
+          "races": 24,
+          "rows": 357,
+          "priced_rows": 357,
+          "unavailable_races": 0
+        },
+        "3": {
+          "races": 24,
+          "rows": 837,
+          "priced_rows": 837,
+          "unavailable_races": 0
+        },
+        "4": {
+          "races": 24,
+          "rows": 2518,
+          "priced_rows": 2518,
+          "unavailable_races": 0
+        },
+        "5": {
+          "races": 24,
+          "rows": 2518,
+          "priced_rows": 2518,
+          "unavailable_races": 0
+        },
+        "6": {
+          "races": 24,
+          "rows": 5036,
+          "priced_rows": 5036,
+          "unavailable_races": 0
+        },
+        "7": {
+          "races": 24,
+          "rows": 11159,
+          "priced_rows": 11159,
+          "unavailable_races": 0
+        },
+        "8": {
+          "races": 24,
+          "rows": 66954,
+          "priced_rows": 66846,
+          "unavailable_races": 0
+        }
+      },
+      "updated_at": "2026-09-27T18:35:41.448Z"
     }
   }
 }
