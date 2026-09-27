@@ -88292,9 +88292,84 @@
       "file": "data/daily/2012-03-04.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20120304/"
+    },
+    "2012-03-03": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "margin_parser_version": 1,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 523,
+        "finish_time_present": 523,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 501,
+        "flat_finish_time_present": 501,
+        "last3f_present": 501,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 34,
+        "obstacle_races": 2,
+        "flat_lap_target_races": 34,
+        "flat_lap_complete_races": 34,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2012-03-03.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20120303/"
     }
   },
-  "updated_at": "2026-09-27T09:45:36.128Z",
+  "updated_at": "2026-09-27T09:51:04.476Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -220175,6 +220250,71 @@
         "average_profile_fetch_ms": 1910,
         "average_pedigree_fetch_ms": 2287,
         "measured_horses": 37
+      }
+    },
+    "horse-2012-03-03-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 42,
+      "file": "data/horses/horse-2012-03-03-001.jsonl.gz",
+      "source_dates": [
+        "2012-03-03"
+      ],
+      "source_horse_ids": [
+        "2005100910",
+        "2005101435",
+        "2005101533",
+        "2005101541",
+        "2005105912",
+        "2006103025",
+        "2006103413",
+        "2007100706",
+        "2007102648",
+        "2007102688",
+        "2007103970",
+        "2007104997",
+        "2007106474",
+        "2008100801",
+        "2008102770",
+        "2008103554",
+        "2008103903",
+        "2009100109",
+        "2009100178",
+        "2009100291",
+        "2009100349",
+        "2009100886",
+        "2009101019",
+        "2009101126",
+        "2009101804",
+        "2009102033",
+        "2009102054",
+        "2009102979",
+        "2009103444",
+        "2009103765",
+        "2009103964",
+        "2009104265",
+        "2009104609",
+        "2009104619",
+        "2009105058",
+        "2009105694",
+        "2009105711",
+        "2009106596",
+        "2009106879",
+        "2009109058",
+        "2009109260",
+        "2009110041"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 180188,
+        "average_ms_per_horse": 4290,
+        "median_ms_per_horse": 4382,
+        "min_ms_per_horse": 2542,
+        "max_ms_per_horse": 5183,
+        "average_profile_fetch_ms": 1914,
+        "average_pedigree_fetch_ms": 2358,
+        "measured_horses": 42
       }
     }
   },
