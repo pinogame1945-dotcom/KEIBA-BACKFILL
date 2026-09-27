@@ -70126,9 +70126,84 @@
       "file": "data/daily/2012-10-20.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20121020/"
+    },
+    "2012-10-14": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "margin_parser_version": 1,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 470,
+        "finish_time_present": 470,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 459,
+        "flat_finish_time_present": 459,
+        "last3f_present": 459,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2012-10-14.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20121014/"
     }
   },
-  "updated_at": "2026-09-27T03:56:07.501Z",
+  "updated_at": "2026-09-27T03:59:42.253Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -196290,6 +196365,62 @@
         "max_ms_per_horse": 4969,
         "average_profile_fetch_ms": 1815,
         "average_pedigree_fetch_ms": 2247,
+        "measured_horses": 33
+      }
+    },
+    "horse-2012-10-14-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 33,
+      "file": "data/horses/horse-2012-10-14-001.jsonl.gz",
+      "source_dates": [
+        "2012-10-14"
+      ],
+      "source_horse_ids": [
+        "2005104158",
+        "2005104884",
+        "2006102264",
+        "2006102829",
+        "2007101202",
+        "2007103266",
+        "2007105621",
+        "2007106814",
+        "2008101799",
+        "2008103044",
+        "2008106092",
+        "2008106529",
+        "2009100602",
+        "2009100710",
+        "2009102570",
+        "2009102940",
+        "2009104017",
+        "2009104305",
+        "2009105602",
+        "2009105836",
+        "2009106206",
+        "2009106550",
+        "2009106560",
+        "2010100686",
+        "2010101648",
+        "2010103104",
+        "2010103166",
+        "2010105664",
+        "2010105755",
+        "2010105927",
+        "2010109170",
+        "2010109198",
+        "2010110077"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 136852,
+        "average_ms_per_horse": 4147,
+        "median_ms_per_horse": 4127,
+        "min_ms_per_horse": 2381,
+        "max_ms_per_horse": 5066,
+        "average_profile_fetch_ms": 1815,
+        "average_pedigree_fetch_ms": 2314,
         "measured_horses": 33
       }
     }
