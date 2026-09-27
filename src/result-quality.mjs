@@ -50,6 +50,14 @@ export function raceFlatLast3fQuality(row){
   return {eligible:true,scope:"FLAT",timed:timed.length,bad};
 }
 
+export function flatLast3fRaceContractViolation(row){
+  const quality=raceFlatLast3fQuality(row);
+  const failed=Boolean(
+    quality.eligible&&quality.timed>=8&&quality.bad/quality.timed>0.1
+  );
+  return {...quality,failed};
+}
+
 
 export function listSuspiciousFlatLast3f(records){
   const out=[];
