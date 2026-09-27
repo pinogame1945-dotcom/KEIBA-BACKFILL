@@ -65237,7 +65237,54 @@
       "races_parsed": 36,
       "file": "data/daily/2018-11-17.jsonl.gz",
       "request_delay_ms": 1500,
-      "discovery_url": "https://www.jra.go.jp/keiba/calendar2018/2018/11/1117.html"
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2018/2018/11/1117.html",
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-27T11:44:23.221Z",
+      "margin_updated_at": "2026-09-27T11:44:23.221Z"
     },
     "2018-11-11": {
       "status": "SUCCESS",
