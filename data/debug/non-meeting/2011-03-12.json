@@ -1,0 +1,108 @@
+{
+  "date": "2011-03-12",
+  "confirmed": true,
+  "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+  "discoveryDiagnostics": [
+    {
+      "url": "https://www.jra.go.jp/keiba/calendar2011/2011/3/0312.html",
+      "source": "JRA_SCHEDULE",
+      "error": "RATE_LIMIT HTTP 403 https://www.jra.go.jp/keiba/calendar2011/2011/3/0312.html"
+    },
+    {
+      "url": "https://db.netkeiba.com/race/list/20110312/",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "2011年03月12日のレース情報 | 競馬データベース - netkeiba",
+      "html_length": 62302,
+      "race_ids_found": 0,
+      "venue_summary_urls": [
+        "https://db.netkeiba.com/race/sum/06/20110312/"
+      ],
+      "venue_diagnostics": [
+        {
+          "url": "https://db.netkeiba.com/race/sum/06/20110312/",
+          "race_ids_found": 0,
+          "html_length": 43576
+        }
+      ],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "https://race.netkeiba.com/top/?rf=navi",
+        "https://race.netkeiba.com/AI/AI.html?rf=navi",
+        "https://db.netkeiba.com/race/top.html",
+        "https://db.netkeiba.com/race/201154031201/",
+        "https://db.netkeiba.com/race/201154031202/",
+        "https://db.netkeiba.com/race/201154031203/",
+        "https://db.netkeiba.com/race/201154031204/",
+        "https://db.netkeiba.com/race/201154031205/",
+        "https://db.netkeiba.com/race/201154031206/",
+        "https://db.netkeiba.com/race/201154031207/",
+        "https://db.netkeiba.com/race/201154031208/",
+        "https://db.netkeiba.com/race/201154031209/",
+        "https://db.netkeiba.com/race/201154031210/",
+        "https://db.netkeiba.com/race/201154031211/",
+        "https://db.netkeiba.com/race/201155031201/",
+        "https://db.netkeiba.com/race/201155031202/",
+        "https://db.netkeiba.com/race/201155031203/",
+        "https://db.netkeiba.com/race/201155031204/",
+        "https://db.netkeiba.com/race/201155031205/",
+        "https://db.netkeiba.com/race/201155031206/",
+        "https://db.netkeiba.com/race/201155031207/",
+        "https://db.netkeiba.com/race/201155031208/",
+        "https://db.netkeiba.com/race/201155031209/",
+        "https://db.netkeiba.com/race/201155031210/",
+        "https://db.netkeiba.com/race/201155031211/",
+        "https://db.netkeiba.com/race/201165031201/",
+        "https://db.netkeiba.com/race/201165031202/",
+        "https://db.netkeiba.com/race/201165031203/",
+        "https://db.netkeiba.com/race/201165031204/",
+        "https://db.netkeiba.com/race/201165031205/",
+        "https://db.netkeiba.com/race/201165031206/",
+        "https://db.netkeiba.com/race/201165031207/",
+        "https://db.netkeiba.com/race/201165031208/",
+        "https://db.netkeiba.com/race/201165031209/",
+        "https://db.netkeiba.com/race/201165031210/",
+        "https://db.netkeiba.com/race/201165031211/",
+        "https://db.netkeiba.com/race/201165031212/",
+        "https://db.netkeiba.com/race/list/20110312/",
+        "https://db.netkeiba.com/race/sum/06/20110312/",
+        "https://db.netkeiba.com/race/pay/06/20110312/",
+        "https://db.netkeiba.com/race/list/20110312/",
+        "https://db.netkeiba.com/race/sum/54/20110312/",
+        "https://db.netkeiba.com/race/pay/54/20110312/",
+        "https://db.netkeiba.com/race/sum/55/20110312/",
+        "https://db.netkeiba.com/race/pay/55/20110312/",
+        "https://db.netkeiba.com/race/sum/65/20110312/",
+        "https://db.netkeiba.com/race/pay/65/20110312/",
+        "https://race.netkeiba.com/top/?rf=footer"
+      ]
+    },
+    {
+      "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20110312",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "レース一覧 | 2011年3月12日 レース情報(JRA) - netkeiba",
+      "html_length": 43519,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "schedule.html?rf=race_list",
+        "race_list.html",
+        "pdf.html?rf=race_list",
+        "/race/track.html",
+        "../top/race_trend.html?rf=sidemenu",
+        "../race/search.html?rf=sidemenu",
+        "https://race.netkeiba.com?pid=bookmark&rf=sidemenu",
+        "https://race.sp.netkeiba.com/barometer/?rf=sidemenu",
+        "../race/compatibility.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_column",
+        "../race/training_best_time.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_banner",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    }
+  ]
+}
