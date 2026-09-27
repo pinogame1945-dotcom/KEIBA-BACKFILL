@@ -1,0 +1,57 @@
+name: Verify last3f source fallback
+
+on:
+  push:
+    branches:
+      - fix/last3f-source-fallback
+    paths:
+      - ".github/workflows/verify-last3f-source-fallback.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
+      SKIP_EMPTY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Static and smoke
+        run: |
+          node --check src/result-quality.mjs
+          node --check src/collect-day.mjs
+          node --check src/verify-range.mjs
+          npm run smoke:result-quality
+      - name: Reproduce affected date
+        run: |
+          node src/collect-day.mjs 2013-01-14
+          node src/verify-range.mjs 2013-01-14 2013-01-14
+      - name: Prove fallback source
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const day=manifest.days?.["2013-01-14"];
+          if(!day?.file)throw new Error("2013-01-14 missing after recollect");
+          const rows=gunzipSync(await readFile(day.file)).toString("utf8").trim().split("\n").map(JSON.parse);
+          const row=rows.find(r=>r?.race?.race_id==="201306010501");
+          if(!row)throw new Error("target race missing");
+          const byHorse=new Map((row.entries??[]).map(e=>[String(e.horse_id),e.horse_name]));
+          const target=(row.results??[]).filter(r=>[7,10].includes(Number(r.official_finish_position))).map(r=>({
+            finish:r.official_finish_position,
+            horse:byHorse.get(String(r.horse_id)),
+            last_3f:r.last_3f,
+            source:row.race?.source_url
+          }));
+          console.log(JSON.stringify({target,source:row.race?.source_url},null,2));
+          if(target.length!==2||target.some(x=>x.last_3f==null))throw new Error("fallback did not restore missing last3f");
+          NODE
