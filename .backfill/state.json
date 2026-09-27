@@ -4746,10 +4746,12 @@
       "source_run_id": "36329384679",
       "next_start": "2011-06-25",
       "next_end": "2011-06-12",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-27T15:45:05.844Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-27T15:45:11.083Z",
+      "dispatch_source_run_id": "36329384679"
     }
   }
 }
