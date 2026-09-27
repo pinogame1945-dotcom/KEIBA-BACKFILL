@@ -97899,7 +97899,54 @@
       "races_parsed": 24,
       "file": "data/daily/2014-12-27.jsonl.gz",
       "request_delay_ms": 1500,
-      "discovery_url": "https://db.netkeiba.com/race/list/20141227/"
+      "discovery_url": "https://db.netkeiba.com/race/list/20141227/",
+      "race_meta_parser_version": 2,
+      "margin_parser_version": 1,
+      "race_meta_coverage": {
+        "total_races": 24,
+        "course_layout": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "race_meta_updated_at": "2026-09-27T20:56:01.359Z",
+      "margin_updated_at": "2026-09-27T20:56:01.359Z"
     },
     "2014-12-21": {
       "status": "SUCCESS",
