@@ -1,0 +1,64 @@
+name: Debug last3f 2013-01-14
+
+on:
+  push:
+    branches:
+      - debug/last3f-2013-01-14
+    paths:
+      - ".github/workflows/debug-last3f-2013-01-14.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Inspect affected race pack
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          import {isSuspiciousFlatLast3f,raceFlatLast3fQuality} from "./src/result-quality.mjs";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          for(const date of ["2013-01-19","2013-01-14","2013-01-13","2013-01-12","2013-01-06"]){
+            const day=manifest.days?.[date];
+            if(!day?.file){
+              console.log(JSON.stringify({date,status:"NO_FILE"}));
+              continue;
+            }
+            const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+            const rows=text?text.split("\n").map(JSON.parse):[];
+            for(const row of rows){
+              const q=raceFlatLast3fQuality(row);
+              if(!q.eligible||q.bad===0)continue;
+              const entryNames=new Map((row.entries??[]).map(e=>[String(e.horse_id),e.horse_name]));
+              const bad=(row.results??[]).filter(r=>{
+                const timed=r?.result_status==="FINISHED"&&r?.official_finish_position!=null&&r?.finish_time_ms!=null;
+                return timed&&(r.last_3f==null||isSuspiciousFlatLast3f(r));
+              }).map(r=>({
+                horse_id:r.horse_id,
+                horse_name:entryNames.get(String(r.horse_id))??null,
+                finish:r.official_finish_position,
+                finish_time_ms:r.finish_time_ms,
+                last_3f:r.last_3f,
+                margin_raw:r.margin_raw,
+                result_status:r.result_status
+              }));
+              console.log(JSON.stringify({
+                date,
+                race_id:row?.race?.race_id,
+                race_name:row?.race?.race_name,
+                source_url:row?.race?.source_url,
+                quality:q,
+                bad
+              }));
+            }
+          }
+          NODE
