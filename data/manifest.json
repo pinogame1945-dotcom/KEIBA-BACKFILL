@@ -110562,9 +110562,84 @@
       "file": "data/daily/2011-05-08.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20110508/"
+    },
+    "2011-05-07": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "margin_parser_version": 1,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 530,
+        "finish_time_present": 530,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 517,
+        "flat_finish_time_present": 517,
+        "last3f_present": 517,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2011-05-07.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20110507/"
     }
   },
-  "updated_at": "2026-09-27T16:57:34.394Z",
+  "updated_at": "2026-09-27T17:01:02.731Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -249144,6 +249219,63 @@
         "average_profile_fetch_ms": 1775,
         "average_pedigree_fetch_ms": 2299,
         "measured_horses": 47
+      }
+    },
+    "horse-2011-05-07-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 34,
+      "file": "data/horses/horse-2011-05-07-001.jsonl.gz",
+      "source_dates": [
+        "2011-05-07"
+      ],
+      "source_horse_ids": [
+        "2004100941",
+        "2004101890",
+        "2005100670",
+        "2005101000",
+        "2005101309",
+        "2005110024",
+        "2006102786",
+        "2006103193",
+        "2006103257",
+        "2007100936",
+        "2007102368",
+        "2007106708",
+        "2007110108",
+        "2008100289",
+        "2008100660",
+        "2008101075",
+        "2008101427",
+        "2008101562",
+        "2008101982",
+        "2008102011",
+        "2008102957",
+        "2008103421",
+        "2008103648",
+        "2008103785",
+        "2008103871",
+        "2008104818",
+        "2008105142",
+        "2008105233",
+        "2008105722",
+        "2008105724",
+        "2008105927",
+        "2008106200",
+        "2008106532",
+        "2008109207"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 131698,
+        "average_ms_per_horse": 3873,
+        "median_ms_per_horse": 3772,
+        "min_ms_per_horse": 2496,
+        "max_ms_per_horse": 5237,
+        "average_profile_fetch_ms": 1774,
+        "average_pedigree_fetch_ms": 2080,
+        "measured_horses": 34
       }
     }
   },
