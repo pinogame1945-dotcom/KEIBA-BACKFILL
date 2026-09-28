@@ -142599,7 +142599,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20090711/"
     }
   },
-  "updated_at": "2026-09-28T09:40:27.388Z",
+  "updated_at": "2026-09-28T09:40:34.814Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -396964,6 +396964,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2009-07-09.json"
+    },
+    "2009-07-08": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-28T09:40:34.814Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20090708/",
+          "title": "2009年07月08日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 68144,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20090708",
+          "title": "レース一覧 | 2009年7月8日 レース情報(JRA) - netkeiba",
+          "html_length": 43280,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2009-07-08.json"
     }
   },
   "rescheduled_meetings": {
