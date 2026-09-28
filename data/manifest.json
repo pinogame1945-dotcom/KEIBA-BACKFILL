@@ -138174,7 +138174,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20100130/"
     }
   },
-  "updated_at": "2026-09-28T04:24:04.211Z",
+  "updated_at": "2026-09-28T04:24:12.337Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -384670,6 +384670,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2010-02-01.json"
+    },
+    "2010-01-29": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-28T04:24:12.337Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20100129/",
+          "title": "2010年01月29日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 61880,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20100129",
+          "title": "レース一覧 | 2010年1月29日 レース情報(JRA) - netkeiba",
+          "html_length": 42670,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2010-01-29.json"
     }
   },
   "rescheduled_meetings": {
