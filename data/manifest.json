@@ -150399,7 +150399,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20080719/"
     }
   },
-  "updated_at": "2026-09-28T18:49:37.934Z",
+  "updated_at": "2026-09-28T18:49:45.929Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -418082,6 +418082,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2008-07-17.json"
+    },
+    "2008-07-16": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-28T18:49:45.929Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20080716/",
+          "title": "2008年07月16日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 66796,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20080716",
+          "title": "レース一覧 | 2008年7月16日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2008-07-16.json"
     }
   },
   "rescheduled_meetings": {
