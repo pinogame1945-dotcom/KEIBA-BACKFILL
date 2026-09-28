@@ -5142,10 +5142,12 @@
       "source_run_id": "36371452610",
       "next_start": "2010-03-20",
       "next_end": "2010-03-07",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-28T03:12:27.877Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-28T03:12:31.635Z",
+      "dispatch_source_run_id": "36371452610"
     }
   }
 }
