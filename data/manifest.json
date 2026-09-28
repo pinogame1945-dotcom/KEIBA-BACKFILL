@@ -137274,7 +137274,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20100313/"
     }
   },
-  "updated_at": "2026-09-28T03:30:39.523Z",
+  "updated_at": "2026-09-28T03:30:47.315Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -382472,6 +382472,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2010-03-10.json"
+    },
+    "2010-03-09": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-28T03:30:47.316Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20100309/",
+          "title": "2010年03月09日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 68463,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20100309",
+          "title": "レース一覧 | 2010年3月9日 レース情報(JRA) - netkeiba",
+          "html_length": 42666,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2010-03-09.json"
     }
   },
   "rescheduled_meetings": {
