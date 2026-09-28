@@ -149722,9 +149722,84 @@
       "file": "data/daily/2008-08-17.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20080817/"
+    },
+    "2008-08-16": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "margin_parser_version": 1,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 36,
+        "course_layout": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 36,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 486,
+        "finish_time_present": 486,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 475,
+        "flat_finish_time_present": 475,
+        "last3f_present": 475,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 35,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 35,
+        "flat_lap_complete_races": 35,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 36,
+      "races_parsed": 36,
+      "file": "data/daily/2008-08-16.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://db.netkeiba.com/race/list/20080816/"
     }
   },
-  "updated_at": "2026-09-28T17:54:47.477Z",
+  "updated_at": "2026-09-28T18:01:01.668Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -309201,6 +309276,122 @@
         "average_profile_fetch_ms": 1948,
         "average_pedigree_fetch_ms": 3100,
         "measured_horses": 10
+      }
+    },
+    "horse-2008-08-16-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 50,
+      "file": "data/horses/horse-2008-08-16-001.jsonl.gz",
+      "source_dates": [
+        "2008-08-16"
+      ],
+      "source_horse_ids": [
+        "2002101867",
+        "2002103344",
+        "2002104926",
+        "2002105517",
+        "2002107407",
+        "2002107654",
+        "2003103458",
+        "2004101111",
+        "2004101933",
+        "2004102236",
+        "2004102432",
+        "2004104754",
+        "2004105018",
+        "2004106061",
+        "2004106965",
+        "2005100059",
+        "2005100085",
+        "2005100784",
+        "2005100926",
+        "2005101008",
+        "2005101267",
+        "2005101434",
+        "2005101449",
+        "2005101466",
+        "2005101790",
+        "2005101934",
+        "2005102104",
+        "2005102162",
+        "2005102264",
+        "2005102291",
+        "2005102493",
+        "2005102519",
+        "2005102690",
+        "2005102729",
+        "2005102790",
+        "2005102806",
+        "2005102909",
+        "2005102929",
+        "2005103186",
+        "2005103939",
+        "2005103990",
+        "2005104041",
+        "2005104083",
+        "2005104117",
+        "2005104220",
+        "2005104252",
+        "2005104308",
+        "2005104637",
+        "2005104716",
+        "2005104796"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 214241,
+        "average_ms_per_horse": 4284,
+        "median_ms_per_horse": 3902,
+        "min_ms_per_horse": 2980,
+        "max_ms_per_horse": 12370,
+        "average_profile_fetch_ms": 1849,
+        "average_pedigree_fetch_ms": 2419,
+        "measured_horses": 50
+      }
+    },
+    "horse-2008-08-16-002": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 20,
+      "file": "data/horses/horse-2008-08-16-002.jsonl.gz",
+      "source_dates": [
+        "2008-08-16"
+      ],
+      "source_horse_ids": [
+        "2005104806",
+        "2005104909",
+        "2005104930",
+        "2005105032",
+        "2005105086",
+        "2005105228",
+        "2005105690",
+        "2005105757",
+        "2005105874",
+        "2005106641",
+        "2005106688",
+        "2005106755",
+        "2005106838",
+        "2005107084",
+        "2005109256",
+        "2005109319",
+        "2005110009",
+        "2005110173",
+        "2006101722",
+        "2006103274"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 81826,
+        "average_ms_per_horse": 4091,
+        "median_ms_per_horse": 4017,
+        "min_ms_per_horse": 2896,
+        "max_ms_per_horse": 5550,
+        "average_profile_fetch_ms": 1797,
+        "average_pedigree_fetch_ms": 2273,
+        "measured_horses": 20
       }
     }
   },
