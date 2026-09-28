@@ -1,0 +1,82 @@
+{
+  "date": "2008-12-26",
+  "confirmed": true,
+  "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+  "discoveryDiagnostics": [
+    {
+      "url": "https://www.jra.go.jp/keiba/calendar2008/2008/12/1226.html",
+      "source": "JRA_SCHEDULE",
+      "error": "RATE_LIMIT HTTP 403 https://www.jra.go.jp/keiba/calendar2008/2008/12/1226.html"
+    },
+    {
+      "url": "https://db.netkeiba.com/race/list/20081226/",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "2008年12月26日のレース情報 | 競馬データベース - netkeiba",
+      "html_length": 53776,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "https://race.netkeiba.com/top/?rf=navi",
+        "https://race.netkeiba.com/AI/AI.html?rf=navi",
+        "https://db.netkeiba.com/race/top.html",
+        "https://db.netkeiba.com/race/200844122601/",
+        "https://db.netkeiba.com/race/200844122602/",
+        "https://db.netkeiba.com/race/200844122603/",
+        "https://db.netkeiba.com/race/200844122604/",
+        "https://db.netkeiba.com/race/200844122605/",
+        "https://db.netkeiba.com/race/200844122606/",
+        "https://db.netkeiba.com/race/200844122607/",
+        "https://db.netkeiba.com/race/200844122608/",
+        "https://db.netkeiba.com/race/200844122609/",
+        "https://db.netkeiba.com/race/200844122610/",
+        "https://db.netkeiba.com/race/200844122611/",
+        "https://db.netkeiba.com/race/200847122601/",
+        "https://db.netkeiba.com/race/200847122602/",
+        "https://db.netkeiba.com/race/200847122603/",
+        "https://db.netkeiba.com/race/200847122604/",
+        "https://db.netkeiba.com/race/200847122605/",
+        "https://db.netkeiba.com/race/200847122606/",
+        "https://db.netkeiba.com/race/200847122607/",
+        "https://db.netkeiba.com/race/200847122608/",
+        "https://db.netkeiba.com/race/200847122609/",
+        "https://db.netkeiba.com/race/list/20081226/",
+        "https://db.netkeiba.com/race/sum/44/20081226/",
+        "https://db.netkeiba.com/race/pay/44/20081226/",
+        "https://db.netkeiba.com/race/sum/47/20081226/",
+        "https://db.netkeiba.com/race/pay/47/20081226/",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    },
+    {
+      "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20081226",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "レース一覧 | 2008年12月26日 レース情報(JRA) - netkeiba",
+      "html_length": 43288,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "schedule.html?rf=race_list",
+        "race_list.html",
+        "pdf.html?rf=race_list",
+        "/race/track.html",
+        "../top/race_trend.html?rf=sidemenu",
+        "../race/search.html?rf=sidemenu",
+        "https://race.netkeiba.com?pid=bookmark&rf=sidemenu",
+        "https://race.sp.netkeiba.com/barometer/?rf=sidemenu",
+        "../race/compatibility.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_column",
+        "../race/training_best_time.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_banner",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    }
+  ]
+}
