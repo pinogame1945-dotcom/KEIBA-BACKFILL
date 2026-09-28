@@ -5514,10 +5514,12 @@
       "source_run_id": "36429279642",
       "next_start": "2009-01-10",
       "next_end": "2008-12-28",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-28T13:50:53.897Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-28T13:50:58.834Z",
+      "dispatch_source_run_id": "36429279642"
     }
   }
 }
