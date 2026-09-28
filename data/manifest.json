@@ -146349,7 +146349,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20090117/"
     }
   },
-  "updated_at": "2026-09-28T13:45:47.824Z",
+  "updated_at": "2026-09-28T13:45:55.201Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -406798,6 +406798,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2009-01-15.json"
+    },
+    "2009-01-14": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-28T13:45:55.201Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20090114/",
+          "title": "2009年01月14日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 67942,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20090114",
+          "title": "レース一覧 | 2009年1月14日 レース情報(JRA) - netkeiba",
+          "html_length": 43284,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2009-01-14.json"
     }
   },
   "rescheduled_meetings": {
