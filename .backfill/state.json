@@ -5310,10 +5310,12 @@
       "source_run_id": "36390319608",
       "next_start": "2009-09-05",
       "next_end": "2009-08-23",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-28T07:41:50.273Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-28T07:41:54.349Z",
+      "dispatch_source_run_id": "36390319608"
     }
   }
 }
