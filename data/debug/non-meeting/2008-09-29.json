@@ -1,0 +1,83 @@
+{
+  "date": "2008-09-29",
+  "confirmed": true,
+  "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+  "discoveryDiagnostics": [
+    {
+      "url": "https://www.jra.go.jp/keiba/calendar2008/2008/9/0929.html",
+      "source": "JRA_SCHEDULE",
+      "error": "RATE_LIMIT HTTP 403 https://www.jra.go.jp/keiba/calendar2008/2008/9/0929.html"
+    },
+    {
+      "url": "https://db.netkeiba.com/race/list/20080929/",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "2008年09月29日のレース情報 | 競馬データベース - netkeiba",
+      "html_length": 54220,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "https://race.netkeiba.com/top/?rf=navi",
+        "https://race.netkeiba.com/AI/AI.html?rf=navi",
+        "https://db.netkeiba.com/race/top.html",
+        "https://db.netkeiba.com/race/200835092901/",
+        "https://db.netkeiba.com/race/200835092902/",
+        "https://db.netkeiba.com/race/200835092903/",
+        "https://db.netkeiba.com/race/200835092904/",
+        "https://db.netkeiba.com/race/200835092905/",
+        "https://db.netkeiba.com/race/200835092906/",
+        "https://db.netkeiba.com/race/200835092907/",
+        "https://db.netkeiba.com/race/200835092908/",
+        "https://db.netkeiba.com/race/200835092909/",
+        "https://db.netkeiba.com/race/200835092910/",
+        "https://db.netkeiba.com/race/200835092911/",
+        "https://db.netkeiba.com/race/200845092901/",
+        "https://db.netkeiba.com/race/200845092902/",
+        "https://db.netkeiba.com/race/200845092903/",
+        "https://db.netkeiba.com/race/200845092904/",
+        "https://db.netkeiba.com/race/200845092905/",
+        "https://db.netkeiba.com/race/200845092906/",
+        "https://db.netkeiba.com/race/200845092907/",
+        "https://db.netkeiba.com/race/200845092908/",
+        "https://db.netkeiba.com/race/200845092909/",
+        "https://db.netkeiba.com/race/200845092910/",
+        "https://db.netkeiba.com/race/list/20080929/",
+        "https://db.netkeiba.com/race/sum/35/20080929/",
+        "https://db.netkeiba.com/race/pay/35/20080929/",
+        "https://db.netkeiba.com/race/sum/45/20080929/",
+        "https://db.netkeiba.com/race/pay/45/20080929/",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    },
+    {
+      "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20080929",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "レース一覧 | 2008年9月29日 レース情報(JRA) - netkeiba",
+      "html_length": 43250,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "schedule.html?rf=race_list",
+        "race_list.html",
+        "pdf.html?rf=race_list",
+        "/race/track.html",
+        "../top/race_trend.html?rf=sidemenu",
+        "../race/search.html?rf=sidemenu",
+        "https://race.netkeiba.com?pid=bookmark&rf=sidemenu",
+        "https://race.sp.netkeiba.com/barometer/?rf=sidemenu",
+        "../race/compatibility.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_column",
+        "../race/training_best_time.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_banner",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    }
+  ]
+}
