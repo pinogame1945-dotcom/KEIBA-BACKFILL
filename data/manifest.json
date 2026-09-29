@@ -162099,7 +162099,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20070127/"
     }
   },
-  "updated_at": "2026-09-29T15:32:35.234Z",
+  "updated_at": "2026-09-29T15:32:44.397Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -449364,6 +449364,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2007-01-25.json"
+    },
+    "2007-01-24": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-29T15:32:44.397Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20070124/",
+          "title": "2007年01月24日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 67385,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20070124",
+          "title": "レース一覧 | 2007年1月24日 レース情報(JRA) - netkeiba",
+          "html_length": 43250,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2007-01-24.json"
     }
   },
   "rescheduled_meetings": {
