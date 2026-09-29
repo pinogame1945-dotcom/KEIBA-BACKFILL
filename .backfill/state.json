@@ -6018,10 +6018,12 @@
       "source_run_id": "36560102788",
       "next_start": "2007-06-02",
       "next_end": "2007-05-20",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-29T11:33:43.844Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-29T11:33:49.127Z",
+      "dispatch_source_run_id": "36560102788"
     }
   }
 }
