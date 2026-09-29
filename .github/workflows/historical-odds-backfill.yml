@@ -88,9 +88,27 @@ jobs:
           const manifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
           for(const date of selected){
             const day=manifest.days?.[date];
-            if(!day||day.status!=="SUCCESS")throw new Error("odds day not SUCCESS: "+date);
+            if(!day)throw new Error("odds day missing: "+date);
             if(day.odds_pack_version!==1)throw new Error("odds pack version mismatch: "+date);
             if(day.decoder_contract_version!==1)throw new Error("decoder contract mismatch: "+date);
+            if(day.status==="SOURCE_UNAVAILABLE"){
+              const sourceRaces=Number(day.source_races??0);
+              const unavailableRaces=Number(day.unavailable_races??0);
+              const details=Array.isArray(day.unavailable_race_details)?day.unavailable_race_details:[];
+              if(sourceRaces<=0||Number(day.races??-1)!==0||unavailableRaces!==sourceRaces){
+                throw new Error("invalid SOURCE_UNAVAILABLE coverage: "+date);
+              }
+              if(details.length!==unavailableRaces){
+                throw new Error("SOURCE_UNAVAILABLE details mismatch: "+date);
+              }
+              for(const item of details){
+                if(!/^\d{12}$/.test(String(item?.race_id??""))||!item?.source_status){
+                  throw new Error("invalid unavailable odds race detail: "+date);
+                }
+              }
+              continue;
+            }
+            if(day.status!=="SUCCESS")throw new Error("odds day not terminal: "+date+" / "+day.status);
             await access(day.file);
             const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
             const rows=text?text.split("\n").map(JSON.parse):[];
