@@ -158949,7 +158949,7 @@
       "discovery_url": "https://db.netkeiba.com/race/list/20070623/"
     }
   },
-  "updated_at": "2026-09-29T11:03:59.900Z",
+  "updated_at": "2026-09-29T11:04:17.870Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -441210,6 +441210,29 @@
         }
       ],
       "evidence_file": "data/debug/non-meeting/2007-06-22.json"
+    },
+    "2007-06-21": {
+      "status": "CONFIRMED_NO_JRA",
+      "confirmed_at": "2026-09-29T11:04:17.870Z",
+      "request_delay_ms": 1500,
+      "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+      "confirmations": [
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://db.netkeiba.com/race/list/20070621/",
+          "title": "2007年06月21日のレース情報 | 競馬データベース - netkeiba",
+          "html_length": 67948,
+          "race_ids_found": 0
+        },
+        {
+          "source": "NETKEIBA_FALLBACK",
+          "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20070621",
+          "title": "レース一覧 | 2007年6月21日 レース情報(JRA) - netkeiba",
+          "html_length": 45146,
+          "race_ids_found": 0
+        }
+      ],
+      "evidence_file": "data/debug/non-meeting/2007-06-21.json"
     }
   },
   "rescheduled_meetings": {
