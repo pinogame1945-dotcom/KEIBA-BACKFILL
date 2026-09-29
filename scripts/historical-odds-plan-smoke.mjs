@@ -29,7 +29,7 @@ await writeFile(path.join(dir,"data","odds","manifest.json"),JSON.stringify({
     },
     "2026-09-18":{
       status:"SOURCE_UNAVAILABLE",odds_pack_version:1,decoder_contract_version:1,
-      updated_at:"2026-09-21T12:00:00.000Z"
+      schedule_contract_version:1,updated_at:"2026-09-21T12:00:00.000Z"
     }
   }
 }));
