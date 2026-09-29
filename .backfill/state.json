@@ -6102,10 +6102,12 @@
       "source_run_id": "36581417882",
       "next_start": "2007-02-24",
       "next_end": "2007-02-11",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-29T14:39:01.284Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-29T14:39:06.714Z",
+      "dispatch_source_run_id": "36581417882"
     }
   }
 }
