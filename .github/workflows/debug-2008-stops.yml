@@ -1,0 +1,109 @@
+name: Debug 2008 backfill stops
+
+on:
+  push:
+    branches:
+      - debug/2008-stop-diagnosis
+    paths:
+      - ".github/workflows/debug-2008-stops.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
+      SKIP_EMPTY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Diagnose race pack horse ids
+        shell: bash
+        run: |
+          node src/collect-day.mjs 2008-04-19
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const day=manifest.days?.["2008-04-19"];
+          const rows=gunzipSync(await readFile(day.file)).toString("utf8").trim().split("\n").map(JSON.parse);
+          const bad=[];
+          for(const row of rows){
+            for(const e of row.entries??[]){
+              const id=String(e?.horse_id??"");
+              if(!/^\d{10}$/.test(id)){
+                bad.push({
+                  race_id:row?.race?.race_id,
+                  race_name:row?.race?.race_name,
+                  source_url:row?.race?.source_url,
+                  horse_id:id,
+                  horse_name:e?.horse_name,
+                  horse_number:e?.horse_number
+                });
+              }
+            }
+          }
+          console.log("INVALID_HORSE_IDS "+JSON.stringify(bad));
+          NODE
+      - name: Inspect invalid horse links at both sources
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const ids=["200806030701","200806030702","200806030703","200806030704","200806030705","200806030706","200806030707","200806030708","200806030709","200806030710","200806030711","200806030712"];
+          for(const raceId of ids){
+            for(const url of [
+              `https://race.netkeiba.com/race/result.html?race_id=${raceId}`,
+              `https://db.netkeiba.com/race/${raceId}/`
+            ]){
+              const r=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0","Accept-Language":"ja"}});
+              const html=await r.text();
+              const matches=[...html.matchAll(/href=["'][^"']*\/horse\/([^/"']+)[^"']*["'][^>]*>([^<]*)</g)]
+                .map(m=>({id:m[1],name:m[2].replace(/<[^>]+>/g,"").trim()}))
+                .filter(x=>!/^\d{10}$/.test(String(x.id)));
+              if(matches.length)console.log("BAD_HREF "+JSON.stringify({raceId,url,status:r.status,matches:matches.slice(0,20)}));
+              await new Promise(res=>setTimeout(res,1200));
+            }
+          }
+          NODE
+      - name: Probe odds boundary
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const races=[
+            ["2008-05-03?","200804010101"],
+            ["2008-05-04","200804010201"],
+            ["2008-05-10","200804010301"],
+            ["2008-05-11","200804010401"],
+          ];
+          const base="https://race.netkeiba.com/api/api_get_jra_odds.html";
+          for(const [label,raceId] of races){
+            const u=new URL(base);
+            for(const [k,v] of Object.entries({pid:"api_get_jra_odds",race_id:raceId,type:"all",action:"init",sort:"odds",compress:"0",output:"json"}))u.searchParams.set(k,v);
+            const r=await fetch(u,{headers:{
+              "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+              "Referer":"https://race.netkeiba.com/",
+              "Accept":"application/json, text/javascript, */*",
+              "Accept-Language":"ja,en;q=0.5"
+            }});
+            const text=await r.text();
+            let summary={raw:text.slice(0,300)};
+            try{
+              const j=JSON.parse(text);
+              summary={
+                status:j?.status??null,
+                reason:j?.reason??null,
+                official_datetime:j?.data?.official_datetime??null,
+                odds_groups:j?.data?.odds&&typeof j.data.odds==="object"?Object.keys(j.data.odds):[]
+              };
+            }catch{}
+            console.log("ODDS_PROBE "+JSON.stringify({label,raceId,http:r.status,...summary}));
+            await new Promise(res=>setTimeout(res,1800));
+          }
+          NODE
