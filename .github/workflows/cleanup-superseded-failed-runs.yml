@@ -19,22 +19,70 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
     steps:
-      - name: Delete exact approved superseded failed runs
+      - name: Delete all superseded failed runs
         shell: bash
         run: |
           set -euo pipefail
-          ids=(36515393284 36515280384 36483284026 36483273789 36480672104 36265167679 36262988296 36262031317 36258909221 36258826200 36258297881 36253836503 36252222947)
+          python - <<'PY'
+          import json, os, subprocess
+
+          repo=os.environ["REPO"]
+          runs=[]
+          page=1
+          while True:
+              p=subprocess.run(
+                  ["gh","api",f"repos/{repo}/actions/runs?per_page=100&page={page}"],
+                  text=True,capture_output=True,check=True
+              )
+              batch=json.loads(p.stdout).get("workflow_runs",[])
+              if not batch:
+                  break
+              runs.extend(batch)
+              if len(batch)<100:
+                  break
+              page+=1
+              if page>100:
+                  raise SystemExit("pagination safety stop")
+
+          latest_success={}
+          for r in runs:
+              if r.get("status")=="completed" and r.get("conclusion")=="success":
+                  key=(r.get("workflow_id"),r.get("head_branch"))
+                  t=r.get("created_at") or ""
+                  if t > latest_success.get(key,""):
+                      latest_success[key]=t
+
+          deletable=[]
+          kept=[]
+          for r in runs:
+              if r.get("status")!="completed" or r.get("conclusion")!="failure":
+                  continue
+              key=(r.get("workflow_id"),r.get("head_branch"))
+              success_at=latest_success.get(key)
+              if success_at and success_at > (r.get("created_at") or ""):
+                  deletable.append(r)
+              else:
+                  kept.append(r)
+
           deleted=0
-          for id in "${ids[@]}"; do
-            echo "Deleting failed run $id"
-            gh api --method DELETE "repos/$REPO/actions/runs/$id"
-            deleted=$((deleted+1))
-          done
-          echo "DELETED_FAILED_RUNS=$deleted"
+          for r in deletable:
+              rid=str(r["id"])
+              subprocess.run(
+                  ["gh","api","--method","DELETE",f"repos/{repo}/actions/runs/{rid}"],
+                  text=True,check=True
+              )
+              deleted+=1
+              print(f"DELETED {rid} {r.get('name','')} {r.get('head_branch','')}")
+
+          print(f"DELETED_SUPERSEDED_FAILED_RUNS={deleted}")
+          print(f"KEPT_UNSUPERSEDED_FAILED_RUNS={len(kept)}")
+          for r in kept:
+              print(f"KEPT {r['id']} {r.get('name','')} {r.get('head_branch','')}")
+          PY
 
       - name: Cost guard
         if: always()
         run: |
           echo "Standard GitHub-hosted ubuntu-latest only."
           echo "No GPU, Artifact, Cache, dataset/model storage, or paid resource."
-          echo "Deletes only the exact listed completed failed workflow runs."
+          echo "Deletes only completed failed runs that have a newer successful run for the same workflow and branch."
