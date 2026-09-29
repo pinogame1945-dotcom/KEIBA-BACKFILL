@@ -1,0 +1,71 @@
+name: Debug 2008 odds boundary
+
+on:
+  push:
+    branches:
+      - debug/2008-stop-diagnosis
+    paths:
+      - ".github/workflows/debug-2008-odds-boundary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Probe existing race days
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const dates=["2008-05-11","2008-05-10","2008-05-04","2008-05-03","2008-04-27","2008-04-26","2008-04-20"];
+          const api="https://race.netkeiba.com/api/api_get_jra_odds.html";
+          for(const date of dates){
+            const day=manifest.days?.[date];
+            if(!day?.file){console.log("BOUNDARY "+JSON.stringify({date,status:"NO_DAY"}));continue;}
+            const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+            const row=text?JSON.parse(text.split("\n")[0]):null;
+            const raceId=String(row?.race?.race_id??"");
+            const u=new URL(api);
+            for(const [k,v] of Object.entries({pid:"api_get_jra_odds",race_id:raceId,type:"all",action:"init",sort:"odds",compress:"0",output:"json"}))u.searchParams.set(k,v);
+            const r=await fetch(u,{headers:{
+              "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+              "Referer":"https://race.netkeiba.com/",
+              "Accept":"application/json, text/javascript, */*",
+              "Accept-Language":"ja,en;q=0.5"
+            }});
+            const body=await r.text();
+            let payload={};
+            try{payload=JSON.parse(body);}catch{}
+            console.log("BOUNDARY "+JSON.stringify({
+              date,raceId,http:r.status,status:payload?.status??null,reason:payload?.reason??null,
+              official:payload?.data?.official_datetime??null,
+              groups:payload?.data?.odds&&typeof payload.data.odds==="object"?Object.keys(payload.data.odds):[]
+            }));
+            await new Promise(res=>setTimeout(res,1600));
+          }
+          NODE
+      - name: Probe alphanumeric horse pages
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          for(const id of ["000a011226","000a011220"]){
+            for(const kind of ["profile","pedigree"]){
+              const url=kind==="profile"
+                ?`https://db.netkeiba.com/horse/${id}/`
+                :`https://db.netkeiba.com/horse/ped/${id}/`;
+              const r=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0","Accept-Language":"ja"}});
+              const html=await r.text();
+              console.log("HORSE_PAGE "+JSON.stringify({id,kind,http:r.status,length:html.length,hasName:/アラームコール|グライディング/.test(html)}));
+              await new Promise(res=>setTimeout(res,1200));
+            }
+          }
+          NODE
