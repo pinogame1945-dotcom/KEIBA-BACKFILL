@@ -50,7 +50,7 @@ function floatOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 function horseId(href) {
-  return href?.match(/\/horse\/(\d+)/)?.[1] ?? null;
+  return href?.match(/\/horse\/([0-9A-Za-z]+)/)?.[1] ?? null;
 }
 function jockeyId(href) {
   return href?.match(/\/jockey\/(?:result\/recent\/)?(\d+)/)?.[1] ?? null;
