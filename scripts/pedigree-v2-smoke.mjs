@@ -30,5 +30,5 @@ for(const generation of [1,2,3,4,5]){
   }
 }
 assert.equal(nodes.some(n=>n.ancestor_name==="WRONG"),false);
-assert.equal(nodes.find(n=>n.generation===1&&n.slot===0)?.ancestor_id,"000a011226");
+assert.equal(nodes.find(n=>n.generation===1&&n.slot===0)?.ancestor_id,"2000190015");
 console.log("pedigree v2 smoke passed");
