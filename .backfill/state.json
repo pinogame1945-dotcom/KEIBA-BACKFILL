@@ -5868,6 +5868,16 @@
       "range_days": 14,
       "dispatched_at": "2026-09-29T06:13:10.941Z",
       "dispatch_source_run_id": "36528333052"
+    },
+    "2007-12-01..2007-11-18": {
+      "completed_at": "2026-09-29T06:33:43.015Z",
+      "source_run_id": "36529949332",
+      "next_start": "2007-11-17",
+      "next_end": "2007-11-04",
+      "next_dispatched": false,
+      "dispatch_prepared_at": "2026-09-29T06:33:43.015Z",
+      "stop_date": "2006-09-01",
+      "range_days": 14
     }
   }
 }
