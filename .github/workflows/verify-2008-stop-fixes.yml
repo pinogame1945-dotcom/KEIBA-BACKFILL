@@ -1,5 +1,5 @@
 name: Verify 2008 stop fixes
-# rerun-after-schedule-aware-fixture
+# rerun-after-canonical-foreign-id
 
 on:
   push:
@@ -32,6 +32,7 @@ jobs:
           node --check src/pedigree-parser.mjs
           node --check src/collect-historical-odds.mjs
           node --check src/plan-historical-odds-backfill.mjs
+          npm run smoke:horse-id
           npm run smoke:pedigree
           npm run smoke:odds
           npm run smoke:odds-plan
@@ -40,7 +41,6 @@ jobs:
         shell: bash
         run: |
           node src/collect-day.mjs 2008-04-19
-          node src/collect-horses.mjs --source-date 2008-04-19 --limit 2 --skip-existing 1
           node --input-type=module <<'NODE'
           import {readFile} from "node:fs/promises";
           import {gunzipSync} from "node:zlib";
@@ -55,25 +55,26 @@ jobs:
               });
             }
           }
-          if(target.length!==2)throw new Error("alphanumeric entries not preserved: "+JSON.stringify(target));
-          const packs=Object.entries(manifest.horse_packs??{})
-            .filter(([,p])=>Array.isArray(p.source_horse_ids)&&p.source_horse_ids.some(id=>String(id).startsWith("000a")));
-          if(!packs.length)throw new Error("alphanumeric horse pack missing");
-          const records=[];
-          for(const [,p] of packs){
-            const text=gunzipSync(await readFile(p.file)).toString("utf8").trim();
-            for(const line of text.split("\n").filter(Boolean)){
-              const row=JSON.parse(line);
-              if(String(row.horse_id).startsWith("000a"))records.push({
-                horse_id:row.horse_id,
-                horse_name:row.profile?.horse_name??null,
-                pedigree_nodes:Array.isArray(row.pedigree)?row.pedigree.length:0
-              });
+          const expected=new Map([
+            ["アラームコール","2000190015"],
+            ["グライディング","2000190016"],
+          ]);
+          console.log("ALPHA_HORSE_VERIFY "+JSON.stringify({target}));
+          if(target.length!==0){
+            throw new Error("legacy alphanumeric ids remained in daily pack: "+JSON.stringify(target));
+          }
+          const mapped=[];
+          for(const row of rows){
+            if(row?.race?.race_id!=="200806030711")continue;
+            for(const e of row.entries??[]){
+              const canonical=expected.get(String(e.horse_name??""));
+              if(canonical)mapped.push({horse_name:e.horse_name,horse_id:String(e.horse_id)});
             }
           }
-          console.log("ALPHA_HORSE_VERIFY "+JSON.stringify({target,records}));
-          if(records.length!==2)throw new Error("expected 2 alphanumeric horse records");
-          if(records.some(r=>!r.horse_name||r.pedigree_nodes<2))throw new Error("alphanumeric profile/pedigree incomplete");
+          console.log("CANONICAL_HORSE_VERIFY "+JSON.stringify(mapped));
+          if(mapped.length!==2||mapped.some(x=>expected.get(x.horse_name)!==x.horse_id)){
+            throw new Error("foreign horse canonical mapping failed: "+JSON.stringify(mapped));
+          }
           NODE
       - name: Verify source-unavailable odds day
         shell: bash
