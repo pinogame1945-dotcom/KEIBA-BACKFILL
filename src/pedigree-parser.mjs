@@ -4,7 +4,7 @@ function clean(value){
   return (value??"").replace(/\s+/g," ").trim();
 }
 function horseId(href){
-  return href?.match(/\/horse\/(\d+)/)?.[1]??null;
+  return href?.match(/\/horse\/([0-9A-Za-z]+)/)?.[1]??null;
 }
 
 function pedigreeRows(table,$){
