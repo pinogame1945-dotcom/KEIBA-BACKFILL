@@ -28,7 +28,7 @@ await writeFile(path.join(dir,"data","odds","manifest.json"),JSON.stringify({
       schedule_contract_version:1,updated_at:"2026-09-21T10:00:00.000Z"
     },
     "2026-09-18":{
-      status:"SUCCESS",odds_pack_version:1,decoder_contract_version:1,
+      status:"SOURCE_UNAVAILABLE",odds_pack_version:1,decoder_contract_version:1,
       updated_at:"2026-09-21T12:00:00.000Z"
     }
   }
@@ -41,9 +41,9 @@ const run=spawnSync(process.execPath,[script,"plan","10","2007-07-28"],{
 if(run.status!==0)throw new Error(run.stderr||"planner failed");
 const result=JSON.parse(run.stdout.trim());
 assert.equal(result.action,"collect");
-assert.equal(result.pending_days,2);
-assert.deepEqual(result.selected,["2026-09-19","2026-09-18"]);
-assert.equal(result.completed_days,1);
+assert.equal(result.pending_days,1);
+assert.deepEqual(result.selected,["2026-09-19"]);
+assert.equal(result.completed_days,2);
 assert.equal(result.race_days,3);
 
 console.log("historical odds planner smoke passed");
