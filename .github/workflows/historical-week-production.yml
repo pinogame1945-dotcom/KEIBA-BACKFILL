@@ -312,6 +312,42 @@ jobs:
             "${{ steps.input.outputs.start }}" \
             "${{ steps.input.outputs.end }}"
 
+      - name: Kick independent race meta catch-up
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_self_chain }}
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          META_AUTO=$(cat .backfill/race-meta-auto-enabled 2>/dev/null || true)
+          if [ "$META_AUTO" != "enabled" ]; then
+            echo "Race Meta auto-follow is disabled by repository control."
+            exit 0
+          fi
+
+          git pull --rebase origin main
+          PLAN=$(node src/plan-race-meta-backfill.mjs plan 6 2006-09-01)
+          PENDING=$(printf '%s' "$PLAN" | jq -r '.pending_days')
+          if [ "$PENDING" = "0" ]; then
+            echo "No pending race meta days."
+            exit 0
+          fi
+
+          OTHER_ACTIVE=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/race-meta-backfill.yml/runs?per_page=30" \
+            --jq "[.workflow_runs[] | select(.status == \"queued\" or .status == \"in_progress\")] | length")
+          if [ "$OTHER_ACTIVE" != "0" ]; then
+            echo "Race Meta catch-up already active/queued; skip duplicate dispatch."
+            exit 0
+          fi
+
+          echo "Kick Race Meta catch-up; pending=$PENDING"
+          gh workflow run race-meta-backfill.yml \
+            --ref main \
+            -f max_days="6" \
+            -f min_date="2006-09-01" \
+            -f allow_self_chain="true"
+
       - name: Kick independent odds catch-up
         if: ${{ github.event_name == 'workflow_dispatch' && (inputs.allow_odds_followup || inputs.allow_self_chain) }}
         continue-on-error: true
