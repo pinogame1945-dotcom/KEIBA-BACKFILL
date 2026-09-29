@@ -9,7 +9,7 @@ for(let row=0;row<32;row+=1){
     const rowspan=spans[generation];
     if(row%rowspan!==0)continue;
     const slot=row/rowspan;
-    const id=String(generation).padStart(2,"0")+String(slot).padStart(8,"0");
+    const id=(generation===1&&slot===0)?"000a011226":String(generation).padStart(2,"0")+String(slot).padStart(8,"0");
     const nested=generation===2&&slot===1
       ?"<table><tbody><tr><td rowspan=\"1\"><a href=\"/horse/9999999999/\">WRONG</a></td></tr></tbody></table>"
       :"";
@@ -30,4 +30,5 @@ for(const generation of [1,2,3,4,5]){
   }
 }
 assert.equal(nodes.some(n=>n.ancestor_name==="WRONG"),false);
+assert.equal(nodes.find(n=>n.generation===1&&n.slot===0)?.ancestor_id,"2000190015");
 console.log("pedigree v2 smoke passed");

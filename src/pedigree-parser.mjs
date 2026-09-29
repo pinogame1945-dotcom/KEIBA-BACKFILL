@@ -1,10 +1,11 @@
 import {load} from "cheerio";
+import {extractNetkeibaHorseId} from "./horse-id.mjs";
 
 function clean(value){
   return (value??"").replace(/\s+/g," ").trim();
 }
 function horseId(href){
-  return href?.match(/\/horse\/(\d+)/)?.[1]??null;
+  return extractNetkeibaHorseId(href);
 }
 
 function pedigreeRows(table,$){

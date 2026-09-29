@@ -196,6 +196,7 @@ for(let i=0;i<raceOwners.length;i+=1){
     const unavailable={
       race_id:raceId,
       source_status:nonFinalStatus,
+      source_reason:String(payload?.reason??"").trim()||null,
       reason:"FINAL_ODDS_UNAVAILABLE_FROM_SOURCE",
     };
     unavailableRaces.push(unavailable);
@@ -214,10 +215,35 @@ for(let i=0;i<raceOwners.length;i+=1){
 }
 
 if(!records.length){
-  throw new Error(
-    "historical odds source returned no final races for "+date+
-    "; refusing empty odds pack"
+  if(unavailableRaces.length!==raceOwners.length){
+    throw new Error(
+      "historical odds empty coverage mismatch for "+date+
+      ": source="+raceOwners.length+" unavailable="+unavailableRaces.length
+    );
+  }
+  oddsManifest.schema_version=1;
+  oddsManifest.odds_pack_version=ODDS_PACK_VERSION;
+  oddsManifest.decoder_contract_version=ODDS_DECODER_CONTRACT_VERSION;
+  oddsManifest.days[date]={
+    status:"SOURCE_UNAVAILABLE",
+    reason:"ALL_FINAL_ODDS_UNAVAILABLE_FROM_SOURCE",
+    source_races:raceOwners.length,
+    races:0,
+    unavailable_races:unavailableRaces.length,
+    unavailable_race_details:unavailableRaces,
+    odds_pack_version:ODDS_PACK_VERSION,
+    decoder_contract_version:ODDS_DECODER_CONTRACT_VERSION,
+    ...(requiresScheduleContract?{schedule_contract_version:SCHEDULE_CONTRACT_VERSION}:{}),
+    request_delay_ms:delayMs,
+    raw_response_bytes:rawResponseBytes,
+    updated_at:new Date().toISOString(),
+  };
+  await atomicWrite(oddsManifestPath,Buffer.from(JSON.stringify(oddsManifest,null,2)+"\n"));
+  console.warn(
+    "[odds] entire day unavailable from source; recorded SOURCE_UNAVAILABLE "+date+
+    " races="+raceOwners.length
   );
+  process.exit(0);
 }
 
 const jsonl=records.map(row=>JSON.stringify(row)).join("\n")+"\n";

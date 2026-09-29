@@ -28,6 +28,7 @@
     "smoke:repair-plan": "node scripts/race-pack-repair-plan-smoke.mjs",
     "backfill:race-meta": "node src/race-meta-backfill.mjs",
     "plan:race-meta": "node src/plan-race-meta-backfill.mjs",
-    "smoke:margin": "node scripts/margin-normalization-smoke.mjs"
+    "smoke:margin": "node scripts/margin-normalization-smoke.mjs",
+    "smoke:horse-id": "node scripts/horse-id-smoke.mjs"
   }
 }

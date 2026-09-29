@@ -39,8 +39,9 @@ const raceDays=Object.entries(raceManifest.days??{})
 const completed=new Set(
   Object.entries(oddsManifest.days??{})
     .filter(([date,entry])=>{
+      const terminalStatus=new Set(["SUCCESS","SOURCE_UNAVAILABLE","UNSUPPORTED"]).has(String(entry?.status??""));
       if(
-        entry?.status!=="SUCCESS"||
+        !terminalStatus||
         Number(entry?.odds_pack_version??0)<1||
         Number(entry?.decoder_contract_version??0)<1
       )return false;

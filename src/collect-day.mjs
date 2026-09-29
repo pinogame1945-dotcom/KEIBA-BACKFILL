@@ -9,6 +9,7 @@ import {
 } from "./payout-normalization.mjs";
 import {findLast3fColumn,parseLast3fSeconds,RESULT_PARSER_VERSION} from "./result-columns.mjs";
 import {MARGIN_PARSER_VERSION,normalizeMarginRaw} from "./margin-normalization.mjs";
+import {extractNetkeibaHorseId} from "./horse-id.mjs";
 import {LAP_PARSER_VERSION,expectedLapSegments,parseRaceLaps} from "./lap-parser.mjs";
 import {flatLast3fDayQuality,flatLast3fRaceContractViolation,listSuspiciousFlatLast3f} from "./result-quality.mjs";
 import {
@@ -50,7 +51,7 @@ function floatOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 function horseId(href) {
-  return href?.match(/\/horse\/(\d+)/)?.[1] ?? null;
+  return extractNetkeibaHorseId(href);
 }
 function jockeyId(href) {
   return href?.match(/\/jockey\/(?:result\/recent\/)?(\d+)/)?.[1] ?? null;
