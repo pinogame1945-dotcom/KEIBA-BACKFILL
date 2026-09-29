@@ -56,7 +56,20 @@ jobs:
             console.log({date,status:day.status});
             process.exit(0);
           }
-          if(day.status!=="SUCCESS")throw new Error("odds day is not SUCCESS");
+          if(day.status==="SOURCE_UNAVAILABLE"){
+            const sourceRaces=Number(day.source_races??0);
+            const unavailableRaces=Number(day.unavailable_races??0);
+            const details=Array.isArray(day.unavailable_race_details)?day.unavailable_race_details:[];
+            if(sourceRaces<=0||Number(day.races??-1)!==0||unavailableRaces!==sourceRaces){
+              throw new Error("invalid SOURCE_UNAVAILABLE coverage");
+            }
+            if(details.length!==unavailableRaces){
+              throw new Error("SOURCE_UNAVAILABLE details mismatch");
+            }
+            console.log({date,status:day.status,sourceRaces,unavailableRaces});
+            process.exit(0);
+          }
+          if(day.status!=="SUCCESS")throw new Error("odds day is not terminal");
           await access(day.file);
           const text=gunzipSync(await readFile(day.file)).toString("utf8").trim();
           const rows=text?text.split("\n").map(JSON.parse):[];
