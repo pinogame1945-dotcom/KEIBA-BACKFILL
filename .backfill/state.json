@@ -5850,10 +5850,12 @@
       "source_run_id": "36527032888",
       "next_start": "2007-12-15",
       "next_end": "2007-12-02",
-      "next_dispatched": false,
+      "next_dispatched": true,
       "dispatch_prepared_at": "2026-09-29T05:53:36.546Z",
       "stop_date": "2006-09-01",
-      "range_days": 14
+      "range_days": 14,
+      "dispatched_at": "2026-09-29T05:53:40.385Z",
+      "dispatch_source_run_id": "36527032888"
     }
   }
 }
