@@ -147,6 +147,10 @@ assert.equal(
   classifyRaceDiscipline(selectRaceMeta(obstacleLive),"障害3歳以上未勝利"),
   "OBSTACLE",
 );
+assert.equal(classifyRaceDiscipline("芝3930m","京都ジャンプS(JGIII)"),"OBSTACLE");
+assert.equal(classifyRaceDiscipline("芝4100m","中山大障害(JG1)"),"OBSTACLE");
+assert.equal(classifyRaceDiscipline("芝2000m","テストジャンプS"),"OBSTACLE");
+assert.equal(classifyRaceDiscipline("芝2000m","テストステークス(GIII)"),"FLAT");
 
 const coverage=summarizeRaceMetaCoverage([
   {race:normalizeRaceMeta({
