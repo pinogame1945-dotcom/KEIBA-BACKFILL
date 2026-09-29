@@ -178,3 +178,8 @@ but schedule-aware odds records and manifest entries add
 
 A schedule-contract race pack requires a schedule-contract odds pack before that
 odds day is considered complete.
+
+
+### Historical odds unavailable days
+
+When the upstream final-odds source explicitly returns no final odds for every race on an otherwise valid race day, `data/odds/manifest.json` records the day as `SOURCE_UNAVAILABLE` rather than creating an empty SUCCESS pack. The entry preserves `source_races`, `unavailable_races`, and per-race source status/reason details. This terminal status prevents infinite retries while keeping the missing source coverage explicit.
