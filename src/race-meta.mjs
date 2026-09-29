@@ -82,8 +82,9 @@ export function selectRaceMeta($){
 
 export function classifyRaceDiscipline(meta,raceName=null){
   const text=cleanMeta(meta);
-  const name=cleanMeta(raceName);
-  if(name.includes("障害"))return "OBSTACLE";
+  const name=normalizedText(raceName).toUpperCase().replace(/\s+/g,"");
+  if(name.includes("障害")||name.includes("ジャンプ"))return "OBSTACLE";
+  if(/\(?JG(?:III|II|I|3|2|1)\)?/u.test(name))return "OBSTACLE";
   if(/(?:障害|障)\s*(?:芝|ダート|ダ)?\s*\d{3,4}\s*m/u.test(text)){
     return "OBSTACLE";
   }
