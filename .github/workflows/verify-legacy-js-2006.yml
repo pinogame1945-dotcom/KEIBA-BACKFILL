@@ -1,0 +1,57 @@
+name: Verify legacy JS obstacle 2006
+
+on:
+  push:
+    branches:
+      - fix/legacy-js-obstacle-2006
+    paths:
+      - ".github/workflows/verify-legacy-js-2006.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
+      SKIP_EMPTY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - name: Smoke
+        run: |
+          node --check src/race-meta.mjs
+          npm run smoke:race-meta
+      - name: Recollect affected date
+        run: node src/collect-day.mjs 2006-12-02
+      - name: Verify affected race and day quality
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+          import {flatLast3fDayQuality,listSuspiciousFlatLast3f} from "./src/result-quality.mjs";
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const day=manifest.days?.["2006-12-02"];
+          if(!day?.file)throw new Error("2006-12-02 pack missing");
+          const rows=gunzipSync(await readFile(day.file)).toString("utf8").trim().split("\n").map(JSON.parse);
+          const race=rows.find(r=>r?.race?.race_id==="200606050109");
+          if(!race)throw new Error("Illumination JS target missing");
+          const q=flatLast3fDayQuality(rows);
+          const suspicious=listSuspiciousFlatLast3f(rows);
+          console.log("JS_VERIFY "+JSON.stringify({
+            race_id:race.race.race_id,
+            race_name:race.race.race_name,
+            discipline:race.race.discipline,
+            last3f:q,
+            suspicious
+          }));
+          if(race.race.discipline!=="OBSTACLE")throw new Error("target still not obstacle");
+          if(suspicious.length!==0)throw new Error("suspicious flat last3f remains");
+          NODE
