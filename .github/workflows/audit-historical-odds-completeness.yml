@@ -1,0 +1,188 @@
+name: Audit historical odds completeness
+
+on:
+  push:
+    branches:
+      - audit/historical-odds-completeness-20260930
+    paths:
+      - ".github/workflows/audit-historical-odds-completeness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Audit race-day vs odds-day completeness
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+
+          const START="2006-09-01";
+          const CONFIG_MIN="2007-07-28";
+
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const oddsManifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
+
+          const raceDays=Object.entries(manifest.days??{})
+            .filter(([d,e])=>d>=START && e?.status==="SUCCESS" && Number(e?.races_parsed??0)>0 && e?.file)
+            .sort(([a],[b])=>a.localeCompare(b));
+
+          const result={
+            start:START,
+            configured_odds_min:CONFIG_MIN,
+            race_days:raceDays.length,
+            odds_manifest_days:Object.keys(oddsManifest.days??{}).length,
+            race_days_at_or_after_config_min:0,
+            race_days_before_config_min:0,
+            missing_odds_days_at_or_after_config_min:[],
+            missing_odds_days_before_config_min:[],
+            source_unavailable_days:[],
+            unsupported_days:[],
+            non_success_other_days:[],
+            success_days:0,
+            success_days_with_race_id_mismatch:[],
+            success_days_with_unavailable_races:[],
+            total_races_expected_at_or_after_config_min:0,
+            total_races_odds_success_at_or_after_config_min:0,
+            total_unavailable_races:0,
+          };
+
+          const readGzJsonl=async file=>{
+            const raw=gunzipSync(await readFile(file)).toString("utf8").trim();
+            return raw?raw.split("\n").filter(Boolean).map(JSON.parse):[];
+          };
+
+          for(const [date,day] of raceDays){
+            const expectedCount=Number(day.races_parsed??0);
+            const odds=oddsManifest.days?.[date]??null;
+            const after=date>=CONFIG_MIN;
+            if(after){
+              result.race_days_at_or_after_config_min++;
+              result.total_races_expected_at_or_after_config_min+=expectedCount;
+            }else{
+              result.race_days_before_config_min++;
+            }
+
+            if(!odds){
+              (after?result.missing_odds_days_at_or_after_config_min:result.missing_odds_days_before_config_min).push({date,races:expectedCount});
+              continue;
+            }
+
+            const status=String(odds.status??"");
+            if(status==="SOURCE_UNAVAILABLE"){
+              result.source_unavailable_days.push({
+                date,
+                expected_races:expectedCount,
+                source_races:Number(odds.source_races??0),
+                unavailable_races:Number(odds.unavailable_races??0),
+                reasons:[...new Set((odds.unavailable_race_details??[]).map(x=>String(x?.source_reason??x?.source_status??"")).filter(Boolean))]
+              });
+              result.total_unavailable_races+=Number(odds.unavailable_races??0);
+              continue;
+            }
+            if(status==="UNSUPPORTED"){
+              result.unsupported_days.push({date,expected_races:expectedCount,reason:odds.reason??null});
+              continue;
+            }
+            if(status!=="SUCCESS"){
+              result.non_success_other_days.push({date,status,expected_races:expectedCount});
+              continue;
+            }
+
+            result.success_days++;
+            if(after) result.total_races_odds_success_at_or_after_config_min+=Number(odds.races??0);
+
+            if(!odds.file){
+              result.success_days_with_race_id_mismatch.push({date,reason:"SUCCESS_WITHOUT_FILE",expected_races:expectedCount,odds_races:Number(odds.races??0)});
+              continue;
+            }
+
+            const [raceRows,oddsRows]=await Promise.all([readGzJsonl(day.file),readGzJsonl(odds.file)]);
+            const expectedIds=new Set(raceRows.map(r=>String(r?.race?.race_id??"")).filter(Boolean));
+            const oddsIds=new Set(oddsRows.map(r=>String(r?.race_id??r?.race?.race_id??"")).filter(Boolean));
+            const missing=[...expectedIds].filter(id=>!oddsIds.has(id));
+            const extra=[...oddsIds].filter(id=>!expectedIds.has(id));
+            const declaredUnavailable=Array.isArray(odds.unavailable_race_details)?odds.unavailable_race_details:[];
+            const unavailableIds=new Set(declaredUnavailable.map(x=>String(x?.race_id??"")).filter(Boolean));
+            const missingNotDeclared=missing.filter(id=>!unavailableIds.has(id));
+
+            if(missingNotDeclared.length||extra.length||Number(odds.races??0)!==oddsRows.length){
+              result.success_days_with_race_id_mismatch.push({
+                date,
+                expected_races:expectedIds.size,
+                odds_rows:oddsRows.length,
+                declared_races:Number(odds.races??0),
+                missing_not_declared:missingNotDeclared,
+                extra,
+                declared_unavailable:[...unavailableIds]
+              });
+            }
+            if(declaredUnavailable.length){
+              result.success_days_with_unavailable_races.push({
+                date,
+                expected_races:expectedIds.size,
+                odds_rows:oddsRows.length,
+                unavailable_races:declaredUnavailable.length,
+                details:declaredUnavailable
+              });
+              result.total_unavailable_races+=declaredUnavailable.length;
+            }
+          }
+
+          const compressRanges=(items)=>{
+            const dates=items.map(x=>x.date).sort();
+            if(!dates.length)return [];
+            const oneDay=24*60*60*1000;
+            const out=[];
+            let start=dates[0],prev=dates[0];
+            for(const d of dates.slice(1)){
+              if(new Date(d+"T00:00:00Z")-new Date(prev+"T00:00:00Z")===oneDay){
+                prev=d; continue;
+              }
+              out.push({start,end:prev,count:dates.filter(x=>x>=start&&x<=prev).length});
+              start=prev=d;
+            }
+            out.push({start,end:prev,count:dates.filter(x=>x>=start&&x<=prev).length});
+            return out;
+          };
+
+          result.missing_ranges_at_or_after_config_min=compressRanges(result.missing_odds_days_at_or_after_config_min);
+          result.missing_ranges_before_config_min=compressRanges(result.missing_odds_days_before_config_min);
+
+          console.log("ODDS_AUDIT_SUMMARY "+JSON.stringify({
+            start:result.start,
+            configured_odds_min:result.configured_odds_min,
+            race_days:result.race_days,
+            race_days_at_or_after_config_min:result.race_days_at_or_after_config_min,
+            race_days_before_config_min:result.race_days_before_config_min,
+            success_days:result.success_days,
+            missing_days_at_or_after_config_min:result.missing_odds_days_at_or_after_config_min.length,
+            missing_days_before_config_min:result.missing_odds_days_before_config_min.length,
+            source_unavailable_days:result.source_unavailable_days.length,
+            unsupported_days:result.unsupported_days.length,
+            other_non_success_days:result.non_success_other_days.length,
+            race_id_mismatch_days:result.success_days_with_race_id_mismatch.length,
+            partial_unavailable_days:result.success_days_with_unavailable_races.length,
+            expected_races_at_or_after_config_min:result.total_races_expected_at_or_after_config_min,
+            odds_success_races_at_or_after_config_min:result.total_races_odds_success_at_or_after_config_min,
+            total_unavailable_races:result.total_unavailable_races
+          }));
+          console.log("MISSING_AFTER_MIN "+JSON.stringify(result.missing_odds_days_at_or_after_config_min));
+          console.log("MISSING_BEFORE_MIN "+JSON.stringify(result.missing_odds_days_before_config_min));
+          console.log("MISSING_RANGES_AFTER_MIN "+JSON.stringify(result.missing_ranges_at_or_after_config_min));
+          console.log("MISSING_RANGES_BEFORE_MIN "+JSON.stringify(result.missing_ranges_before_config_min));
+          console.log("SOURCE_UNAVAILABLE "+JSON.stringify(result.source_unavailable_days));
+          console.log("UNSUPPORTED "+JSON.stringify(result.unsupported_days));
+          console.log("OTHER_NON_SUCCESS "+JSON.stringify(result.non_success_other_days));
+          console.log("RACE_ID_MISMATCH "+JSON.stringify(result.success_days_with_race_id_mismatch));
+          console.log("PARTIAL_UNAVAILABLE "+JSON.stringify(result.success_days_with_unavailable_races));
+          NODE
