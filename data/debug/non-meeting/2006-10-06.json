@@ -1,0 +1,82 @@
+{
+  "date": "2006-10-06",
+  "confirmed": true,
+  "policy": "JRA_ZERO_PLUS_NETKEIBA_ZERO_OR_TWO_DISTINCT_NETKEIBA_ZERO",
+  "discoveryDiagnostics": [
+    {
+      "url": "https://www.jra.go.jp/keiba/calendar2006/2006/10/1006.html",
+      "source": "JRA_SCHEDULE",
+      "error": "RATE_LIMIT HTTP 403 https://www.jra.go.jp/keiba/calendar2006/2006/10/1006.html"
+    },
+    {
+      "url": "https://db.netkeiba.com/race/list/20061006/",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "2006年10月06日のレース情報 | 競馬データベース - netkeiba",
+      "html_length": 53760,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "https://race.netkeiba.com/top/?rf=navi",
+        "https://race.netkeiba.com/AI/AI.html?rf=navi",
+        "https://db.netkeiba.com/race/top.html",
+        "https://db.netkeiba.com/race/200644100601/",
+        "https://db.netkeiba.com/race/200644100602/",
+        "https://db.netkeiba.com/race/200644100603/",
+        "https://db.netkeiba.com/race/200644100604/",
+        "https://db.netkeiba.com/race/200644100605/",
+        "https://db.netkeiba.com/race/200644100606/",
+        "https://db.netkeiba.com/race/200644100607/",
+        "https://db.netkeiba.com/race/200644100608/",
+        "https://db.netkeiba.com/race/200644100609/",
+        "https://db.netkeiba.com/race/200644100610/",
+        "https://db.netkeiba.com/race/200647100601/",
+        "https://db.netkeiba.com/race/200647100602/",
+        "https://db.netkeiba.com/race/200647100603/",
+        "https://db.netkeiba.com/race/200647100604/",
+        "https://db.netkeiba.com/race/200647100605/",
+        "https://db.netkeiba.com/race/200647100606/",
+        "https://db.netkeiba.com/race/200647100607/",
+        "https://db.netkeiba.com/race/200647100608/",
+        "https://db.netkeiba.com/race/200647100609/",
+        "https://db.netkeiba.com/race/200647100610/",
+        "https://db.netkeiba.com/race/list/20061006/",
+        "https://db.netkeiba.com/race/sum/44/20061006/",
+        "https://db.netkeiba.com/race/pay/44/20061006/",
+        "https://db.netkeiba.com/race/sum/47/20061006/",
+        "https://db.netkeiba.com/race/pay/47/20061006/",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    },
+    {
+      "url": "https://race.netkeiba.com/top/race_list.html?kaisai_date=20061006",
+      "source": "NETKEIBA_FALLBACK",
+      "title": "レース一覧 | 2006年10月6日 レース情報(JRA) - netkeiba",
+      "html_length": 42670,
+      "race_ids_found": 0,
+      "venue_summary_urls": [],
+      "venue_diagnostics": [],
+      "href_samples": [
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=navi",
+        "https://race.netkeiba.com/notes/schedule.html?rf=navi",
+        "schedule.html?rf=race_list",
+        "race_list.html",
+        "pdf.html?rf=race_list",
+        "/race/track.html",
+        "../top/race_trend.html?rf=sidemenu",
+        "../race/search.html?rf=sidemenu",
+        "https://race.netkeiba.com?pid=bookmark&rf=sidemenu",
+        "https://race.sp.netkeiba.com/barometer/?rf=sidemenu",
+        "../race/compatibility.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_column",
+        "../race/training_best_time.html?rf=sidemenu",
+        "https://yoso.netkeiba.com/senmonshi/jra/?rf=race_banner",
+        "https://race.netkeiba.com/top/?rf=footer",
+        "https://race.netkeiba.com/bookmark/bookmark.html?rf=footer"
+      ]
+    }
+  ]
+}
