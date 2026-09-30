@@ -1,0 +1,110 @@
+name: Audit odds combination cardinality
+
+on:
+  push:
+    branches:
+      - audit/historical-odds-completeness-20260930
+    paths:
+      - ".github/workflows/audit-odds-combination-cardinality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Audit stored combination counts
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+
+          const oddsManifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
+          const choose2=n=>n>=2?n*(n-1)/2:0;
+          const choose3=n=>n>=3?n*(n-1)*(n-2)/6:0;
+          const expected=(g,n)=>({
+            "4":choose2(n),
+            "5":choose2(n),
+            "6":n>=2?n*(n-1):0,
+            "7":choose3(n),
+            "8":n>=3?n*(n-1)*(n-2):0,
+          })[g];
+
+          let races=0;
+          const rawMismatch=[];
+          const pricedMismatch=[];
+          const missingGroups=[];
+          const capFreq={};
+          const byYear={};
+
+          for(const [date,day] of Object.entries(oddsManifest.days??{}).sort()){
+            if(day?.status!=="SUCCESS"||!day?.file)continue;
+            const raw=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+            if(!raw)continue;
+            for(const line of raw.split("\n").filter(Boolean)){
+              const row=JSON.parse(line);
+              races++;
+              const s=row.group_summary??{};
+              const nRows=Number(s?.["1"]?.rows??0);
+              const nPriced=Number(s?.["1"]?.priced_rows??0);
+              const year=date.slice(0,4);
+              byYear[year]??={races:0,raw_mismatch:0,priced_mismatch:0,missing_groups:0,max_field:0};
+              byYear[year].races++;
+              byYear[year].max_field=Math.max(byYear[year].max_field,nRows);
+
+              for(const g of ["4","5","6","7","8"]){
+                const item=s?.[g];
+                if(!item){
+                  if(nRows>=3||["4","5","6"].includes(g)){
+                    missingGroups.push({date,race_id:row.race_id,group:g,n:nRows});
+                    byYear[year].missing_groups++;
+                  }
+                  continue;
+                }
+                const rows=Number(item.rows??0);
+                const priced=Number(item.priced_rows??0);
+                const er=expected(g,nRows);
+                const ep=expected(g,nPriced);
+                capFreq[g+":"+rows]=(capFreq[g+":"+rows]??0)+1;
+
+                if(rows!==er){
+                  rawMismatch.push({
+                    date,race_id:row.race_id,group:g,n_rows:nRows,actual_rows:rows,expected_rows:er,
+                    n_priced:nPriced,actual_priced:priced,expected_priced:ep
+                  });
+                  byYear[year].raw_mismatch++;
+                }
+                if(priced!==ep){
+                  pricedMismatch.push({
+                    date,race_id:row.race_id,group:g,n_rows:nRows,actual_rows:rows,expected_rows:er,
+                    n_priced:nPriced,actual_priced:priced,expected_priced:ep
+                  });
+                  byYear[year].priced_mismatch++;
+                }
+              }
+            }
+          }
+
+          const suspiciousCaps=Object.entries(capFreq)
+            .filter(([k,v])=>v>=3 && /:(?:100|200|300|500|1000|2000|3000|4000)$/.test(k))
+            .sort((a,b)=>b[1]-a[1]);
+
+          console.log("COMBO_AUDIT_SUMMARY "+JSON.stringify({
+            races,
+            raw_mismatch_count:rawMismatch.length,
+            priced_mismatch_count:pricedMismatch.length,
+            missing_group_count:missingGroups.length,
+            suspicious_caps:suspiciousCaps.slice(0,30),
+            by_year:byYear
+          }));
+          console.log("RAW_MISMATCH_SAMPLE "+JSON.stringify(rawMismatch.slice(0,200)));
+          console.log("PRICED_MISMATCH_SAMPLE "+JSON.stringify(pricedMismatch.slice(0,200)));
+          console.log("MISSING_GROUP_SAMPLE "+JSON.stringify(missingGroups.slice(0,200)));
+          NODE
