@@ -1,0 +1,100 @@
+name: Probe historical odds anomalies
+
+on:
+  push:
+    branches:
+      - audit/historical-odds-completeness-20260930
+    paths:
+      - ".github/workflows/probe-historical-odds-anomalies.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Compare stored, all, and dedicated odds
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+
+          const cases=[
+            {date:"2007-07-28",raceId:"200702020501",groups:["8"],note:"early-race group8 absent"},
+            {date:"2007-07-28",raceId:"200702020511",groups:["8"],note:"group8 partial 353"},
+            {date:"2008-07-26",raceId:"200804020312",groups:["8"],note:"group8 4895/4896"},
+            {date:"2009-05-23",raceId:"200907030104",groups:["5","6"],note:"wide/exacta one raw row short"},
+            {date:"2009-07-18",raceId:"200904020105",groups:["8"],note:"group8 4895/4896"},
+            {date:"2007-10-27",raceId:"200708040811",groups:["4","5","6","7","8"],note:"group1 says17 but combo maps look18"},
+          ];
+
+          const oddsManifest=JSON.parse(await readFile("data/odds/manifest.json","utf8"));
+          const api="https://race.netkeiba.com/api/api_get_jra_odds.html";
+          const headers={
+            "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+            "Referer":"https://race.netkeiba.com/",
+            "Accept":"application/json, text/javascript, */*",
+            "Accept-Language":"ja,en;q=0.5",
+          };
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const counts=odds=>Object.fromEntries(Object.entries(odds??{}).map(([g,m])=>[
+            g,m&&typeof m==="object"&&!Array.isArray(m)?Object.keys(m).length:null
+          ]));
+          const keys=odds=>Object.fromEntries(Object.entries(odds??{}).map(([g,m])=>[
+            g,m&&typeof m==="object"&&!Array.isArray(m)?Object.keys(m):[]
+          ]));
+
+          for(const item of cases){
+            const day=oddsManifest.days?.[item.date];
+            let stored=null;
+            if(day?.file){
+              const raw=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+              const rows=raw?raw.split("\n").map(JSON.parse):[];
+              const row=rows.find(x=>String(x.race_id)===item.raceId);
+              if(row)stored={counts:counts(row.odds),keys:keys(row.odds)};
+            }
+
+            const fetched={};
+            for(const type of ["all",...item.groups]){
+              const u=new URL(api);
+              for(const [k,v] of Object.entries({pid:"api_get_jra_odds",race_id:item.raceId,type,action:"init",sort:"odds",compress:"0",output:"json"}))u.searchParams.set(k,v);
+              const r=await fetch(u,{headers,signal:AbortSignal.timeout(25000)});
+              const body=await r.text();
+              let p={};
+              try{p=JSON.parse(body);}catch{}
+              fetched[type]={
+                http:r.status,status:p?.status??null,reason:p?.reason??null,
+                counts:counts(p?.data?.odds),
+                keys:keys(p?.data?.odds),
+                bytes:body.length
+              };
+              await sleep(1700);
+            }
+
+            const diffs={};
+            for(const g of item.groups){
+              const sk=stored?.keys?.[g]??[];
+              const ak=fetched.all?.keys?.[g]??[];
+              const dk=fetched[g]?.keys?.[g]??[];
+              diffs[g]={
+                stored_vs_all_missing:ak.filter(k=>!sk.includes(k)).slice(0,30),
+                all_vs_dedicated_missing:dk.filter(k=>!ak.includes(k)).slice(0,30),
+                dedicated_vs_all_missing:ak.filter(k=>!dk.includes(k)).slice(0,30),
+              };
+            }
+            console.log("ANOMALY_PROBE "+JSON.stringify({
+              ...item,
+              stored_counts:stored?.counts??null,
+              fresh_all:{http:fetched.all.http,status:fetched.all.status,reason:fetched.all.reason,counts:fetched.all.counts,bytes:fetched.all.bytes},
+              dedicated:Object.fromEntries(item.groups.map(g=>[g,{http:fetched[g].http,status:fetched[g].status,reason:fetched[g].reason,counts:fetched[g].counts,bytes:fetched[g].bytes}])),
+              diffs
+            }));
+          }
+          NODE
