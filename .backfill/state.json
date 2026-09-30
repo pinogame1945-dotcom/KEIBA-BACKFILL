@@ -6252,6 +6252,14 @@
       "range_days": 14,
       "dispatched_at": "2026-09-30T03:33:22.253Z",
       "dispatch_source_run_id": "36662585379"
+    },
+    "2006-09-09..2006-09-01": {
+      "completed_at": "2026-09-30T03:57:39.101Z",
+      "source_run_id": "36664927920",
+      "terminal": true,
+      "reason": "stop_date_reached",
+      "stop_date": "2006-09-01",
+      "next_dispatched": false
     }
   }
 }
