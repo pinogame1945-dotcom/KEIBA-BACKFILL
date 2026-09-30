@@ -151,6 +151,9 @@ assert.equal(classifyRaceDiscipline("芝3930m","京都ジャンプS(JGIII)"),"OB
 assert.equal(classifyRaceDiscipline("芝4100m","中山大障害(JG1)"),"OBSTACLE");
 assert.equal(classifyRaceDiscipline("芝2000m","テストジャンプS"),"OBSTACLE");
 assert.equal(classifyRaceDiscipline("芝2000m","テストステークス(GIII)"),"FLAT");
+assert.equal(classifyRaceDiscipline("芝3570m","イルミネーションJS(OP)"),"OBSTACLE");
+assert.equal(classifyRaceDiscipline("芝3140m","阪神JS(JGIII)"),"OBSTACLE");
+assert.equal(classifyRaceDiscipline("芝1600m","JRAステークス"),"FLAT");
 
 const coverage=summarizeRaceMetaCoverage([
   {race:normalizeRaceMeta({
