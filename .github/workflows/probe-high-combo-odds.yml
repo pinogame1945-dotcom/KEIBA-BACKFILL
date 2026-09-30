@@ -1,0 +1,89 @@
+name: Probe high-combination odds completeness
+
+on:
+  push:
+    branches:
+      - audit/historical-odds-completeness-20260930
+    paths:
+      - ".github/workflows/probe-high-combo-odds.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Find high-field races and compare all vs dedicated ticket types
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from "node:fs/promises";
+          import {gunzipSync} from "node:zlib";
+
+          const manifest=JSON.parse(await readFile("data/manifest.json","utf8"));
+          const candidates=[];
+          const dates=Object.keys(manifest.days??{}).sort().reverse();
+          for(const date of dates){
+            const day=manifest.days?.[date];
+            if(day?.status!=="SUCCESS"||!day?.file)continue;
+            const raw=gunzipSync(await readFile(day.file)).toString("utf8").trim();
+            for(const line of raw.split("\n").filter(Boolean)){
+              const row=JSON.parse(line);
+              const n=(row.entries??[]).filter(e=>e?.horse_id).length;
+              if(n>=16)candidates.push({date,raceId:String(row.race?.race_id??""),n,name:row.race?.race_name??null});
+            }
+            if(candidates.length>=20)break;
+          }
+          candidates.sort((a,b)=>b.n-a.n||b.date.localeCompare(a.date));
+          const pick=[];
+          for(const c of candidates){
+            if(!/^\d{12}$/.test(c.raceId))continue;
+            if(pick.some(x=>x.raceId===c.raceId))continue;
+            pick.push(c);
+            if(pick.length>=3)break;
+          }
+          console.log("PROBE_RACES "+JSON.stringify(pick));
+
+          const api="https://race.netkeiba.com/api/api_get_jra_odds.html";
+          const headers={
+            "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+            "Referer":"https://race.netkeiba.com/",
+            "Accept":"application/json, text/javascript, */*",
+            "Accept-Language":"ja,en;q=0.5",
+          };
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          for(const race of pick){
+            const byType={};
+            for(const type of ["all","7","8"]){
+              const u=new URL(api);
+              for(const [k,v] of Object.entries({pid:"api_get_jra_odds",race_id:race.raceId,type,action:"init",sort:"odds",compress:"0",output:"json"}))u.searchParams.set(k,v);
+              const r=await fetch(u,{headers,signal:AbortSignal.timeout(25000)});
+              const body=await r.text();
+              let p={};
+              try{p=JSON.parse(body);}catch{}
+              const odds=p?.data?.odds??{};
+              byType[type]={
+                http:r.status,
+                status:p?.status??null,
+                reason:p?.reason??null,
+                groups:Object.fromEntries(Object.entries(odds).map(([g,m])=>[g,m&&typeof m==="object"&&!Array.isArray(m)?Object.keys(m).length:null])),
+                bytes:body.length
+              };
+              await sleep(1800);
+            }
+            const n=race.n;
+            console.log("HIGH_COMBO "+JSON.stringify({
+              ...race,
+              theoretical:{trio:n*(n-1)*(n-2)/6,trifecta:n*(n-1)*(n-2)},
+              all:byType.all,
+              dedicated7:byType["7"],
+              dedicated8:byType["8"]
+            }));
+          }
+          NODE
