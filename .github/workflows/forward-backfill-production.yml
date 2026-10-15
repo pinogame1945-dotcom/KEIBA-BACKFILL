@@ -1,0 +1,162 @@
+name: Forward historical backfill
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/forward-backfill-production.yml"
+      - "src/forward-backfill-plan.mjs"
+      - "scripts/forward-backfill-plan-smoke.mjs"
+      - "scripts/forward-horse-pending.mjs"
+  push:
+    branches: [main]
+    paths:
+      - ".backfill/forward-kick"
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Earliest calendar date to catch up (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-01"
+      max_dates:
+        description: "Max pending calendar dates in this free CPU run (1..90)"
+        required: true
+        default: "60"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keiba-forward-backfill-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  planner-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify planner and existing data contracts
+        run: |
+          node --check src/forward-backfill-plan.mjs
+          node --check scripts/forward-horse-pending.mjs
+          node scripts/forward-backfill-plan-smoke.mjs
+          npm install --no-audit --no-fund
+          npm run smoke:schedule
+          npm run smoke:odds
+          npm run smoke:workflow-safety
+
+  catch-up:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: planner-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    env:
+      REQUEST_DELAY_MS: "1500"
+      SCHEDULE_INTEGRITY_V2: "1"
+      SKIP_EMPTY: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Catch up through yesterday JST with existing race/horse/odds collectors
+        env:
+          START_DATE: ${{ inputs.start_date || '2026-09-01' }}
+          MAX_DATES: ${{ inputs.max_dates || '60' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "keiba-backfill-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+
+          # No paid storage services, Actions artifacts, Actions cache or GPU.
+          # Conservative Git health guard; GitHub recommends keeping repos <5 GiB.
+          check_repo_size() {
+            local repo_mib
+            repo_mib=$(du -sm .git | awk '{print $1}')
+            echo "Git repository storage: ${repo_mib} MiB"
+            if [ "$repo_mib" -ge 3500 ]; then
+              echo "::error::Repository exceeded conservative 3500 MiB guard. Stop before adding data."
+              exit 1
+            fi
+          }
+          check_repo_size
+
+          node src/forward-backfill-plan.mjs --from "$START_DATE" --max-dates "$MAX_DATES" > /tmp/keiba-forward-plan.json
+          jq '{from,through,scanned_days,pending_total,remaining_after_batch,selected}' /tmp/keiba-forward-plan.json
+          COUNT=$(jq -r '.selected | length' /tmp/keiba-forward-plan.json)
+          echo "Forward pending batch size: $COUNT"
+
+          UNAVAILABLE_ODDS=0
+          while IFS= read -r ITEM; do
+            DATE=$(jq -r '.date' <<< "$ITEM")
+            NEEDS_RACE=$(jq -r '.needs_race' <<< "$ITEM")
+            NEEDS_ODDS=$(jq -r '.needs_odds' <<< "$ITEM")
+            echo "========== FORWARD $DATE race=$NEEDS_RACE odds=$NEEDS_ODDS =========="
+            check_repo_size
+
+            if [ "$NEEDS_RACE" = "true" ]; then
+              node src/collect-day.mjs "$DATE"
+            fi
+
+            # Retain the exact legacy horse enrichment + pedigree contract.
+            if [ -f "data/daily/$DATE.jsonl.gz" ]; then
+              for round in $(seq 1 10); do
+                node src/repair-pedigree-v2.mjs --source-date "$DATE" --limit 200
+              done
+              PENDING=$(node scripts/forward-horse-pending.mjs "$DATE")
+              for round in $(seq 1 20); do
+                if [ "$PENDING" -eq 0 ]; then break; fi
+                echo "New horse master pending for $DATE: $PENDING (batch $round)"
+                node src/collect-horses.mjs --source-date "$DATE" --limit 50 --skip-existing 1
+                PENDING=$(node scripts/forward-horse-pending.mjs "$DATE")
+              done
+              if [ "$PENDING" -ne 0 ]; then
+                echo "::error::Horse master incomplete for $DATE: $PENDING"
+                exit 1
+              fi
+
+              if [ "$NEEDS_ODDS" = "true" ]; then
+                node src/collect-historical-odds.mjs "$DATE"
+              fi
+            fi
+
+            node src/verify-range.mjs "$DATE" "$DATE"
+
+            ODDS_STATUS="NOT_APPLICABLE"
+            if [ -f "data/daily/$DATE.jsonl.gz" ]; then
+              ODDS_STATUS=$(jq -r --arg d "$DATE" '.days[$d].status // "MISSING"' data/odds/manifest.json)
+            fi
+
+            # Commit successful race/horse data even if final odds are temporarily unavailable.
+            check_repo_size
+            git add -A -- data/manifest.json data/daily/ data/horses/ data/odds/ data/debug/
+            if ! git diff --cached --quiet; then
+              git commit -m "data: forward backfill $DATE"
+              bash scripts/push-main-with-retry.sh
+            fi
+
+            if [ -f "data/daily/$DATE.jsonl.gz" ] && [ "$ODDS_STATUS" != "SUCCESS" ]; then
+              echo "::warning::Final odds not complete for $DATE: $ODDS_STATUS; continue other dates and preserve retryable gap."
+              UNAVAILABLE_ODDS=$((UNAVAILABLE_ODDS + 1))
+            fi
+          done < <(jq -c '.selected[]' /tmp/keiba-forward-plan.json)
+
+          node src/forward-backfill-plan.mjs --from "$START_DATE" --max-dates "$MAX_DATES" > /tmp/keiba-forward-remain.json
+          jq '{through,pending_total,remaining_after_batch,selected}' /tmp/keiba-forward-remain.json
+          echo "Forward batch complete; re-dispatch if pending_total > 0."
+          if [ "$UNAVAILABLE_ODDS" -gt 0 ]; then
+            echo "::error::Forward catch-up left $UNAVAILABLE_ODDS date(s) with unavailable final odds."
+            exit 1
+          fi
