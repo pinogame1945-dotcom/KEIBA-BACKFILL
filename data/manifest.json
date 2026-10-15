@@ -165400,9 +165400,84 @@
       "file": "data/daily/2026-09-22.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0922.html"
+    },
+    "2026-09-26": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "margin_parser_version": 1,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 24,
+        "course_layout": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 24,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 312,
+        "finish_time_present": 312,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 306,
+        "flat_finish_time_present": 306,
+        "last3f_present": 306,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 23,
+        "obstacle_races": 1,
+        "flat_lap_target_races": 23,
+        "flat_lap_complete_races": 23,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 24,
+      "races_parsed": 24,
+      "file": "data/daily/2026-09-26.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0926.html"
     }
   },
-  "updated_at": "2026-10-15T10:51:36.634Z",
+  "updated_at": "2026-10-15T10:57:22.315Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -339780,6 +339855,112 @@
         "average_profile_fetch_ms": 2204,
         "average_pedigree_fetch_ms": 2148,
         "measured_horses": 23
+      }
+    },
+    "horse-2026-09-26-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 50,
+      "file": "data/horses/horse-2026-09-26-001.jsonl.gz",
+      "source_dates": [
+        "2026-09-26"
+      ],
+      "source_horse_ids": [
+        "2024100133",
+        "2024100477",
+        "2024100551",
+        "2024100638",
+        "2024100647",
+        "2024100657",
+        "2024100819",
+        "2024100993",
+        "2024101095",
+        "2024101206",
+        "2024101549",
+        "2024101727",
+        "2024101762",
+        "2024101768",
+        "2024101990",
+        "2024102002",
+        "2024102159",
+        "2024102355",
+        "2024102432",
+        "2024102485",
+        "2024102496",
+        "2024102556",
+        "2024102745",
+        "2024102965",
+        "2024103415",
+        "2024103510",
+        "2024103598",
+        "2024103640",
+        "2024103644",
+        "2024103649",
+        "2024103853",
+        "2024104270",
+        "2024104526",
+        "2024104846",
+        "2024105116",
+        "2024105142",
+        "2024105150",
+        "2024105185",
+        "2024105251",
+        "2024105690",
+        "2024105808",
+        "2024105852",
+        "2024105870",
+        "2024106008",
+        "2024106146",
+        "2024106171",
+        "2024106188",
+        "2024106417",
+        "2024106532",
+        "2024106586"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 251517,
+        "average_ms_per_horse": 5030,
+        "median_ms_per_horse": 4287,
+        "min_ms_per_horse": 2624,
+        "max_ms_per_horse": 13601,
+        "average_profile_fetch_ms": 2017,
+        "average_pedigree_fetch_ms": 2997,
+        "measured_horses": 50
+      }
+    },
+    "horse-2026-09-26-002": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 10,
+      "file": "data/horses/horse-2026-09-26-002.jsonl.gz",
+      "source_dates": [
+        "2026-09-26"
+      ],
+      "source_horse_ids": [
+        "2024106725",
+        "2024106775",
+        "2024106860",
+        "2024106881",
+        "2024107051",
+        "2024107151",
+        "2024107167",
+        "2024107265",
+        "2024107307",
+        "2024108368"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 40285,
+        "average_ms_per_horse": 4028,
+        "median_ms_per_horse": 3827,
+        "min_ms_per_horse": 2878,
+        "max_ms_per_horse": 6860,
+        "average_profile_fetch_ms": 1926,
+        "average_pedigree_fetch_ms": 2074,
+        "measured_horses": 10
       }
     }
   },
