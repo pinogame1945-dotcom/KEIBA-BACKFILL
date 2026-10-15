@@ -165247,9 +165247,87 @@
       "file": "data/daily/2006-09-02.jsonl.gz",
       "request_delay_ms": 1500,
       "discovery_url": "https://db.netkeiba.com/race/list/20060902/"
+    },
+    "2026-09-21": {
+      "status": "SUCCESS",
+      "race_pack_version": 3,
+      "payout_parser_version": 2,
+      "result_parser_version": 4,
+      "margin_parser_version": 1,
+      "lap_parser_version": 2,
+      "race_meta_parser_version": 2,
+      "race_meta_coverage": {
+        "total_races": 12,
+        "course_layout": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_class": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "grade": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "age_condition": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "sex_condition": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "weight_rule": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "race_condition_raw": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        },
+        "course_meta_raw": {
+          "known": 12,
+          "unknown": 0,
+          "coverage_pct": 100
+        }
+      },
+      "result_quality": {
+        "finished_results": 157,
+        "finish_time_present": 157,
+        "last3f_scope": "FLAT",
+        "flat_finished_results": 157,
+        "flat_finish_time_present": 157,
+        "last3f_present": 157,
+        "last3f_suspicious": 0,
+        "finish_time_coverage_pct": 100,
+        "flat_finish_time_coverage_pct": 100,
+        "last3f_coverage_pct": 100,
+        "flat_races": 12,
+        "obstacle_races": 0,
+        "flat_lap_target_races": 12,
+        "flat_lap_complete_races": 12,
+        "flat_lap_coverage_pct": 100
+      },
+      "schedule_contract_version": 1,
+      "races_discovered": 12,
+      "races_parsed": 12,
+      "file": "data/daily/2026-09-21.jsonl.gz",
+      "request_delay_ms": 1500,
+      "discovery_url": "https://www.jra.go.jp/keiba/calendar2026/2026/9/0921.html",
+      "rescheduled_meetings": [
+        "2026060407"
+      ]
     }
   },
-  "updated_at": "2026-10-15T10:45:46.092Z",
+  "updated_at": "2026-10-15T10:48:16.364Z",
   "horse_packs": {
     "smoke-2026-09-20-001": {
       "status": "SUCCESS",
@@ -339534,6 +339612,54 @@
         "average_pedigree_fetch_ms": 2235,
         "measured_horses": 30
       }
+    },
+    "horse-2026-09-21-001": {
+      "status": "SUCCESS",
+      "horse_pack_version": 2,
+      "pedigree_parser_version": 2,
+      "records": 25,
+      "file": "data/horses/horse-2026-09-21-001.jsonl.gz",
+      "source_dates": [
+        "2026-09-21"
+      ],
+      "source_horse_ids": [
+        "2024100147",
+        "2024100532",
+        "2024100681",
+        "2024100736",
+        "2024101460",
+        "2024101882",
+        "2024101893",
+        "2024102335",
+        "2024103825",
+        "2024104567",
+        "2024104742",
+        "2024104786",
+        "2024104814",
+        "2024105100",
+        "2024105753",
+        "2024105771",
+        "2024106639",
+        "2024106684",
+        "2024106758",
+        "2024107015",
+        "2024107019",
+        "2024107301",
+        "2024107362",
+        "2024108206",
+        "2024108253"
+      ],
+      "request_delay_ms": 1500,
+      "timing": {
+        "total_ms": 120409,
+        "average_ms_per_horse": 4816,
+        "median_ms_per_horse": 3997,
+        "min_ms_per_horse": 2197,
+        "max_ms_per_horse": 12087,
+        "average_profile_fetch_ms": 1939,
+        "average_pedigree_fetch_ms": 2857,
+        "measured_horses": 25
+      }
     }
   },
   "race_pack_version": 3,
@@ -458385,6 +458511,26 @@
         }
       ],
       "updated_at": "2026-09-22T00:12:58.436Z"
+    },
+    "2026060407": {
+      "meeting_key": "2026060407",
+      "venue_code": "06",
+      "meeting_no": 4,
+      "meeting_day": 7,
+      "scheduled_date": "2026-09-21",
+      "actual_date": "2026-09-22",
+      "status": "RESCHEDULED",
+      "scope": "FULL",
+      "source": "JRA_SCHEDULE",
+      "history": [
+        {
+          "scheduled_date": "2026-09-21",
+          "actual_date": "2026-09-22",
+          "source": "JRA_SCHEDULE",
+          "scope": "FULL"
+        }
+      ],
+      "updated_at": "2026-10-15T10:46:13.226Z"
     },
     "2026080204": {
       "meeting_key": "2026080204",
