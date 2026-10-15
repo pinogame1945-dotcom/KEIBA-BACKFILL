@@ -98,6 +98,7 @@ jobs:
           COUNT=$(jq -r '.selected | length' /tmp/keiba-forward-plan.json)
           echo "Forward pending batch size: $COUNT"
 
+          UNAVAILABLE_ODDS=0
           while IFS= read -r ITEM; do
             DATE=$(jq -r '.date' <<< "$ITEM")
             NEEDS_RACE=$(jq -r '.needs_race' <<< "$ITEM")
@@ -147,11 +148,15 @@ jobs:
             fi
 
             if [ -f "data/daily/$DATE.jsonl.gz" ] && [ "$ODDS_STATUS" != "SUCCESS" ]; then
-              echo "::error::Final odds not complete for $DATE: $ODDS_STATUS; retry on the next invocation."
-              exit 1
+              echo "::warning::Final odds not complete for $DATE: $ODDS_STATUS; continue other dates and preserve retryable gap."
+              UNAVAILABLE_ODDS=$((UNAVAILABLE_ODDS + 1))
             fi
           done < <(jq -c '.selected[]' /tmp/keiba-forward-plan.json)
 
           node src/forward-backfill-plan.mjs --from "$START_DATE" --max-dates "$MAX_DATES" > /tmp/keiba-forward-remain.json
           jq '{through,pending_total,remaining_after_batch,selected}' /tmp/keiba-forward-remain.json
           echo "Forward batch complete; re-dispatch if pending_total > 0."
+          if [ "$UNAVAILABLE_ODDS" -gt 0 ]; then
+            echo "::error::Forward catch-up left $UNAVAILABLE_ODDS date(s) with unavailable final odds."
+            exit 1
+          fi
