@@ -1,0 +1,35 @@
+name: BACKFILL 690 strict comparison unit tests free
+on:
+  push:
+    branches: [test/690-20261010-24-20261017-36]
+    paths:
+      - ml_features/research/compare_original_690_all24_v1.py
+      - ml_features/research/build_live_690_batch_36_v1.py
+      - ml_features/tests/test_compare_original_690_all24_v1.py
+      - ml_features/tests/test_build_live_690_batch_36_v1.py
+      - .github/workflows/690-parity-unit-free.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ml_features
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pin source dependencies and run numerical comparison tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            lightgbm==4.7.0 pandas==3.0.6 scikit-learn==1.9.1 'numpy>=2.0,<3'
+          python -m compileall -q ml_features/research
+          python -m unittest discover -s ml_features/tests -p 'test_compare_original_690_all24_v1.py' -v
+          python -m unittest discover -s ml_features/tests -p 'test_build_live_690_batch_36_v1.py' -v
+          python -m unittest discover -s ml_features/tests -p 'test_live_json_to_daily_pack_v1.py' -v
+          echo "TESTS_ONLY_NO_HISTORICAL_DATA_DOWNLOAD_NO_ARTIFACTS"
