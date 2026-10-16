@@ -1,0 +1,60 @@
+name: 2026-10-17 pre-race JRA 36 race collection (free BACKFILL)
+on:
+  push:
+    branches: [feature/live-20261017-36-races]
+    paths:
+      - scripts/all_jra_20261017_collect.py
+      - scripts/live_20261017_jra_transport.py
+      - scripts/live_20261017_jra_odds.py
+      - scripts/live_20261017_catalog_audit.py
+      - tests/test_all_jra_20261017_collect.py
+      - contracts/l1-feature-catalog-v1.json
+      - .github/workflows/live-20261017-36-races-free.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: backfill-live-20261017-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --no-cache-dir beautifulsoup4==4.14.3
+      - name: Test unchanged 36-race collection semantics
+        run: python -m unittest discover -s tests -p 'test_all_jra_20261017_collect.py' -v
+      - name: Guard free GitHub repository storage
+        shell: bash
+        run: |
+          test "$(du -sm .git | awk '{print $1}')" -lt 3500
+      - name: Collect and verify 36 pre-race cards and official 8 bet types
+        id: collect
+        continue-on-error: true
+        run: python scripts/all_jra_20261017_collect.py --limit 36 --out data/live/2026-10-17 --resume-verified
+      - name: Validate output size and save isolated live snapshots
+        if: steps.collect.outcome == 'success' || steps.collect.outcome == 'failure'
+        shell: bash
+        run: |
+          test "$(du -sm data/live/2026-10-17 | awk '{print $1}')" -lt 100
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f data/live/2026-10-17/
+          if ! git diff --cached --quiet; then
+            git commit -m "data: preserve 2026-10-17 pre-race JRA snapshots [skip ci]"
+            git push origin HEAD:refs/heads/feature/live-20261017-36-races
+          fi
+      - name: Assert 36 of 36 source-and-odds verified
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/live/2026-10-17/manifest.json').read_text('utf-8'))
+          print('BACKFILL_LIVE_36_RACE_COUNTS',m['race_count_expected'],m['actual_races_processed'],m['full_source_and_odds_verified'],m['blocked'])
+          assert (m['race_count_expected'],m['actual_races_processed'],m['full_source_and_odds_verified'],m['blocked'])==(36,36,36,0)
+          PY
