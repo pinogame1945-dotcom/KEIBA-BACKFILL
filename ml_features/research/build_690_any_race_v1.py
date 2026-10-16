@@ -168,7 +168,7 @@ def bias19(snapshot, target):
             path = Path(t) / "previous-races.jsonl.gz"
             with gzip.open(path, "wt", encoding="utf8") as out:
                 for item in matched:
-                    out.write(json.dumps(item, ensure_ascii=False) + "\\n")
+                    out.write(json.dumps(item, ensure_ascii=False) + "\n")
             previous = read_bias_source(path, int(day[:4]))
             previous["front_score"] = infer_front_score(previous)
     state = BiasState()
@@ -238,7 +238,7 @@ def run(snapshot, history_sources, rid, output):
     }
     dest = Path(output)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(json.dumps(doc, ensure_ascii=False, allow_nan=False) + "\\n",
+    dest.write_text(json.dumps(doc, ensure_ascii=False, allow_nan=False) + "\n",
                     encoding="utf8")
     return doc
 

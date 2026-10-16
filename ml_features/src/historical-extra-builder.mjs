@@ -27,7 +27,7 @@ function resultMap(row) {
 function eligible(entry, result, allowUnresultedTargets = false) {
   if (!entry || (!result && !allowUnresultedTargets)) return false;
   const es = String(entry.entry_status ?? "").toUpperCase();
-  const rs = String(result.result_status ?? "").toUpperCase();
+  const rs = String(result?.result_status ?? "").toUpperCase();
   return !["SCRATCHED", "EXCLUDED"].includes(es) && !["SCRATCHED", "EXCLUDED"].includes(rs);
 }
 
