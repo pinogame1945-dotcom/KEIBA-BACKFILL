@@ -4,9 +4,9 @@ TYPES={"単勝・複勝":"WIN_PLACE","枠連":"BRACKET_QUINELLA","馬連":"QUINE
        "ワイド":"WIDE","馬単":"EXACTA","3連複":"TRIO","3連単":"TRIFECTA"}
 N=0
 RUNNERS={}
-POSITIVE=re.compile(r"(?:\\d+)(?:\\.\\d+)?")
-RANGE=re.compile(r"(\\d+(?:\\.\\d+)?)\\s*[-－ー〜~]\\s*(\\d+(?:\\.\\d+)?)")
-def clean(t):return re.sub(r"\\s+"," ",unicodedata.normalize("NFKC",t or "")).strip()
+POSITIVE=re.compile(r"(?:\d+)(?:\.\d+)?")
+RANGE=re.compile(r"(\d+(?:\.\d+)?)\s*[-－ー〜~]\s*(\d+(?:\.\d+)?)")
+def clean(t):return re.sub(r"\s+"," ",unicodedata.normalize("NFKC",t or "")).strip()
 def parse_one_odd(value,ranged=False):
  text=clean(value)
  if "票数なし" in text or text in ("－","-","発売なし","発売前"):
