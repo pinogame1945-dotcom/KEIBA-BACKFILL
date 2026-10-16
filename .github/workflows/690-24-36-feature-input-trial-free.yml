@@ -1,0 +1,118 @@
+name: BACKFILL historical 24 and live 36 original feature trial
+on:
+  push:
+    branches: [test/690-20261010-24-20261017-36]
+    paths:
+      - ml_features/research/live_json_to_daily_pack_v1.py
+      - ml_features/tests/test_live_json_to_daily_pack_v1.py
+      - .github/workflows/690-24-36-feature-input-trial-free.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backfill-690-24-36-trial-\${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Free-runner storage and source safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(du -sm .git | awk '{print $1}')" -lt 3500
+          test "$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')" -gt 4500000
+          node --check ml_features/research/build-yearly-superset-snapshots.mjs
+          python -m compileall -q ml_features/research
+      - name: Verify live adapter safety
+        run: python -m unittest discover -s ml_features/tests -p 'test_live_json_to_daily_pack_v1.py' -v
+      - name: Verify historical October 10 24-race population
+        shell: bash
+        run: |
+          python - <<'PY'
+          from gzip import open as gzopen
+          import json
+          expected={f"2026{venue}0403{n:02d}" for venue in ("05","08") for n in range(1,13)}
+          with gzopen("data/daily/2026-10-10.jsonl.gz","rt",encoding="utf8") as fd:
+            rows=[json.loads(line) for line in fd if line.strip()]
+          ids=[str(x["race"]["race_id"]) for x in rows]
+          assert len(ids)==24 and set(ids)==expected,"HISTORICAL_24_IDS_DIFFER"
+          active=sum(sum(str(e.get("entry_status")).upper() not in ("SCRATCHED","EXCLUDED") for e in row.get("entries",[])) for row in rows)
+          print("OCT10_HISTORICAL_24",json.dumps({"races":len(ids),"active":active,"reference_expected":315}))
+          assert active==315,"OCT10_315_STARTERS_DIFFER"
+          PY
+      - name: Convert 36 live races into temporary result-free daily pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          mkdir -p "$RUNNER_TEMP/overlay/data/daily"
+          python ml_features/research/live_json_to_daily_pack_v1.py \
+            --live-dir data/live/2026-10-17 \
+            --output "$RUNNER_TEMP/overlay/data/daily/2026-10-17.jsonl.gz"
+          for file in data/daily/*.jsonl.gz; do
+            day="$(basename "$file" .jsonl.gz)"
+            if [[ "$day" > "2021-12-31" && "$day" < "2026-10-17" ]]; then
+              ln -s "$ROOT/$file" "$RUNNER_TEMP/overlay/data/daily/$(basename "$file")"
+            fi
+          done
+          ln -s "$ROOT/data/horses" "$RUNNER_TEMP/overlay/data/horses"
+          python - <<'PY'
+          import os,gzip,json
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"overlay/data/daily/2026-10-17.jsonl.gz"
+          with gzip.open(p,"rt",encoding="utf8") as f:
+            rows=[json.loads(s) for s in f if s.strip()]
+          assert len(rows)==36 and all(not x["results"] and not x["payouts"] and not x["odds"] for x in rows)
+          expected={f"2026{v}04{d}{n:02d}" for v,d in (("04","01"),("05","06"),("08","06")) for n in range(1,13)}
+          assert {x["race"]["race_id"] for x in rows}==expected
+          print("TEMPORARY_LIVE_36",len(rows),"active",sum(sum(e["entry_status"]=="STARTED" for e in row["entries"]) for row in rows))
+          PY
+      - name: Original 649 source generation for October 10 historical 24
+        shell: bash
+        run: |
+          node ml_features/research/build-yearly-superset-snapshots.mjs \
+            --source-root . --out-dir "$RUNNER_TEMP/feature-20261010" \
+            --source-start 2022-01-01 --source-end 2026-10-10 \
+            --emit-start 2026-10-10 --emit-end 2026-10-10 \
+            --prediction-phase FINAL \
+            --feature-sets BASE,OPPONENT,NETWORK,LAP,STYLE,DISTANCE,BACKFILL,AUTO,ACTOR,TIME_PACE \
+            --first-model-ready-year 2023 --source-sha "$GITHUB_SHA" \
+            --ml-source-sha c782a7e0c6e2f09b2d0603b23336eab31ad5bc77
+      - name: Original 649 source generation for October 17 live 36
+        shell: bash
+        run: |
+          node ml_features/research/build-yearly-superset-snapshots.mjs \
+            --source-root "$RUNNER_TEMP/overlay" --out-dir "$RUNNER_TEMP/feature-20261017" \
+            --source-start 2022-01-01 --source-end 2026-10-17 \
+            --emit-start 2026-10-17 --emit-end 2026-10-17 \
+            --allow-unresulted-targets --prediction-phase FINAL \
+            --feature-sets BASE,OPPONENT,NETWORK,LAP,STYLE,DISTANCE,BACKFILL,AUTO,ACTOR,TIME_PACE \
+            --first-model-ready-year 2023 --source-sha "$GITHUB_SHA" \
+            --ml-source-sha c782a7e0c6e2f09b2d0603b23336eab31ad5bc77
+      - name: Assert frozen source row counts and no live target outcomes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,gzip,json
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          for suffix,expected,day in (("20261010",24,"2026-10-10"),("20261017",36,"2026-10-17")):
+            files=list((root/("feature-"+suffix)).glob("*/snapshot-2026.jsonl.gz"))
+            assert len(files)==1,"TARGET_YEAR_SNAPSHOT_NOT_FOUND:"+suffix
+            with gzip.open(files[0],"rt",encoding="utf8") as fd:
+              records=[json.loads(s) for s in fd if s.strip()]
+            ids={x["race_id"] for x in records}
+            assert len(ids)==expected and all(x["features"].get("race_date")==day for x in records),"RACE_POPULATION_DRIFT"
+            if suffix=="20261017":
+              assert all(x.get("target") is None and x.get("market_outcome") is None for x in records),"RESULTS_LEAKED"
+            print("ORIGINAL_649_TRIAL_STAGE",json.dumps({"date":day,"races":len(ids),"horses":len(records),"postrace_labels_present":any(x.get("target") for x in records) if suffix=="20261010" else False}))
+          PY
