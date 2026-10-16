@@ -16,7 +16,7 @@ jobs:
       - name: Verify prerequisites only, never fetch Kaggle data
         shell: bash
         env:
-          KAGGLE_API_TOKEN: \${{ secrets.KAGGLE_API_TOKEN }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           set -euo pipefail
           if [[ -n "$KAGGLE_API_TOKEN" ]]; then
