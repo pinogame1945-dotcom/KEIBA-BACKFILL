@@ -137,6 +137,7 @@ const emitEnd = dateArg("--emit-end", sourceEnd);
 const sourceSha = arg("--source-sha");
 const mlSourceSha = arg("--ml-source-sha");
 const predictionPhase = String(arg("--prediction-phase") ?? "FINAL").toUpperCase();
+const allowUnresultedTargets = process.argv.includes("--allow-unresulted-targets");
 const firstModelReadyYear = Number(arg("--first-model-ready-year") ?? (Number(sourceStart.slice(0, 4)) + 1));
 const allFeatureSets = Object.keys(L1_FEATURE_SET_CONTRACT.feature_sets);
 const featureSets = normalizeFeatureSets(arg("--feature-sets") ?? allFeatureSets.join(","));
@@ -154,6 +155,9 @@ if (!Number.isInteger(firstModelReadyYear)) throw new Error("--first-model-ready
 if (sourceStart > emitStart) throw new Error("--source-start must be <= --emit-start");
 if (emitStart > emitEnd) throw new Error("--emit-start must be <= --emit-end");
 if (emitEnd > sourceEnd) throw new Error("--emit-end must be <= --source-end");
+if (allowUnresultedTargets && !(sourceEnd === emitStart && emitStart === emitEnd)) {
+  throw new Error("LIVE_TARGET_MUST_BE_ONE_FINAL_SOURCE_DATE");
+}
 
 const featureContractPath = path.join(ROOT, "contracts", "l1-feature-set-contract-v1.json");
 const smallSampleContractPath = path.join(ROOT, "contracts", "l1-small-sample-contract-v1.json");
@@ -164,6 +168,7 @@ const generation = {
   feature_schema_version: ML_FEATURE_SCHEMA_VERSION,
   leakage_policy: ML_LEAKAGE_POLICY,
   prediction_phase: predictionPhase,
+  allow_unresulted_targets: allowUnresultedTargets,
   feature_sets: featureSets,
   history_windows: historyWindows,
   small_sample_policy: smallSamplePolicy,
@@ -228,13 +233,21 @@ for (const name of dailyNames) {
   const rows = parseDailyFile(await readFile(path.join(dailyDir, name)));
   sourceRaces += rows.length;
   for (const group of groupByDate(rows)) {
+    const unresultedTarget = allowUnresultedTargets && group.date === emitStart;
+    if (unresultedTarget && group.rows.some(row =>
+      (row.results ?? []).length || (row.payouts ?? []).length ||
+      (row.odds ?? []).length)) {
+      throw new Error("LIVE_TARGET_MUST_NOT_CONTAIN_RESULTS_PAYOUTS_OR_ODDS");
+    }
     const baseRows = mlProcessor.processDay(group.rows, group.date, {
       startDate: emitStart,
       endDate: emitEnd,
+      allowUnresultedTargets: unresultedTarget,
     });
     const extras = extraProcessor.processDay(group.rows, group.date, {
       startDate: emitStart,
       endDate: emitEnd,
+      allowUnresultedTargets: unresultedTarget,
     });
 
     const staged = baseRows.map(row => {

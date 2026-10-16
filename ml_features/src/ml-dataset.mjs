@@ -532,6 +532,7 @@ export function createMlDatasetProcessor({
   function processDay(dayRows, dateValue = null, {
     startDate = null,
     endDate = null,
+    allowUnresultedTargets = false,
   } = {}) {
     const day = [...(dayRows ?? [])]
       .filter(row => stableRaceDate(row))
@@ -559,7 +560,7 @@ export function createMlDatasetProcessor({
         const horseId = String(entry?.horse_id ?? "");
         if (!raceId || !horseId) continue;
         const result = results.get(horseId) ?? null;
-        if (!result || !isEligibleStarter(entry, result)) continue;
+        if ((!result && !allowUnresultedTargets) || !isEligibleStarter(entry, result)) continue;
         const history = historyByHorse.get(horseId) ?? [];
         const current = { date, race: row.race ?? {}, entry };
         const historyFeatures = historySnapshot(
@@ -607,8 +608,8 @@ export function createMlDatasetProcessor({
             race_id: raceId,
             horse_id: horseId,
             features,
-            target: targetFrom(result),
-            market_outcome: marketOutcomeFrom(result),
+            target: result ? targetFrom(result) : null,
+            market_outcome: result ? marketOutcomeFrom(result) : null,
           });
         }
       }

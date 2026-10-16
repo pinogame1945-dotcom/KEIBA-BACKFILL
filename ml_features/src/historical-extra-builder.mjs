@@ -24,8 +24,8 @@ function resultMap(row) {
   return new Map((row?.results ?? []).map(r => [String(r?.horse_id ?? ""), r]));
 }
 
-function eligible(entry, result) {
-  if (!entry || !result) return false;
+function eligible(entry, result, allowUnresultedTargets = false) {
+  if (!entry || (!result && !allowUnresultedTargets)) return false;
   const es = String(entry.entry_status ?? "").toUpperCase();
   const rs = String(result.result_status ?? "").toUpperCase();
   return !["SCRATCHED", "EXCLUDED"].includes(es) && !["SCRATCHED", "EXCLUDED"].includes(rs);
@@ -145,6 +145,7 @@ export function createHistoricalExtraProcessor(historyWindows) {
   function processDay(dayRows, dateValue = null, {
     startDate = null,
     endDate = null,
+    allowUnresultedTargets = false,
   } = {}) {
     const day = [...(dayRows ?? [])]
       .filter(row => raceDate(row))
@@ -164,7 +165,7 @@ export function createHistoricalExtraProcessor(historyWindows) {
         for (const entry of row?.entries ?? []) {
           const horseId = String(entry?.horse_id ?? "");
           const result = results.get(horseId);
-          if (!raceId || !horseId || !eligible(entry, result)) continue;
+          if (!raceId || !horseId || !eligible(entry, result, allowUnresultedTargets)) continue;
           extras.set(
             raceId + "|" + horseId,
             historicalExtras(historyByHorse.get(horseId) ?? [], row?.race?.distance_m, windows),
