@@ -1,0 +1,248 @@
+name: BACKFILL original 690 parity Oct10 and live 690 Oct17 free CPU
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backfill-690-original-full-parity-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '1'
+      NODE_OPTIONS: '--max-old-space-size=4096'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fail closed before any large download or generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$KAGGLE_API_TOKEN" ]]; then
+            echo "BLOCKED: BACKFILL KAGGLE_API_TOKEN secret is not configured"
+            exit 2
+          fi
+          test "$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')" -gt 18000000
+          test "$(du -sm .git | awk '{print $1}')" -lt 3500
+          git diff --quiet 03950cfe132abeca15ef17dbc7c6885ceb1591b7 HEAD -- data/daily data/horses
+          test ! -e data/daily/2026-10-17.jsonl.gz
+          echo "STANDARD_FREE_CPU_EPHEMERAL_ONLY_NO_ARTIFACT_CACHE_OR_UPLOAD"
+      - name: Install pinned original numeric dependencies without cache
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            lightgbm==4.7.0 pandas==3.0.6 scikit-learn==1.9.1 'numpy>=2.0,<3' kaggle
+          python -m unittest discover -s ml_features/tests -p 'test_compare_original_690_all24_v1.py' -v
+          python -m unittest discover -s ml_features/tests -p 'test_build_live_690_batch_36_v1.py' -v
+          python -m unittest discover -s ml_features/tests -p 'test_live_json_to_daily_pack_v1.py' -v
+      - name: Create verified live 36 target daypack in temporary overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SRC="$PWD"
+          mkdir -p "$RUNNER_TEMP/overlay/data/daily"
+          python ml_features/research/live_json_to_daily_pack_v1.py \
+            --live-dir data/live/2026-10-17 \
+            --output "$RUNNER_TEMP/overlay/data/daily/2026-10-17.jsonl.gz"
+          for file in data/daily/*.jsonl.gz; do
+            day="$(basename "$file" .jsonl.gz)"
+            if [[ "$day" > "2021-12-31" && "$day" < "2026-10-17" ]]; then
+              ln -s "$SRC/$file" "$RUNNER_TEMP/overlay/data/daily/$(basename "$file")"
+            fi
+          done
+          ln -s "$SRC/data/horses" "$RUNNER_TEMP/overlay/data/horses"
+      - name: Create ORIGINAL full 2026 historical snapshot for October 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ml_features/research/build-yearly-superset-snapshots.mjs \
+            --source-root . --out-dir "$RUNNER_TEMP/original-20261010" \
+            --source-start 2022-01-01 --source-end 2026-10-10 \
+            --emit-start 2026-01-01 --emit-end 2026-10-10 \
+            --first-model-ready-year 2023 --prediction-phase FINAL \
+            --feature-sets BASE,OPPONENT,NETWORK,LAP,STYLE,DISTANCE,BACKFILL,AUTO,ACTOR,TIME_PACE \
+            --source-sha 03950cfe132abeca15ef17dbc7c6885ceb1591b7 \
+            --ml-source-sha c782a7e0c6e2f09b2d0603b23336eab31ad5bc77
+          file="$(find "$RUNNER_TEMP/original-20261010" -name snapshot-2026.jsonl.gz -print -quit)"
+          test -s "$file"
+          echo "SNAPSHOT_20261010=$file" >> "$GITHUB_ENV"
+      - name: Create original 649-col reference panels and Oct10 target batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          V="$RUNNER_TEMP/original24"
+          mkdir -p "$V/compact"
+          python ml_features/research/phase3_20261010_all_24_unscored_inputs_v1.py \
+            --backfill-day data/daily/2026-10-10.jsonl.gz \
+            --snapshot-2026 "$SNAPSHOT_20261010" --output "$V/649"
+          python ml_features/research/phase3_20261010_24_extra41_batch_v1.py \
+            --mode aggregate --panels "$V/649" --out "$V/all315.json"
+          python ml_features/research/phase3_20261010_24_extra41_batch_v1.py \
+            --mode compact --panels "$V/649" --year 2026 \
+            --source "$SNAPSHOT_20261010" --batch "$V/all315.json" \
+            --out "$V/compact/prior-full-race-context-2026.pkl"
+      - name: Create full 2026 historical and live 2026 feature snapshots separately
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ml_features/research/build-yearly-superset-snapshots.mjs \
+            --source-root . --out-dir "$RUNNER_TEMP/historical-20261016" \
+            --source-start 2022-01-01 --source-end 2026-10-16 \
+            --emit-start 2026-01-01 --emit-end 2026-10-16 \
+            --first-model-ready-year 2023 --prediction-phase FINAL \
+            --feature-sets BASE,OPPONENT,NETWORK,LAP,STYLE,DISTANCE,BACKFILL,AUTO,ACTOR,TIME_PACE \
+            --source-sha 03950cfe132abeca15ef17dbc7c6885ceb1591b7 \
+            --ml-source-sha c782a7e0c6e2f09b2d0603b23336eab31ad5bc77
+          node ml_features/research/build-yearly-superset-snapshots.mjs \
+            --source-root "$RUNNER_TEMP/overlay" --out-dir "$RUNNER_TEMP/prestart-20261017" \
+            --source-start 2022-01-01 --source-end 2026-10-17 \
+            --emit-start 2026-10-17 --emit-end 2026-10-17 \
+            --allow-unresulted-targets \
+            --first-model-ready-year 2023 --prediction-phase FINAL \
+            --feature-sets BASE,OPPONENT,NETWORK,LAP,STYLE,DISTANCE,BACKFILL,AUTO,ACTOR,TIME_PACE \
+            --source-sha 03950cfe132abeca15ef17dbc7c6885ceb1591b7 \
+            --ml-source-sha c782a7e0c6e2f09b2d0603b23336eab31ad5bc77
+          python - <<'PY'
+          import os,gzip,json
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          hist=list((root/"historical-20261016").glob("*/snapshot-2026.jsonl.gz"))
+          live=list((root/"prestart-20261017").glob("*/snapshot-2026.jsonl.gz"))
+          assert len(hist)==len(live)==1
+          out=root/"combined-2026.jsonl.gz"
+          count=0
+          with gzip.open(out,"wt",encoding="utf-8") as target:
+            for path,allowdate in ((hist[0],False),(live[0],True)):
+              with gzip.open(path,"rt",encoding="utf-8") as f:
+                for line in f:
+                  if not line.strip():continue
+                  r=json.loads(line); d=r.get("features",{}).get("race_date")
+                  assert d and (d=="2026-10-17" if allowdate else d<"2026-10-17")
+                  if allowdate:assert r.get("target") is None and r.get("market_outcome") is None
+                  target.write(line);count+=1
+          print("2026_HISTORICAL_LIVE_SNAPSHOT_MERGE",count,flush=True)
+          PY
+          echo "SNAPSHOT_20261017=$RUNNER_TEMP/combined-2026.jsonl.gz" >> "$GITHUB_ENV"
+      - name: Prepare Oct17 batch of 471 horses for strict-prior history
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/live36/compact"
+          python - <<'PY'
+          import os,sys,json
+          from pathlib import Path
+          sys.path.insert(0,"ml_features/research")
+          from build_live_690_batch_36_v1 import collect
+          root=Path(os.environ["RUNNER_TEMP"])
+          races,all_rows=collect(root/"combined-2026.jsonl.gz")
+          (root/"live36"/"all471.json").write_text(json.dumps({
+            "race_id":"2026_36_BATCH","race_date":"2026-10-17",
+            "rows":all_rows},ensure_ascii=False),encoding="utf-8")
+          print("LIVE_471_HISTORICAL_CONTEXT_TARGETS_READY",len(races),len(all_rows))
+          PY
+          python ml_features/research/phase3_20261010_24_extra41_batch_v1.py \
+            --mode compact --panels "$RUNNER_TEMP/original24/649" \
+            --year 2026 --source "$SNAPSHOT_20261010" \
+            --batch "$RUNNER_TEMP/original24/all315.json" \
+            --out "$RUNNER_TEMP/original24/compact/prior-full-race-context-2026.pkl"
+          python - <<'PY'
+          import os,sys,json
+          from pathlib import Path
+          sys.path.insert(0,"ml_features/research")
+          from verify_2026_original_690_extra_values_v1 import compact_one_year
+          root=Path(os.environ["RUNNER_TEMP"])
+          doc=json.loads((root/"live36"/"all471.json").read_text())
+          compact_one_year(root/"combined-2026.jsonl.gz",2026,doc,
+                           root/"live36"/"compact"/"prior-full-race-context-2026.pkl")
+          PY
+      - name: Fetch each pinned Kaggle history year and compact BOTH dates (then delete source)
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$RUNNER_TEMP/kaggle-history"
+          mkdir -p "$remote"
+          for year in 2019 2020 2021 2022 2023 2024 2025; do
+            echo "KAGGLE_STATE_PRIOR_YEAR_START year=$year"
+            pushd ml_features > /dev/null
+            bash scripts/fetch_original_state_history_snapshot.sh "$year" "$remote" \
+              | tee "$remote/fetch-$year.log"
+            popd > /dev/null
+            source="$(tail -n 1 "$remote/fetch-$year.log")"
+            test -s "$source"
+            python - "$source" "$year" <<'PY'
+          import gzip,json,sys
+          from pathlib import Path
+          file,yr=Path(sys.argv[1]),int(sys.argv[2])
+          wanted={2019:(47345,"2019-01-05","2019-12-28"),
+                  2020:(48127,"2020-01-05","2020-12-27"),
+                  2021:(47660,"2021-01-05","2021-12-28"),
+                  2022:(47054,"2022-01-05","2022-12-28"),
+                  2023:(47493,"2023-01-05","2023-12-28"),
+                  2024:(47009,"2024-01-06","2024-12-28"),
+                  2025:(47731,"2025-01-05","2025-12-28")}
+          op=gzip.open if file.suffix==".gz" else open
+          first=None;last=None;count=0
+          with op(file,"rt",encoding="utf-8") as f:
+            for raw in f:
+              if not raw.strip():continue
+              obj=json.loads(raw)
+              dt=obj.get("features",{}).get("race_date")
+              assert dt and dt[:4]==str(yr),"KAGGLE_YEAR_ROW_DATE_DRIFT"
+              first=dt if first is None or dt<first else first
+              last=dt if last is None or dt>last else last
+              count+=1
+          assert (count,first,last)==wanted[yr],"KAGGLE_YEAR_ROW_RANGE_DRIFT"
+          print("KAGGLE_YEAR_ROW_DATE_VERIFIED",yr,count,first,last,flush=True)
+          PY
+            python ml_features/research/phase3_20261010_24_extra41_batch_v1.py \
+              --mode compact --panels "$RUNNER_TEMP/original24/649" \
+              --year "$year" --source "$source" \
+              --batch "$RUNNER_TEMP/original24/all315.json" \
+              --out "$RUNNER_TEMP/original24/compact/prior-full-race-context-$year.pkl"
+            python - "$year" "$source" <<'PY'
+          import os,sys,json
+          from pathlib import Path
+          sys.path.insert(0,"ml_features/research")
+          from verify_2026_original_690_extra_values_v1 import compact_one_year
+          y=int(sys.argv[1]);source=Path(sys.argv[2])
+          root=Path(os.environ["RUNNER_TEMP"])
+          target=json.loads((root/"live36"/"all471.json").read_text(encoding="utf8"))
+          compact_one_year(source,y,target,root/"live36"/"compact"/f"prior-full-race-context-{y}.pkl")
+          PY
+            rm -f "$source"
+          done
+          echo "ORIGINAL_2019_2025_STATE_CONTEXT_READY_FOR_BOTH_DATES"
+      - name: Generate frozen ML original 690 per horse for October 10 24
+        shell: bash
+        run: |
+          python ml_features/research/phase3_20261010_24_extra41_batch_v1.py \
+            --mode run --panels "$RUNNER_TEMP/original24/649" \
+            --source "$SNAPSHOT_20261010" \
+            --compact-dir "$RUNNER_TEMP/original24/compact" \
+            --out "$RUNNER_TEMP/original24/690"
+      - name: Compare BACKFILL independent 690 and ML original 315x690
+        shell: bash
+        run: |
+          python ml_features/research/compare_original_690_all24_v1.py \
+            --original-dir "$RUNNER_TEMP/original24/690" \
+            --snapshot-2026 "$SNAPSHOT_20261010" \
+            --compact-dir "$RUNNER_TEMP/original24/compact" \
+            --output "$RUNNER_TEMP/original24/full-cell-parity.json"
+      - name: Build 36 live races all 471x690 and keep ASOF unverified
+        shell: bash
+        run: |
+          python ml_features/research/build_live_690_batch_36_v1.py \
+            --snapshot-2026 "$SNAPSHOT_20261017" \
+            --compact-dir "$RUNNER_TEMP/live36/compact" \
+            --out "$RUNNER_TEMP/live36/690"
+          test "$(find "$RUNNER_TEMP/live36/690" -maxdepth 1 -name '2026*.json' | wc -l)" -eq 36
+          echo "ML_FEATURES_690_LIVE_TRIAL_COMPLETE_NO_MODEL_OR_BETS_NO_ARTIFACT"
