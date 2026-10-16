@@ -159,7 +159,15 @@ def bias19(snapshot, target):
         if (str(feat.get("venue_code")) == venue and
                 str(feat.get("surface")) == surface and
                 int(feat.get("race_no") or 0) < number):
-            matched.append(record)
+            # An earlier race may still be unresulted in a live day's feed.
+            # Only *completed* earlier races may update the frozen bias state.
+            previous_finish = (record.get("target") or {}).get("finish_position")
+            try:
+                completed = float(previous_finish) >= 1
+            except (TypeError, ValueError):
+                completed = False
+            if completed:
+                matched.append(record)
     ensure(set(styles) == {str(r["_horse_id"]) for r in target["rows"]},
            "TARGET_STYLE_IDS_DRIFT")
     previous = None
