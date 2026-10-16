@@ -1,0 +1,32 @@
+name: BACKFILL L1 feature processing source transfer CI
+on:
+  push:
+    branches: [feature/l1-690-feature-processing-transfer-20261016]
+    paths:
+      - 'ml_features/**'
+      - '.github/workflows/l1-feature-processing-transfer-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check transferred JS modules and frozen feature contracts
+        run: |
+          set -euo pipefail
+          for f in ml_features/src/*.mjs ml_features/research/*.mjs; do node --check "$f"; done
+          python -m json.tool ml_features/contracts/l1-feature-set-contract-v1.json > /dev/null
+          python -m json.tool ml_features/contracts/l1-small-sample-contract-v1.json > /dev/null
+      - name: Check transferred Python feature processing code
+        run: python -m compileall -q ml_features/research
+      - name: Prove pre-race processing and original historical behavior
+        run: node --test ml_features/tests/l1-feature-processing.test.mjs
