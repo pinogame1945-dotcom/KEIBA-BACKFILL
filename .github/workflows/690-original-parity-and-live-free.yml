@@ -1,5 +1,9 @@
 name: BACKFILL original 690 parity Oct10 and live 690 Oct17 free CPU
 on:
+  push:
+    branches: [test/690-20261010-24-20261017-36]
+    paths:
+      - ml_features/trigger-original-690-full-audit.txt
   workflow_dispatch:
 permissions:
   contents: read
