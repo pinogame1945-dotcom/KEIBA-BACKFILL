@@ -1,0 +1,33 @@
+name: BACKFILL 690 original prior-history access preflight (no downloads)
+on:
+  push:
+    branches: [test/690-20261010-24-20261017-36]
+    paths:
+      - .github/workflows/690-prior-history-access-preflight-free.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify prerequisites only, never fetch Kaggle data
+        shell: bash
+        env:
+          KAGGLE_API_TOKEN: \${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$KAGGLE_API_TOKEN" ]]; then
+            echo "690_PRIOR_HISTORY_CREDENTIAL_STATUS AVAILABLE_IN_BACKFILL_REPO"
+          else
+            echo "690_PRIOR_HISTORY_CREDENTIAL_STATUS NOT_CONFIGURED_IN_BACKFILL_REPO"
+          fi
+          AVAILABLE=$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')
+          GIT_MIB=$(du -sm .git | awk '{print $1}')
+          echo "690_PRIOR_HISTORY_EPHEMERAL_DISK_AVAILABLE_KIB $AVAILABLE"
+          echo "690_PRIOR_HISTORY_REPO_GIT_SIZE_MIB $GIT_MIB"
+          test "$AVAILABLE" -gt 4500000
+          test "$GIT_MIB" -lt 3500
+          echo "690_PRIOR_HISTORY_NO_REMOTE_DATA_DOWNLOADED true"
