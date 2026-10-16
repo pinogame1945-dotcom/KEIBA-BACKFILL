@@ -79,6 +79,23 @@ class LiveAdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SOURCE_NOT_PROVEN_CAPTURED_BEFORE_RACE"):
             convert(a)
 
+    def test_obstacle_uses_backfill_normalization_not_fabricated_flat_surface(self):
+        a = source()
+        a["netkeiba"]["race_name"] = "3歳以上障害未勝利"
+        a["netkeiba"]["raw_course"] = "11:25発走/障2910m(芝ダート)"
+        a["netkeiba"]["features_149"] = [
+            x for x in a["netkeiba"]["features_149"]
+            if x["feature_id"] not in ("race.discipline", "race.surface")]
+        a["netkeiba"]["features_149"] += [
+            {"feature_id": "race.discipline", "status": "NOT_VISIBLE_OR_UNPROVEN",
+             "observed_value": None},
+            {"feature_id": "race.surface", "status": "NOT_VISIBLE_OR_UNPROVEN",
+             "observed_value": None},
+        ]
+        row = convert(a)
+        self.assertEqual(row["race"]["discipline"], "OBSTACLE")
+        self.assertEqual(row["race"]["surface"], "MIXED")
+
     def test_block_unverified_odds(self):
         a = source()
         a["jra_odds"]["publisher_update_display_consistent"] = False

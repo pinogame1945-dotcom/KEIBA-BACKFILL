@@ -123,13 +123,30 @@ def convert(doc):
             sorted(x["horse_number"] for x in entries) == list(range(1, len(entries) + 1)),
             "RUNNER_DUPLICATE_OR_NUMBER_GAP")
     require(any(x["entry_status"] == "STARTED" for x in entries), "NO_ACTIVE_STARTERS")
+    # Reuse the original BACKFILL historical obstacle/dual-surface normalization.
+    # The 149-field live page audit can leave these unset even when the source
+    # explicitly publishes 障2910m(芝ダート); never invent an unsupported surface.
+    raw_course = str(net.get("raw_course") or "")
+    raw_name = str(net.get("race_name") or "")
+    discipline = val("discipline")
+    surface = val("surface")
+    if discipline is None and ("障害" in raw_name or
+                               (raw_course.count("障") and "m" in raw_course)):
+        discipline = "OBSTACLE"
+        if surface is None:
+            if "芝" in raw_course and "ダート" in raw_course:
+                surface = "MIXED"
+            elif "芝" in raw_course:
+                surface = "TURF"
+            elif "ダ" in raw_course:
+                surface = "DIRT"
     race = {
         "race_id": rid, "actual_date": None, "scheduled_date": DAY,
         "venue_code": rid[4:6],
         "meeting_no": int(rid[6:8]), "meeting_day": int(rid[8:10]),
         "race_no": int(rid[10:12]), "race_name": net.get("race_name"),
-        "race_status": "SCHEDULED", "discipline": val("discipline"),
-        "surface": val("surface"), "distance_m": val("distance_m"),
+        "race_status": "SCHEDULED", "discipline": discipline,
+        "surface": surface, "distance_m": val("distance_m"),
         "direction": val("direction"),
         "weather": val("weather"), "track_condition": val("track_condition"),
         "actual_start_time": None,
@@ -147,7 +164,7 @@ def convert(doc):
         "source_url": net.get("source_url"),
         "race_meta_source_url": net.get("source_url")
     }
-    require(race["surface"] in ("TURF", "DIRT") and
+    require(race["surface"] in ("TURF", "DIRT", "MIXED") and
             type(race["distance_m"]) is int and race["distance_m"] > 0,
             "RACE_SURFACE_OR_DISTANCE_UNKNOWN")
     return {
