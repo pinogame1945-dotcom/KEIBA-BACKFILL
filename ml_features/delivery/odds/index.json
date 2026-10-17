@@ -2,10 +2,118 @@
   "contract": "KEIBA_BACKFILL_TO_ML_ODDS_INDEX_V1",
   "repository": "pinogame1945-dotcom/KEIBA-BACKFILL",
   "branch": "handoff/690-feature-data-v1",
-  "total_races": 24,
+  "total_races": 60,
   "feature_index_path": "ml_features/delivery/690/index.json",
   "feature_contract": "KEIBA_BACKFILL_TO_ML_690_INDEX_V1",
   "races": {
+    "202604040101": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040101.json",
+      "sha256": "807e85866450567ef36baf5aa76404a31711be0826c58050596181945489552b",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "b00e01702a1bfaa81c34c6d29402656c63547b25b2fa4525522249e962e5476d"
+    },
+    "202604040102": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040102.json",
+      "sha256": "58c1865ef554bdd364dadb59fa9ce94eb76913b77826f7036316e2d90f7cc3c8",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "d4c042be4bd1581ddd4821830310657ccf5cda0aabf82254784eb54090586f55"
+    },
+    "202604040103": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040103.json",
+      "sha256": "7be2888cf554587e8c666cdaa2b4fa55629837afd55703f96cb37750f1b524a7",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "1651f730fb28deff52f54f72a5cd6cdfe8b327989d1de4d1b4cb73144a42399d"
+    },
+    "202604040104": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040104.json",
+      "sha256": "5d981a05da558df293d92ee5ffa219ed1e2caa6479e7321b4500f6819106020f",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "880700091e20dc123d48a75ca480d22fbfa0b7258bf4f9308d2c5299a6840977"
+    },
+    "202604040105": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040105.json",
+      "sha256": "0cffc0b99c0d8df980a4f6f13589bef3bf1c41afd379b8fc19f8f25a59450e80",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "7c11520c38876059c2579a2f716f49879b80ae4a1dad0222f9969a2bed09f72b"
+    },
+    "202604040106": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040106.json",
+      "sha256": "825f01993dffabd70e79185a2740e77b0ca44e2aebf9b3f0ceb2caea2882bf87",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "7133525f05b2ab7d60af47a6e1006a541e7d9aeb46124123f49c3729cf955533"
+    },
+    "202604040107": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040107.json",
+      "sha256": "7d846e11151b7ad9f92ccc82bc9e6862a4072c361c4bcd6a6aebb588d165fcb1",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "a18a2b0dcac6effd1da2df62d576706144a9308a3562663b3487ac10504a7ae1"
+    },
+    "202604040108": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040108.json",
+      "sha256": "9d0f4e48151cd58161845fefb66e8742a21b7b2fe63e9096d1c822ee5f4cfaa4",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "8cfbe6b183fa6d77b3b16366643dffd7f7be1e2da3424406ade739741f442913"
+    },
+    "202604040109": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040109.json",
+      "sha256": "4ec2dba5f12659d0ffe43d95ced1d5a44e8a0addaa3a808770ec4da20e16c8ed",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "6711a62b8e4c90d3fef35a621e9e674c2d96cc3a4946280cc12f01578c4166f4"
+    },
+    "202604040110": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040110.json",
+      "sha256": "5dfcd78cb47e914fdcd9e61b1ed18afe82d38376c49bcda1b90a412ecf5dd850",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "496815051768ba095dd0fc86b7a5061ebdab5a49b975bcdb7564abb0ec751e11"
+    },
+    "202604040111": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040111.json",
+      "sha256": "ac3550dbfcdbb33b3f22d9afd9eba20407cdcb5bf98b4ffa6aa659473695b0d3",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "5a9c26f9024b3a2fdc5568afb99bb1d80782afcc3e22d02833a51aa71bfac565"
+    },
+    "202604040112": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202604040112.json",
+      "sha256": "bbba0eda1640ac7f2107766ac26ebafc6c98a5231c20342dac5579668ff9c5a7",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "cd65802d4cb921e53ee353f597d582782718b66b13125704f22d88fb88bbf340"
+    },
     "202605040301": {
       "date": "2026-10-10",
       "path": "ml_features/delivery/odds/2026-10-10/202605040301.json",
@@ -114,6 +222,114 @@
       "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
       "feature_sha256": "6dd969e83e338d1e0c2ed3592e18f79407e398361e8410305c8d60e7553aed22"
     },
+    "202605040601": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040601.json",
+      "sha256": "317ae3a6a2fe74896cb7fcd1091d115345d5fe12ba6faa28902499ef08e0048d",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "04dfe6c959965b1963bcf3bb745103fdeb62b1b598df0493238337a525e3cef5"
+    },
+    "202605040602": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040602.json",
+      "sha256": "242c71e86f2bc9ea6c3be676ff5092dbb02669f1d9edc01477b29d9c9782bf58",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "fdb69f1e7447ac88247afadceb7c175a295ec927e65ed6fd8f0ca82279e61dbb"
+    },
+    "202605040603": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040603.json",
+      "sha256": "845c29cee467710db9480e69b525758446111619589fbebbeb99e7f130a872e3",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "33eaa60667543ca0e3ef44231b4cb93d3adc6d7be34bcf7cbd984c81b50a4fc7"
+    },
+    "202605040604": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040604.json",
+      "sha256": "51e0706237938e4fe6b8ba2434e23cb824f95ffab17d778a35afcd0b741d4bf0",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "d0e1898eadaf78158311845e15b2872a22cf3433c2654467887b407b82863528"
+    },
+    "202605040605": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040605.json",
+      "sha256": "7b2001097cec0b6552ac29ed3874dced041ccdc15bbe06e9b5b64d2d26dd955b",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "196433e2547ea75383bd6bd58cfcfd092911988f680f6cb5d8a65524558c8267"
+    },
+    "202605040606": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040606.json",
+      "sha256": "afbb7ca568099d411ef127211adae11b0c8284b850fbb49c249168ad77ffdda2",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "bd0cd5e780b61c5a62af37fca7d714ff94dfc23d2dc8a5f53a971196f690d0bd"
+    },
+    "202605040607": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040607.json",
+      "sha256": "d00f978a5a8bd107ca4e1af7de995be164853b31a0703955bd107c255db1cf1f",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "389b0aa542f5f66cdab2ab2fe04f77edd6e187dbe3954221fdccaffd7c594ebb"
+    },
+    "202605040608": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040608.json",
+      "sha256": "ad094e2dd7cb5b311e0f50f95ad1ae8a66ee4e41142c714b569e40168388b8ee",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "c37eb2ae16f3896d433ab840de68493f1a9b9c7ae8c0299d18cc2bb12c1779a5"
+    },
+    "202605040609": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040609.json",
+      "sha256": "49b6f07fb3fc4ef05cd7e2904efc0b0f3d776a7a56bbe304f56675915f39e7b9",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "093ff9a3dc7e3dc8f1906d98a90c60d41bfa608fd744a9fd42e9e1d519fe3d84"
+    },
+    "202605040610": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040610.json",
+      "sha256": "ea0c783417d68cf27c782e735a206f129a135ac5e1904f1e389dc8b0eae5b478",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "6e972368a54387f1f14de7f1f4e0e7f69605a6e72d314bec7d19de5426d6dda3"
+    },
+    "202605040611": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040611.json",
+      "sha256": "347583a233185c489779d3e1b9a6050619f5ab9d208b209f7e3c04d64d329e20",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "10ec36c306f6c6c8c8094a5f9c2af09093437ef5e8308c422714ff4d90bfa6a4"
+    },
+    "202605040612": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202605040612.json",
+      "sha256": "4565ef334c0a18b4ab71c2720b9802ea1c02fbaffcd9f6ba168bb3704679916a",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "1361e8e5bac084d978cd948ab2979dfff3c9369460e8a2f136009752e7f0dd8b"
+    },
     "202608040301": {
       "date": "2026-10-10",
       "path": "ml_features/delivery/odds/2026-10-10/202608040301.json",
@@ -221,6 +437,114 @@
       "snapshot_type": "POST_RACE_FINAL",
       "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
       "feature_sha256": "69b3d4d87f17388796dba02d5285723381c057644e286d55a5a81d2fe45e2db3"
+    },
+    "202608040601": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040601.json",
+      "sha256": "fc2a1b29f5e319f862ab8e4f69a4e87d32448671344f69621e4092390e852a8b",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "01d9c5e4f5939212a3be06b49c6d29a243e64eef52ca1d3f9487f5af9d209524"
+    },
+    "202608040602": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040602.json",
+      "sha256": "e1f488f7ebb95b66998565741a2f984d43c21b29444a55fb5de7e48feaf3b7f8",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "b7512f47f0901291825e861900aaa43f501199f295790c8218dbfaaaf87f21fd"
+    },
+    "202608040603": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040603.json",
+      "sha256": "27ad00df3686475b3abfbb5e60f53bb72ad8689f61de05e8154f47c756310f26",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "0f764ab1e804737fd8d5f30f82d629d0c60092ab5a9bf312ea356db7b7beaf39"
+    },
+    "202608040604": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040604.json",
+      "sha256": "30f72555c5ef27635742f9a0641c6b8a60d4ce4f35df5732082d811cd1335636",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "bde2d8140f1e0d506b8587abffe7cdf058a236c6511dff0fe6a1f95d5ce9fe09"
+    },
+    "202608040605": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040605.json",
+      "sha256": "a47b6da399f656c6b4459e6e00c5a9207f508781f865b01662cc7a981a622f15",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "2c67d71253542bfe07fc33c85485e91674db72cff09f81cbc131e42195aa3d1f"
+    },
+    "202608040606": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040606.json",
+      "sha256": "bae57e095392f5adf36daac3ac041af5698e50116e0d3ef94c1b0df5fcc9dc27",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "1f7706faca835b265db1bb88183d636db0d01af713aa3ac95b9e3f4d32b7fbc5"
+    },
+    "202608040607": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040607.json",
+      "sha256": "4cf69da33fb22832f2eb17cff7ed3d00aa138c217b77e00b0c5d1fd3e805dfbe",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "2f10ca1c0957fda31036974a974cb52df69c166861601721484a4dbcf1e7c542"
+    },
+    "202608040608": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040608.json",
+      "sha256": "9c726e10379971b4c640aa9448bbbe6f3319f20568d7bbeab1247b9ec4c574dc",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "3e71501a0210026135fab26942b47ad877199c001c2e0ff690c597cca3571196"
+    },
+    "202608040609": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040609.json",
+      "sha256": "4884cb7367c70f858ad7403e4d705cf9b81cee091fc472b55b8e3122f140c3ff",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "79863079f8bc97a87bc46f19e315b91211c04ada3d4318d526f1e2d3ee81acb9"
+    },
+    "202608040610": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040610.json",
+      "sha256": "be8156b81755f059e08ce70582541572e066b41443f8a34a7e347c0707442cab",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "7b5bd351d636dc677e9926fc444e83b80571ded721224f59d39321cc053d656a"
+    },
+    "202608040611": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040611.json",
+      "sha256": "c836e4b949e431fe6f3adbfd557f9d0effe8b1e2a1e4ec0982743ef7394c0f6f",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "ee022d63e20314ec1f83ba5df9d03065ad95456a00736f1211a697be26669f3a"
+    },
+    "202608040612": {
+      "date": "2026-10-17",
+      "path": "ml_features/delivery/odds/2026-10-17/202608040612.json",
+      "sha256": "7232d2d02ad8ac8c8a468a3cef59f2bac00ef3d8873984299228b20bce9ebc76",
+      "source": "JRA_OFFICIAL_POST",
+      "snapshot_type": "PRE_RACE_LIVE_ODDS",
+      "readiness": "PRE_RACE_OBSERVED_ASOF_UNVERIFIED",
+      "feature_sha256": "f3fac563d41ebff010a04ee1beaabf466f852e13d5442ae38cc516c929e2bc5b"
     }
   }
 }
