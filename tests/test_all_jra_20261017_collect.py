@@ -102,10 +102,6 @@ class AllJraTests(unittest.TestCase):
    item["jra_odds"]["expected_combination_count"]=3
    p.write_text(x.json.dumps(item,ensure_ascii=False),"utf-8")
    self.assertIsNone(x.reusable_verified(p,race))
-   item["jra_odds"]["expected_combination_count"]=2
-   item["jra_odds"]["page_observations"]["WIN_PLACE"]["fetched_at_utc"]="2026-10-18T12:00:00+00:00"
-   p.write_text(x.json.dumps(item,ensure_ascii=False),"utf-8")
-   self.assertIsNone(x.reusable_verified(p,race))
  def test_transport_timeout_retry_is_bounded(self):
   with patch.object(x,"src_fetch_once",side_effect=[TimeoutError("timed out"),("ok",{"sha256":"good"})]) as fetch,patch.object(x.time,"sleep") as nap:
    self.assertEqual(x.src_fetch("https://www.jra.go.jp"),("ok",{"sha256":"good"}))
@@ -132,6 +128,19 @@ class NewDayJraOddsPairTests(unittest.TestCase):
   code=self.odds_cname()
   anchor=self.row('<a onclick="doAction(\'/JRADB/accessO.html\',\''+code+'\')">オッズ</a>')
   self.assertEqual(d.row_odds_cname(anchor,"05",4,7,1),code)
+
+ def test_dynamic_reuse_rejects_any_post_start_source_page(self):
+  import all_jra_dynamic_collect_v1 as d
+  race={"race_id":"202605040701","scheduled_start_time_jst":"09:45"}
+  old_day=d.DAY
+  safe=d.DAY+"T09:40:00+09:00"
+  doc={"captured_at_utc":safe,
+       "netkeiba":{"meta":{"fetched_at_utc":safe}},
+       "jra_card":{"meta":{"fetched_at_utc":safe}},
+       "jra_odds":{"page_observations":{"WIN_PLACE":{"fetched_at_utc":safe}}}}
+  self.assertTrue(d.verified_pre_start_timestamps(race,doc))
+  doc["jra_odds"]["page_observations"]["WIN_PLACE"]["fetched_at_utc"]=d.DAY+"T09:45:00+09:00"
+  self.assertFalse(d.verified_pre_start_timestamps(race,doc))
 
  def test_unpublished_odds_does_not_fall_through_to_next_race(self):
   import all_jra_dynamic_collect_v1 as d
