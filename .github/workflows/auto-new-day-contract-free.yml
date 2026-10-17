@@ -9,6 +9,8 @@ on:
       - scripts/all_jra_dynamic_collect_v1.py
       - tests/test_all_jra_20261017_collect.py
       - ml_features/research/detect_live_day_delta_v1.py
+      - ml_features/research/auto_new_day_handoff_2026_v1.py
+      - .github/workflows/auto-new-day-690-odds-free.yml
       - ml_features/research/live_json_to_daily_pack_dynamic_v1.py
       - ml_features/tests/test_live_day_delta_v1.py
       - scripts/discover_jra_official_seed_v1.py
