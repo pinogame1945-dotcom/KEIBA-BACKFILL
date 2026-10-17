@@ -93,13 +93,15 @@ def build(date_text, output):
     require(numbers["live"]>0 and numbers["prior"]>0,"LIVE_OR_PRIOR_MISSING")
     print("AUTO_DAY_CORE4_HISTORY_READY",dict(numbers),flush=True)
 
-    ids=sorted({str(it["race_id"]) for it in source_rows(combined)
+    # New snapshot contains ONLY the target day. Avoid scanning tens of thousands
+    # of strictly-prior rows once per race when extracting original CORE4 649.
+    ids=sorted({str(it["race_id"]) for it in source_rows(new)
                 if (it.get("features") or {}).get("race_date")==date_text})
     per_venue=Counter(x[4:6] for x in ids)
     require(len(ids) in (12,24,36) and
             all(count==12 for count in per_venue.values()),
             "NEW_DAY_RACE_SET_INCOMPLETE")
-    rows=[r for race in ids for r in load_core4(combined,race)["rows"]]
+    rows=[r for race in ids for r in load_core4(new,race)["rows"]]
     require(3*len(ids)<=len(rows)<=18*len(ids),"NEW_DAY_STARTERS_OUTSIDE_RANGE")
     doc={"race_id":"day-cohort","race_date":date_text,"rows":rows}
     compact=parent/"compact"
@@ -126,16 +128,16 @@ def build(date_text, output):
                          compact/f"prior-full-race-context-{year}.pkl")
         raw.unlink()
     print("AUTO_DAY_ALL_ORIGINAL_2019_2025_STATE_READY",flush=True)
-    return combined,compact
+    return combined,compact,new
 
 
-def publish(day,source,compact,root):
+def publish(day,source,compact,root,live_snapshot):
     dest=Path(root)/"publication"
     command("git","fetch","--no-tags","origin","handoff/690-feature-data-v1")
     command("git","worktree","add","--detach",dest,"FETCH_HEAD")
     command(sys.executable,ML/"export_690_delivery_dynamic_v1.py",
-            "--date",day,"--snapshot",source,"--compact-dir",compact,
-            "--out-root",dest)
+            "--date",day,"--snapshot",source,"--target-snapshot",live_snapshot,
+            "--compact-dir",compact,"--out-root",dest)
     command(sys.executable,ML/"export_odds_delivery_v1.py",
             "--date",day,"--source-root",ROOT,"--out-root",dest)
     shutil.copyfile(ML/"fetch_features_and_odds_for_ml_v1.py",
@@ -216,5 +218,5 @@ if __name__=="__main__":
         publish_odds_only(a.date,directory)
     else:
         with tempfile.TemporaryDirectory(dir=a.runner_temp,prefix="auto-day-"):
-            first,prior=build(a.date,directory)
-            publish(a.date,first,prior,directory)
+            first,prior,live=build(a.date,directory)
+            publish(a.date,first,prior,directory,live)
