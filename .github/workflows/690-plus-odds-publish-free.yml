@@ -5,6 +5,12 @@ on:
     paths:
       - ml_features/trigger-690-plus-odds-delivery.txt
   workflow_dispatch:
+    inputs:
+      date:
+        description: "Optional indexed feature day (YYYY-MM-DD); leave blank for Oct10+Oct17 backfill"
+        type: string
+        required: false
+        default: ""
 permissions:
   contents: write
 concurrency:
@@ -40,6 +46,7 @@ jobs:
           cp ml_features/research/fetch_features_and_odds_for_ml_v1.py \
             "$RUNNER_TEMP/paired/ml_features/fetch_features_and_odds_for_ml_v1.py"
       - name: Export 10 October FINAL eight-ticket odds and publish checkpoint
+        if: ${{ github.event_name == 'push' || inputs.date == '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -51,6 +58,7 @@ jobs:
           git -C "$PAIRED" push origin HEAD:refs/heads/handoff/690-feature-data-v1
           echo "OCT10_FINAL_24_ODDS_GIT_PUBLISHED"
       - name: Export 17 October JRA LIVE eight-ticket odds and publish checkpoint
+        if: ${{ github.event_name == 'push' || inputs.date == '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -72,7 +80,32 @@ jobs:
           git -C "$PAIRED" commit -m "data(handoff): publish Oct17 36 live odds plus 60-race odds index"
           git -C "$PAIRED" push origin HEAD:refs/heads/handoff/690-feature-data-v1
           echo "OCT17_LIVE_36_ODDS_GIT_PUBLISHED"
+      - name: Publish odds for any requested new race date (after 690 feature export)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.date != '' }}
+        shell: bash
+        env:
+          REQUESTED_DATE: ${{ inputs.date }}
+        run: |
+          set -euo pipefail
+          python ml_features/research/export_odds_delivery_v1.py \\
+            --date "$REQUESTED_DATE" --source-root . --out-root "$PAIRED"
+          git -C "$PAIRED" add ml_features/delivery/odds ml_features/fetch_features_and_odds_for_ml_v1.py
+          if ! git -C "$PAIRED" diff --cached --quiet; then
+            git -C "$PAIRED" commit -m "data(handoff): update requested date odds alongside 690 features"
+            git -C "$PAIRED" push origin HEAD:refs/heads/handoff/690-feature-data-v1
+          fi
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["PAIRED"])
+          day=os.environ["REQUESTED_DATE"]
+          index=json.loads((root/"ml_features/delivery/odds/index.json").read_text())
+          rows=[rid for rid,v in index["races"].items() if v["date"]==day]
+          assert rows,"REQUESTED_ODDS_DATE_NOT_INDEXED"
+          print("REQUESTED_DATE_ODDS_PUBLISHED",day,len(rows))
+          PY
       - name: Prove race ID directly retrieves matched 690 and 8 ticket odds
+        if: ${{ github.event_name == 'push' || inputs.date == '' }}
         shell: bash
         run: |
           set -euo pipefail
