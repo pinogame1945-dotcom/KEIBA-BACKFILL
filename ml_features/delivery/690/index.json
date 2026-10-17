@@ -3,12 +3,84 @@
   "repository": "pinogame1945-dotcom/KEIBA-BACKFILL",
   "branch": "handoff/690-feature-data-v1",
   "feature_count": 690,
-  "total_races": 24,
-  "total_horses": 315,
+  "total_races": 60,
+  "total_horses": 786,
   "feature_name_sha256": "1667293eed867b77bbccf9af7dea758f0c9252581de40aedb64fded938621384",
   "readiness": "ASOF_UNVERIFIED_DO_NOT_BET",
   "original_ml_full_numerical_parity_verified": false,
   "races": {
+    "202604040101": {
+      "date": "2026-10-17",
+      "starters": 12,
+      "path": "ml_features/delivery/690/2026-10-17/202604040101.json",
+      "sha256": "b00e01702a1bfaa81c34c6d29402656c63547b25b2fa4525522249e962e5476d"
+    },
+    "202604040102": {
+      "date": "2026-10-17",
+      "starters": 12,
+      "path": "ml_features/delivery/690/2026-10-17/202604040102.json",
+      "sha256": "d4c042be4bd1581ddd4821830310657ccf5cda0aabf82254784eb54090586f55"
+    },
+    "202604040103": {
+      "date": "2026-10-17",
+      "starters": 15,
+      "path": "ml_features/delivery/690/2026-10-17/202604040103.json",
+      "sha256": "1651f730fb28deff52f54f72a5cd6cdfe8b327989d1de4d1b4cb73144a42399d"
+    },
+    "202604040104": {
+      "date": "2026-10-17",
+      "starters": 16,
+      "path": "ml_features/delivery/690/2026-10-17/202604040104.json",
+      "sha256": "880700091e20dc123d48a75ca480d22fbfa0b7258bf4f9308d2c5299a6840977"
+    },
+    "202604040105": {
+      "date": "2026-10-17",
+      "starters": 15,
+      "path": "ml_features/delivery/690/2026-10-17/202604040105.json",
+      "sha256": "7c11520c38876059c2579a2f716f49879b80ae4a1dad0222f9969a2bed09f72b"
+    },
+    "202604040106": {
+      "date": "2026-10-17",
+      "starters": 15,
+      "path": "ml_features/delivery/690/2026-10-17/202604040106.json",
+      "sha256": "7133525f05b2ab7d60af47a6e1006a541e7d9aeb46124123f49c3729cf955533"
+    },
+    "202604040107": {
+      "date": "2026-10-17",
+      "starters": 15,
+      "path": "ml_features/delivery/690/2026-10-17/202604040107.json",
+      "sha256": "a18a2b0dcac6effd1da2df62d576706144a9308a3562663b3487ac10504a7ae1"
+    },
+    "202604040108": {
+      "date": "2026-10-17",
+      "starters": 18,
+      "path": "ml_features/delivery/690/2026-10-17/202604040108.json",
+      "sha256": "8cfbe6b183fa6d77b3b16366643dffd7f7be1e2da3424406ade739741f442913"
+    },
+    "202604040109": {
+      "date": "2026-10-17",
+      "starters": 14,
+      "path": "ml_features/delivery/690/2026-10-17/202604040109.json",
+      "sha256": "6711a62b8e4c90d3fef35a621e9e674c2d96cc3a4946280cc12f01578c4166f4"
+    },
+    "202604040110": {
+      "date": "2026-10-17",
+      "starters": 15,
+      "path": "ml_features/delivery/690/2026-10-17/202604040110.json",
+      "sha256": "496815051768ba095dd0fc86b7a5061ebdab5a49b975bcdb7564abb0ec751e11"
+    },
+    "202604040111": {
+      "date": "2026-10-17",
+      "starters": 18,
+      "path": "ml_features/delivery/690/2026-10-17/202604040111.json",
+      "sha256": "5a9c26f9024b3a2fdc5568afb99bb1d80782afcc3e22d02833a51aa71bfac565"
+    },
+    "202604040112": {
+      "date": "2026-10-17",
+      "starters": 18,
+      "path": "ml_features/delivery/690/2026-10-17/202604040112.json",
+      "sha256": "cd65802d4cb921e53ee353f597d582782718b66b13125704f22d88fb88bbf340"
+    },
     "202605040301": {
       "date": "2026-10-10",
       "starters": 16,
@@ -81,6 +153,78 @@
       "path": "ml_features/delivery/690/2026-10-10/202605040312.json",
       "sha256": "6dd969e83e338d1e0c2ed3592e18f79407e398361e8410305c8d60e7553aed22"
     },
+    "202605040601": {
+      "date": "2026-10-17",
+      "starters": 12,
+      "path": "ml_features/delivery/690/2026-10-17/202605040601.json",
+      "sha256": "04dfe6c959965b1963bcf3bb745103fdeb62b1b598df0493238337a525e3cef5"
+    },
+    "202605040602": {
+      "date": "2026-10-17",
+      "starters": 10,
+      "path": "ml_features/delivery/690/2026-10-17/202605040602.json",
+      "sha256": "fdb69f1e7447ac88247afadceb7c175a295ec927e65ed6fd8f0ca82279e61dbb"
+    },
+    "202605040603": {
+      "date": "2026-10-17",
+      "starters": 12,
+      "path": "ml_features/delivery/690/2026-10-17/202605040603.json",
+      "sha256": "33eaa60667543ca0e3ef44231b4cb93d3adc6d7be34bcf7cbd984c81b50a4fc7"
+    },
+    "202605040604": {
+      "date": "2026-10-17",
+      "starters": 18,
+      "path": "ml_features/delivery/690/2026-10-17/202605040604.json",
+      "sha256": "d0e1898eadaf78158311845e15b2872a22cf3433c2654467887b407b82863528"
+    },
+    "202605040605": {
+      "date": "2026-10-17",
+      "starters": 8,
+      "path": "ml_features/delivery/690/2026-10-17/202605040605.json",
+      "sha256": "196433e2547ea75383bd6bd58cfcfd092911988f680f6cb5d8a65524558c8267"
+    },
+    "202605040606": {
+      "date": "2026-10-17",
+      "starters": 18,
+      "path": "ml_features/delivery/690/2026-10-17/202605040606.json",
+      "sha256": "bd0cd5e780b61c5a62af37fca7d714ff94dfc23d2dc8a5f53a971196f690d0bd"
+    },
+    "202605040607": {
+      "date": "2026-10-17",
+      "starters": 11,
+      "path": "ml_features/delivery/690/2026-10-17/202605040607.json",
+      "sha256": "389b0aa542f5f66cdab2ab2fe04f77edd6e187dbe3954221fdccaffd7c594ebb"
+    },
+    "202605040608": {
+      "date": "2026-10-17",
+      "starters": 9,
+      "path": "ml_features/delivery/690/2026-10-17/202605040608.json",
+      "sha256": "c37eb2ae16f3896d433ab840de68493f1a9b9c7ae8c0299d18cc2bb12c1779a5"
+    },
+    "202605040609": {
+      "date": "2026-10-17",
+      "starters": 12,
+      "path": "ml_features/delivery/690/2026-10-17/202605040609.json",
+      "sha256": "093ff9a3dc7e3dc8f1906d98a90c60d41bfa608fd744a9fd42e9e1d519fe3d84"
+    },
+    "202605040610": {
+      "date": "2026-10-17",
+      "starters": 14,
+      "path": "ml_features/delivery/690/2026-10-17/202605040610.json",
+      "sha256": "6e972368a54387f1f14de7f1f4e0e7f69605a6e72d314bec7d19de5426d6dda3"
+    },
+    "202605040611": {
+      "date": "2026-10-17",
+      "starters": 14,
+      "path": "ml_features/delivery/690/2026-10-17/202605040611.json",
+      "sha256": "10ec36c306f6c6c8c8094a5f9c2af09093437ef5e8308c422714ff4d90bfa6a4"
+    },
+    "202605040612": {
+      "date": "2026-10-17",
+      "starters": 14,
+      "path": "ml_features/delivery/690/2026-10-17/202605040612.json",
+      "sha256": "1361e8e5bac084d978cd948ab2979dfff3c9369460e8a2f136009752e7f0dd8b"
+    },
     "202608040301": {
       "date": "2026-10-10",
       "starters": 14,
@@ -152,6 +296,78 @@
       "starters": 16,
       "path": "ml_features/delivery/690/2026-10-10/202608040312.json",
       "sha256": "69b3d4d87f17388796dba02d5285723381c057644e286d55a5a81d2fe45e2db3"
+    },
+    "202608040601": {
+      "date": "2026-10-17",
+      "starters": 10,
+      "path": "ml_features/delivery/690/2026-10-17/202608040601.json",
+      "sha256": "01d9c5e4f5939212a3be06b49c6d29a243e64eef52ca1d3f9487f5af9d209524"
+    },
+    "202608040602": {
+      "date": "2026-10-17",
+      "starters": 11,
+      "path": "ml_features/delivery/690/2026-10-17/202608040602.json",
+      "sha256": "b7512f47f0901291825e861900aaa43f501199f295790c8218dbfaaaf87f21fd"
+    },
+    "202608040603": {
+      "date": "2026-10-17",
+      "starters": 8,
+      "path": "ml_features/delivery/690/2026-10-17/202608040603.json",
+      "sha256": "0f764ab1e804737fd8d5f30f82d629d0c60092ab5a9bf312ea356db7b7beaf39"
+    },
+    "202608040604": {
+      "date": "2026-10-17",
+      "starters": 8,
+      "path": "ml_features/delivery/690/2026-10-17/202608040604.json",
+      "sha256": "bde2d8140f1e0d506b8587abffe7cdf058a236c6511dff0fe6a1f95d5ce9fe09"
+    },
+    "202608040605": {
+      "date": "2026-10-17",
+      "starters": 8,
+      "path": "ml_features/delivery/690/2026-10-17/202608040605.json",
+      "sha256": "2c67d71253542bfe07fc33c85485e91674db72cff09f81cbc131e42195aa3d1f"
+    },
+    "202608040606": {
+      "date": "2026-10-17",
+      "starters": 16,
+      "path": "ml_features/delivery/690/2026-10-17/202608040606.json",
+      "sha256": "1f7706faca835b265db1bb88183d636db0d01af713aa3ac95b9e3f4d32b7fbc5"
+    },
+    "202608040607": {
+      "date": "2026-10-17",
+      "starters": 10,
+      "path": "ml_features/delivery/690/2026-10-17/202608040607.json",
+      "sha256": "2f10ca1c0957fda31036974a974cb52df69c166861601721484a4dbcf1e7c542"
+    },
+    "202608040608": {
+      "date": "2026-10-17",
+      "starters": 7,
+      "path": "ml_features/delivery/690/2026-10-17/202608040608.json",
+      "sha256": "3e71501a0210026135fab26942b47ad877199c001c2e0ff690c597cca3571196"
+    },
+    "202608040609": {
+      "date": "2026-10-17",
+      "starters": 16,
+      "path": "ml_features/delivery/690/2026-10-17/202608040609.json",
+      "sha256": "79863079f8bc97a87bc46f19e315b91211c04ada3d4318d526f1e2d3ee81acb9"
+    },
+    "202608040610": {
+      "date": "2026-10-17",
+      "starters": 9,
+      "path": "ml_features/delivery/690/2026-10-17/202608040610.json",
+      "sha256": "7b5bd351d636dc677e9926fc444e83b80571ded721224f59d39321cc053d656a"
+    },
+    "202608040611": {
+      "date": "2026-10-17",
+      "starters": 15,
+      "path": "ml_features/delivery/690/2026-10-17/202608040611.json",
+      "sha256": "ee022d63e20314ec1f83ba5df9d03065ad95456a00736f1211a697be26669f3a"
+    },
+    "202608040612": {
+      "date": "2026-10-17",
+      "starters": 18,
+      "path": "ml_features/delivery/690/2026-10-17/202608040612.json",
+      "sha256": "f3fac563d41ebff010a04ee1beaabf466f852e13d5442ae38cc516c929e2bc5b"
     }
   }
 }
