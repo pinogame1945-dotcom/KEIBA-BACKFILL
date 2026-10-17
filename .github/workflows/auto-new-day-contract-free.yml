@@ -37,6 +37,7 @@ jobs:
           python -m unittest discover -s tests -p test_all_jra_20261017_collect.py -v
           python -m unittest discover -s ml_features/tests -p test_live_official_seed_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_odds_handoff_v1.py -v
+          python -m unittest discover -s ml_features/tests -p test_dynamic_day_paired_handoff_v1.py -v
           KEIBA_LIVE_DATE=2026-10-17 python ml_features/research/live_json_to_daily_pack_dynamic_v1.py --live-dir data/live/2026-10-17 --output "$RUNNER_TEMP/source-36.jsonl.gz"
           python - <<'PY'
           import gzip,json,os
