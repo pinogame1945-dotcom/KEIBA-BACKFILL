@@ -1,0 +1,35 @@
+name: Original frozen pedigree V4 238 numeric for 60 pre-race targets free CPU
+on:
+  push:
+    branches: [feature/7king-original-pedigree-v4-20261017]
+    paths:
+      - ml_features/research/calculate_original_7king_pedigree_v4_real_60.mjs
+      - .github/workflows/l1-original-pedigree-v4-numeric-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ml_features
+            data/horses
+            data/daily
+            data/live/2026-10-17
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Compute untouched original V4 numeric pedigree from strict-prior history
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ml_features/research/calculate_original_7king_pedigree_v4_real_60.mjs
+          node ml_features/research/calculate_original_7king_pedigree_v4_real_60.mjs \
+            . "$RUNNER_TEMP/original-v4-238-60"
+          test "$(find "$RUNNER_TEMP/original-v4-238-60" -name '2026*.json' | wc -l)" -eq 60
+          echo "ORIGINAL_V4_NUMERIC_TEMP_ONLY_NO_ARTIFACT_CACHE_PAID_STORAGE_OR_MODEL_INFERENCE"
