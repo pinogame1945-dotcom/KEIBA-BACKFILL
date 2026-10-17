@@ -1,0 +1,48 @@
+name: New-day JRA official collection dynamic smoke free
+on:
+  push:
+    branches: [feature/auto-new-race-day-handoff-20261017]
+    paths:
+      - ml_features/auto-live-smoke-trigger.txt
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      KEIBA_LIVE_DATE: "2026-10-18"
+      KEIBA_JRA_CARD_URL: "https://www.jra.go.jp/JRADB/accessD.html?CNAME=pw01dde0105202604070120261018%2F00"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts
+            tests
+            contracts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify date-dependent source syntax and original unchanged source
+        run: |
+          python -m pip install --no-cache-dir beautifulsoup4==4.14.3
+          python -m py_compile scripts/all_jra_dynamic_collect_v1.py scripts/discover_jra_official_seed_v1.py
+          test -f scripts/all_jra_20261017_collect.py
+          python -m unittest discover -s tests -p test_all_jra_20261017_collect.py -v
+      - name: Collect first true official Oct18 race as live smoke without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/all_jra_dynamic_collect_v1.py --limit 1 --out "$RUNNER_TEMP/smoke-live"
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"smoke-live"
+          doc=json.loads((root/"manifest.json").read_text())
+          assert doc["day"]=="2026-10-18"
+          assert doc["race_count_expected"] in (12,24,36)
+          assert doc["actual_races_processed"]==1
+          assert doc["full_source_and_odds_verified"]==1 and doc["blocked"]==0,doc
+          print("GENERIC_JRA_OFFICIAL_PRE_RACE_8_ODDS_SMOKE_SUCCESS")
+          PY
