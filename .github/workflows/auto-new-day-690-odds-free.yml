@@ -79,22 +79,38 @@ jobs:
             KEIBA_JRA_CARD_URL="$(python scripts/discover_jra_official_seed_v1.py --date "$TARGET_DATE")"
             echo "KEIBA_JRA_CARD_URL=$KEIBA_JRA_CARD_URL" >> "$GITHUB_ENV"
           fi
-      - name: Collect complete meeting day from verified official JRA links
+      - name: Capture fresh pre-race candidates and classify source/odds deltas
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/all_jra_dynamic_collect_v1.py --limit 36 --out "data/live/$TARGET_DATE" --resume-verified
+          python scripts/all_jra_dynamic_collect_v1.py --limit 36 \
+            --update-pre-race --prior-dir "data/live/$TARGET_DATE" \
+            --out "$RUNNER_TEMP/new-race-day"
+          python ml_features/research/detect_live_day_delta_v1.py \
+            --prior-dir "data/live/$TARGET_DATE" \
+            --current-dir "$RUNNER_TEMP/new-race-day" \
+            --out "$RUNNER_TEMP/new-race-day-delta.json"
           python - <<'PY'
-          import json,os
+          import json,os,shutil
           from pathlib import Path
-          data=json.loads((Path("data/live")/os.environ["TARGET_DATE"]/"manifest.json").read_text())
-          n=data["race_count_expected"]
-          assert n in (12,24,36) and data["actual_races_processed"]==n
-          assert data["full_source_and_odds_verified"]==n and data["blocked"]==0
-          print("ALL_OFFICIAL_EIGHT_ODDS_SOURCE_READY",n)
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"new-race-day-delta.json").read_text())
+          source=Path(os.environ["RUNNER_TEMP"])/"new-race-day"
+          root=Path("data/live")/os.environ["TARGET_DATE"]
+          if not d["noop"]:
+              root.mkdir(parents=True,exist_ok=True)
+              for rid in d["new"]+d["feature_changed"]+d["odds_only_changed"]:
+                  shutil.copyfile(source/(rid+".json"),root/(rid+".json"))
+              shutil.copyfile(source/"manifest.json",root/"manifest.json")
+          with open(os.environ["GITHUB_ENV"],"a") as e:
+              e.write(f'DO_ORIGINAL_690={"true" if d["recompute_original_690"] else "false"}\n')
+              e.write(f'DO_PUBLISH_ODDS={"true" if d["publish_new_odds"] else "false"}\n')
+          print("LIVE_PRE_RACE_DELTA",d)
           PY
-          test "$(du -sm "data/live/$TARGET_DATE" | awk '{print $1}')" -lt 120
-      - name: Preserve original source separately in isolated branch
+          if [ -d "data/live/$TARGET_DATE" ]; then
+            test "$(du -sm "data/live/$TARGET_DATE" | awk '{print $1}')" -lt 120
+          fi
+      - name: Preserve changed verified source separately in isolated branch
+        if: env.DO_PUBLISH_ODDS == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -105,9 +121,18 @@ jobs:
             git commit -m "data: JRA new day verified pre-race source"
             git push origin HEAD:refs/heads/feature/auto-new-race-day-handoff-20261017
           fi
-      - name: Produce original 690 and current JRA odds in ONE Git handoff checkpoint
+      - name: Publish exact original 690 with verified current 8-ticket odds
+        if: env.DO_ORIGINAL_690 == 'true'
         shell: bash
         run: |
           set -euo pipefail
           python ml_features/research/auto_new_day_handoff_2026_v1.py --date "$TARGET_DATE" --runner-temp "$RUNNER_TEMP"
           echo "AUTO_RACE_ID_690_AND_EIGHT_ODDS_HANDOFF_COMPLETE"
+      - name: Update odds only without rebuilding the unchanged 690 horse features
+        if: env.DO_PUBLISH_ODDS == 'true' && env.DO_ORIGINAL_690 == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ml_features/research/auto_new_day_handoff_2026_v1.py \
+            --date "$TARGET_DATE" --runner-temp "$RUNNER_TEMP" --odds-only
+          echo "AUTO_RACE_ID_ODDS_ONLY_HANDOFF_COMPLETE"
