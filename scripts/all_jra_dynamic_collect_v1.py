@@ -104,7 +104,7 @@ def row_odds_cname(card_anchor,venue,meet,meeting_day,race_no):
  # Example actually published by JRA for 2026-10-17:
  # pw151ouS305202604060120261017Z/73 = WIN/PLACE, Tokyo, YYYY, meeting, day, race, date.
  race_code=f"{venue}{DAY[:4]}{int(meet):02d}{int(meeting_day):02d}{int(race_no):02d}{TOKEN}"
- pattern=r"pw15[1-8]ouS3"+re.escape(race_code)+r"Z(?:\\d+)?/[0-9A-Fa-f]{2}"
+ pattern=r"pw15[1-8]ouS3"+re.escape(race_code)+r"Z(?:[0-9]+)?/[0-9A-Fa-f]{2}"
  if not re.fullmatch(pattern,odds_code):
   raise ValueError("JRA_ODDS_CNAME_RACE_IDENTITY_MISMATCH:"+rid)
  return odds_code
