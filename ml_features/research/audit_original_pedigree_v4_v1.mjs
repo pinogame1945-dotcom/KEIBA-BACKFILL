@@ -68,6 +68,6 @@ console.log("ORIGINAL_ML_V4_PEDIGREE_RESTORED "+JSON.stringify({
   original_v3_key_count:k3.size,additional_race_class_keys:diff.length,
   sire_race_class_keys:17,damsire_race_class_keys:17,
   historical_earlier_result_fixture_only:true,
-  same_day_target_result_read:false,2026_result_read:false,
-  2026_real_pedigree_values_generated:false
+  same_day_target_result_read:false,"2026_result_read":false,
+  "2026_real_pedigree_values_generated":false
 }));
