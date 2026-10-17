@@ -13,6 +13,7 @@ import gzip
 import hashlib
 import json
 from pathlib import Path
+from datetime import date as Date
 
 BET_TYPES = {
     "1": "WIN", "2": "PLACE", "3": "BRACKET_QUINELLA",
@@ -20,7 +21,6 @@ BET_TYPES = {
     "7": "TRIO", "8": "TRIFECTA",
 }
 BASE = Path("ml_features/delivery")
-DATES = ("2026-10-10", "2026-10-17")
 
 
 def require(condition, message):
@@ -113,7 +113,8 @@ def make_live(race, item):
 
 
 def export_date(date, source_root, dest_root):
-    require(date in DATES, "OUT_OF_SCOPE_DATE")
+    require(len(date)==10 and Date.fromisoformat(date).isoformat()==date,
+            "INVALID_REQUESTED_RACE_DATE")
     source=Path(source_root)
     target=Path(dest_root)
     feature_index=load_json(target/BASE/"690/index.json")
@@ -122,9 +123,11 @@ def export_date(date, source_root, dest_root):
             "ML_FEATURE_INDEX_INVALID")
     selected={rid: v for rid,v in feature_index["races"].items()
               if v["date"] == date}
-    require(len(selected) == (24 if date == DATES[0] else 36),
-            "NOT_ALL_FEATURE_RACES_EXPORTED")
-    if date == DATES[0]:
+    require(selected, "NO_EXPORTED_FEATURE_RACES_ON_REQUESTED_DATE")
+    source_dir=source/"data/live"/date
+    live_available=source_dir.is_dir() and any(
+        f.stem.isdigit() and len(f.stem)==12 for f in source_dir.glob("*.json"))
+    if not live_available:
         pack=source/"data/odds/daily"/(date+".jsonl.gz")
         require(pack.is_file(), "HISTORICAL_FINAL_ODDS_PACK_MISSING")
         with gzip.open(pack,"rt",encoding="utf-8") as fh:
@@ -137,7 +140,6 @@ def export_date(date, source_root, dest_root):
         require(set(selected).issubset(all_odds),
                 "HISTORICAL_ODDS_RACES_MISSING")
     else:
-        source_dir=source/"data/live"/date
         require(source_dir.is_dir(),"JRA_LIVE_SOURCE_MISSING")
         all_odds={}
         for file in source_dir.glob("*.json"):
@@ -150,7 +152,7 @@ def export_date(date, source_root, dest_root):
     result_dir.mkdir(parents=True,exist_ok=True)
     for rid in sorted(selected):
         original=all_odds[rid]
-        odds=make_historical(rid,original) if date==DATES[0] else make_live(rid,original)
+        odds=make_live(rid,original) if live_available else make_historical(rid,original)
         doc={
             "contract": "KEIBA_BACKFILL_TO_ML_ODDS_V1",
             "race_id":rid,"race_date":date,
@@ -164,7 +166,7 @@ def export_date(date, source_root, dest_root):
                        allow_nan=False)+"\n",encoding="utf8")
     print("ODDS_HANDOFF_DAY_WRITTEN "+json.dumps(
         {"date":date,"races":len(selected),"source":
-         "NETKEIBA_FINAL" if date==DATES[0] else "JRA_OFFICIAL_POST"},
+         "JRA_OFFICIAL_POST" if live_available else "NETKEIBA_FINAL"},
         sort_keys=True),flush=True)
 
 
@@ -212,7 +214,7 @@ if __name__=="__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--source-root",default=".")
     parser.add_argument("--out-root",required=True)
-    parser.add_argument("--date",choices=DATES)
+    parser.add_argument("--date")
     parser.add_argument("--index-only",action="store_true")
     p=parser.parse_args()
     if not p.index_only:
