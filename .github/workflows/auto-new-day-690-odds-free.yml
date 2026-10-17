@@ -1,9 +1,9 @@
 name: Weekly JRA race day 690 plus eight odds free
 on:
-  # UTC 00:20-14:20 = JST 09:20-23:20. JRA source decides race day,
+  # UTC 00:20-08:20 + 10:20-14:20 = JST 09:20-17:20 and 19:20-23:20. JRA source decides race day,
   # never Saturday/Sunday date guesses; holidays are supported.
   schedule:
-    - cron: "20 0-14 * * *"
+    - cron: "20 0-8,10-14 * * *"
   push:
     branches: [feature/auto-new-race-day-handoff-20261017]
     paths: [ml_features/new-date-request.json]
@@ -51,16 +51,8 @@ jobs:
           set -euo pipefail
           python -m pip install --disable-pip-version-check --no-cache-dir beautifulsoup4==4.14.3
           if [ "${{ github.event_name }}" = "push" ]; then
-            python - <<'PY'
-          import json,os
-          from pathlib import Path
-          p=Path("ml_features/new-date-request.json")
-          assert p.is_file(),"PUSH_DATE_REQUEST_FILE_ABSENT"
-          d=json.loads(p.read_text("utf-8"))
-          with open(os.environ["GITHUB_ENV"],"a") as out:
-              out.write("REQUEST_DATE="+d["race_date"]+"\\n")
-              out.write("REQUEST_SEED="+d.get("official_seed_url","")+"\\n")
-          PY
+            REQUEST_DATE="$(python -c 'import json;print(json.load(open("ml_features/new-date-request.json"))["race_date"])')"
+            REQUEST_SEED="$(python -c 'import json;print(json.load(open("ml_features/new-date-request.json")).get("official_seed_url",""))')"
           fi
           if [ -n "$REQUEST_DATE" ]; then
             python scripts/resolve_weekly_jra_day_v1.py --date "$REQUEST_DATE" --seed "$REQUEST_SEED" --github-env "$GITHUB_ENV"
