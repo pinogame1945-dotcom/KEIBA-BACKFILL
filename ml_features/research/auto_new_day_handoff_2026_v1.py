@@ -164,12 +164,57 @@ def publish(day,source,compact,root):
         "feature_count":690,"eight_odds":True},sort_keys=True),flush=True)
 
 
+def publish_odds_only(day, root):
+    """Published 690 is immutable on market-only changes. Refresh odds and SHA index."""
+    root=Path(root)
+    dest=root/"odds-publication"
+    source_manifest=ROOT/"data"/"live"/day/"manifest.json"
+    require(source_manifest.is_file(),"LIVE_MANIFEST_MISSING_FOR_ODDS_ONLY")
+    m=json.loads(source_manifest.read_text("utf-8"))
+    source_ids={str(r.get("race_id")) for r in m.get("races",[])}
+    require(m.get("day")==day and len(source_ids)==m.get("race_count_expected")
+            and len(source_ids)==m.get("full_source_and_odds_verified")
+            and m.get("blocked")==0,"LIVE_SOURCE_NOT_READY_FOR_ODDS_ONLY")
+    command("git","fetch","--no-tags","origin","handoff/690-feature-data-v1")
+    command("git","worktree","add","--detach",dest,"FETCH_HEAD")
+    f=json.loads((dest/"ml_features/delivery/690/index.json").read_text("utf-8"))
+    ids={rid for rid,rec in f["races"].items() if rec["date"]==day}
+    require(ids==source_ids and len(ids) in (12,24,36),
+            "ODDS_ONLY_REQUIRES_ALREADY_PUBLISHED_EXACT_690_RACE_SET")
+    command(sys.executable,ML/"export_odds_delivery_v1.py",
+            "--date",day,"--source-root",ROOT,"--out-root",dest)
+    require(sum(p.stat().st_size for p in (dest/"ml_features"/"delivery").rglob("*.json"))<250*1024*1024,
+            "GIT_HANDOFF_STORAGE_GUARD_250M")
+    example=sorted(ids)[0]
+    command(sys.executable,ML/"fetch_features_and_odds_for_ml_v1.py",
+            "--race-id",example,"--base-url",dest.as_uri()+"/",
+            "--output",root/"odds-only-example.json")
+    command("git","add","ml_features/delivery/odds",cwd=dest)
+    changed=subprocess.run(["git","diff","--cached","--quiet"],cwd=dest)
+    require(changed.returncode in (0,1),"GIT_ODDS_ONLY_DIFF_FAILED")
+    if changed.returncode==0:
+        print("AUTO_DAY_ODDS_ONLY_NO_PUBLICATION_REQUIRED",flush=True)
+        return
+    command("git","-c","user.name=github-actions-bot",
+            "-c","user.email=41898282+github-actions[bot]@users.noreply.github.com",
+            "commit","-m","data: refresh verified JRA pre-race odds without recomputing 690",cwd=dest)
+    command("git","push","origin","HEAD:refs/heads/handoff/690-feature-data-v1",cwd=dest)
+    print("AUTO_DAY_ODDS_ONLY_COMPLETE",json.dumps(
+        {"date":day,"races":len(ids),"feature_count":690,
+         "recalculated_690":False,"source":"JRA_OFFICIAL_POST"},sort_keys=True),flush=True)
+
+
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--date",required=True)
     parser.add_argument("--runner-temp",required=True)
+    parser.add_argument("--odds-only",action="store_true")
     a=parser.parse_args()
     directory=Path(a.runner_temp)/"auto-day"
-    with tempfile.TemporaryDirectory(dir=a.runner_temp,prefix="auto-day-") as temp:
-        first,prior=build(a.date,directory)
-        publish(a.date,first,prior,directory)
+    if a.odds_only:
+        directory.mkdir(parents=True,exist_ok=True)
+        publish_odds_only(a.date,directory)
+    else:
+        with tempfile.TemporaryDirectory(dir=a.runner_temp,prefix="auto-day-"):
+            first,prior=build(a.date,directory)
+            publish(a.date,first,prior,directory)
