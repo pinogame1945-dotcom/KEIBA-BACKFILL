@@ -100,7 +100,11 @@ jobs:
               root.mkdir(parents=True,exist_ok=True)
               for rid in d["new"]+d["feature_changed"]+d["odds_only_changed"]:
                   shutil.copyfile(source/(rid+".json"),root/(rid+".json"))
-              shutil.copyfile(source/"manifest.json",root/"manifest.json")
+              manifest=json.loads((source/"manifest.json").read_text("utf-8"))
+              for rec in manifest["races"]:
+                  rec["file"]=str(root/(rec["race_id"]+".json"))
+              (root/"manifest.json").write_text(
+                  json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
           with open(os.environ["GITHUB_ENV"],"a") as e:
               e.write(f'DO_ORIGINAL_690={"true" if d["recompute_original_690"] else "false"}\n')
               e.write(f'DO_PUBLISH_ODDS={"true" if d["publish_new_odds"] else "false"}\n')
