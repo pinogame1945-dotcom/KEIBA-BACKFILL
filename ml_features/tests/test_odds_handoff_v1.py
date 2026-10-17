@@ -18,6 +18,14 @@ class TestOddsHandoff(unittest.TestCase):
             "fetched_at":"2026-10-12T01:00:00Z"})
         self.assertEqual(a["snapshot_type"],"POST_RACE_FINAL")
         self.assertEqual(a["readiness"],"FINAL_ODDS_NOT_PRE_RACE_ASOF")
+        self.assertTrue(a["all_eight_bet_types_present"])
+        del odds["8"]
+        missing=make_historical("202605040301",{
+            "race_id":"202605040301","source_status":"result",
+            "odds_kind":"FINAL","source":"NETKEIBA_FINAL",
+            "odds":odds,"group_summary":{}})
+        self.assertFalse(missing["all_eight_bet_types_present"])
+        self.assertEqual(missing["source_absent_bet_types"],["TRIFECTA"])
         with self.assertRaises(ValueError):
             make_historical("202605040301",{
                 "race_id":"202605040301","source_status":"middle",
