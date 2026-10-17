@@ -50,6 +50,6 @@ console.log("ORIGINAL_FROZEN_7KING_PEDIGREE_V4_SCHEMA_TEST_SUCCESS "+JSON.string
  exact_raceclass_keys_added:34, shared204_values_unchanged_in_synthetic_test:true,
  both_lineages_tested:true, 
  real_2026_pedigree_stats_computed:false,model_inference_executed:false,
- original_model_or_feature_math_edited:false,2026_results_read:false,
+ original_model_or_feature_math_edited:false,target_2026_results_read:false,
  added_names:added
 }));
