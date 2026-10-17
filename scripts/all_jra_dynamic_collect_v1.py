@@ -170,8 +170,12 @@ def discover(prior=None,reuse_started=False):
     if not previous or previous.get("status")!="SOURCE_AND_ODDS_VERIFIED":
      raise ValueError("NO_VERIFIED_PRE_RACE_SNAPSHOT_FOR_STARTED_RACE:"+rid)
     prior_record=previous.get("source_discovery") or {}
-    if prior_record.get("race_id")!=rid or prior_record.get("race_date")!=DAY or prior_record.get("scheduled_start_time_jst")!=scheduled:
+    if prior_record.get("race_id")!=rid or prior_record.get("race_date")!=DAY or (
+        prior_record.get("scheduled_start_time_jst") is not None and
+        prior_record.get("scheduled_start_time_jst")!=scheduled):
      raise ValueError("JRA_PREVIOUS_START_TIME_OR_RACE_MISMATCH:"+rid)
+    if prior_record.get("venue_code")!=venue or int(prior_record.get("meeting",-1))!=int(m.group("meet")) or int(prior_record.get("meeting_day",-1))!=int(m.group("day")) or int(prior_record.get("race_no",-1))!=int(m.group("no")):
+     raise ValueError("JRA_PREVIOUS_RACE_IDENTITY_MISMATCH:"+rid)
     odds_code=prior_record.get("jra_odds_cname")
     if not odds_code:raise ValueError("JRA_PREVIOUS_ODDS_CNAME_MISSING:"+rid)
    else:
@@ -180,7 +184,10 @@ def discover(prior=None,reuse_started=False):
         "meeting":MEETINGS[venue][1],"meeting_day":MEETINGS[venue][2],
         "race_no":int(m.group("no")),"jra_card_url":urljoin("https://www.jra.go.jp",href),
         "jra_odds_cname":odds_code,"race_date":DAY,
-        "scheduled_start_time_jst":scheduled})
+        "scheduled_start_time_jst":scheduled} if not (
+          reuse_started and race_started({"scheduled_start_time_jst":scheduled})
+          and (prior or {}).get(rid,{}).get("source_discovery",{}).get("scheduled_start_time_jst") is None
+         ) else (prior[rid]["source_discovery"]))
   if len(selections)!=12 or {x["race_no"] for x in selections}!=set(range(1,13)):
    raise ValueError("NOT_TWELVE_OFFICIAL_RACE_LINKS:"+venue+":"+str(len(selections)))
   records.extend(selections)
