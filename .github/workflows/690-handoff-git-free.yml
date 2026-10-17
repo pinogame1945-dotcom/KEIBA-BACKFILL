@@ -239,7 +239,9 @@ jobs:
         run: |
           set -euo pipefail
           python ml_features/research/export_690_delivery_v1.py --date 2026-10-10 --snapshot "$SNAPSHOT_20261010" --compact-dir "$RUNNER_TEMP/original24/compact" --out-root "$OUT"
-          git -C "$OUT" add ml_features/delivery/690
+          python ml_features/research/export_odds_delivery_v1.py --date 2026-10-10 --source-root . --out-root "$OUT"
+          cp ml_features/research/fetch_features_and_odds_for_ml_v1.py "$OUT/ml_features/fetch_features_and_odds_for_ml_v1.py"
+          git -C "$OUT" add ml_features/delivery/690 ml_features/delivery/odds ml_features/fetch_features_and_odds_for_ml_v1.py
           git -C "$OUT" -c user.name=github-actions -c user.email=actions@users.noreply.github.com commit -m "Publish Oct10 690 handoff data"
           git -C "$OUT" push origin HEAD:refs/heads/handoff/690-feature-data-v1
       - name: Generate and publish 17 October
@@ -247,7 +249,9 @@ jobs:
         run: |
           set -euo pipefail
           python ml_features/research/export_690_delivery_v1.py --date 2026-10-17 --snapshot "$SNAPSHOT_20261017" --compact-dir "$RUNNER_TEMP/live36/compact" --out-root "$OUT"
-          git -C "$OUT" add ml_features/delivery/690
+          python ml_features/research/export_odds_delivery_v1.py --date 2026-10-17 --source-root . --out-root "$OUT"
+          cp ml_features/research/fetch_features_and_odds_for_ml_v1.py "$OUT/ml_features/fetch_features_and_odds_for_ml_v1.py"
+          git -C "$OUT" add ml_features/delivery/690 ml_features/delivery/odds ml_features/fetch_features_and_odds_for_ml_v1.py
           git -C "$OUT" -c user.name=github-actions -c user.email=actions@users.noreply.github.com commit -m "Publish Oct17 690 handoff data and index"
           git -C "$OUT" push origin HEAD:refs/heads/handoff/690-feature-data-v1
           test "$(find "$OUT/ml_features/delivery/690/2026-10-17" -name '*.json' | wc -l)" -eq 36
