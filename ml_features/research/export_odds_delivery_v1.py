@@ -41,7 +41,10 @@ def make_historical(race, item):
     odds = item.get("odds")
     require(isinstance(odds, dict) and odds, "HISTORICAL_ODDS_MISSING")
     require(set(odds).issubset(BET_TYPES), "HISTORICAL_UNKNOWN_BET_GROUP")
-    require(set(odds) == set(BET_TYPES), f"HISTORICAL_8_GROUPS_MISSING:{race}")
+    present = set(odds)
+    missing = set(BET_TYPES) - present
+    # Netkeiba FINAL may omit an unoffered/unpublished ticket group,
+    # especially on obstacle races. Preserve missingness; never invent odds.
     for typ, combos in odds.items():
         require(isinstance(combos, dict), f"ODDS_GROUP_INVALID:{race}:{typ}")
         for key, vals in combos.items():
