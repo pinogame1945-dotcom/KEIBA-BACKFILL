@@ -4,6 +4,7 @@ on:
     branches: [feature/auto-new-race-day-handoff-20261017]
     paths:
       - ml_features/research/benchmark_ephemeral_history_cache_v1.py
+      - .github/workflows/ephemeral-690-history-reuse-experiment-free.yml
   workflow_dispatch:
 permissions:
   contents: read
