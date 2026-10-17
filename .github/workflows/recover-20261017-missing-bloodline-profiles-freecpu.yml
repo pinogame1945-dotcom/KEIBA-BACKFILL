@@ -121,7 +121,7 @@ jobs:
           test "$(du -sk data/horses/horse-2026-10-17-001.jsonl.gz | cut -f1)" -lt 512
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/horses/horse-2026-10-17-001.jsonl.gz \
+          git add --sparse data/horses/horse-2026-10-17-001.jsonl.gz \
             ml_features/delivery/pedigree/2026-10-17/index.json
           test "$(git diff --cached --name-only | wc -l)" -eq 2
           git commit -m "data: restore only 65 missing Oct17 static horse bloodlines using original collector"
