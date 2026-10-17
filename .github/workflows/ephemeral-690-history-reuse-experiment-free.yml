@@ -1,0 +1,44 @@
+name: Frozen 690 free CPU in-run history reuse experiment
+on:
+  push:
+    branches: [feature/auto-new-race-day-handoff-20261017]
+    paths:
+      - ml_features/research/benchmark_ephemeral_history_cache_v1.py
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: free-690-history-reuse-experiment
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "1"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Require free standard CPU and ephemeral space
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KAGGLE_API_TOKEN"
+          test "$(du -sm .git | awk 'NR==1{print $1}')" -lt 3500
+          test "$(df -Pk "$RUNNER_TEMP" | awk 'NR==2{print $4}')" -gt 18000000
+          echo "FREE_STANDARD_CPU_ONLY_NO_ARTIFACT_CACHE_DATASET_UPLOAD_OR_PUSH"
+      - name: Install existing pinned feature dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir beautifulsoup4==4.14.3 lightgbm==4.7.0 pandas==3.0.6 scikit-learn==1.9.1 'numpy>=2.0,<3' kaggle
+      - name: Run cold then warm history against published frozen 690 values
+        run: |
+          python ml_features/research/benchmark_ephemeral_history_cache_v1.py --runner-temp "$RUNNER_TEMP"
