@@ -1,0 +1,54 @@
+name: Exact original ML pedigree v4 source and restored all 786 lineages (free CPU)
+on:
+  push:
+    branches: [feature/7king-pedigree-schema-recovery-20261017]
+    paths:
+      - ml_features/src/pedigree-feature-builder-original-v4.mjs
+      - ml_features/research/audit_original_pedigree_v4_v1.mjs
+      - .github/workflows/l1-7king-original-pedigree-v4-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ml_features/delivery/690
+            ml_features/src
+            ml_features/research/audit_original_pedigree_v4_v1.mjs
+            ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs
+            data/horses
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify canonical copied V4 generates exactly 204 original plus 34 raceclass features
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ml_features/research/audit_original_pedigree_v4_v1.mjs
+          node ml_features/research/audit_original_pedigree_v4_v1.mjs
+      - name: Verify lineage of all 786 actual 2026 participants after 65 static profiles restored
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs . > "$RUNNER_TEMP/lineage-check.log"
+          grep '^REAL_2026_PEDIGREE_LINEAGE_COVERAGE ' "$RUNNER_TEMP/lineage-check.log" | sed 's/^REAL_2026_PEDIGREE_LINEAGE_COVERAGE //' > "$RUNNER_TEMP/lineage.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          report=json.loads((Path(os.environ["RUNNER_TEMP"])/"lineage.json").read_text())
+          assert (report["race_population"],report["horse_population"])==(60,786)
+          for day,n in (("2026-10-10",315),("2026-10-17",471)):
+              row=report["coverage"][day]
+              assert row["target_horses"]==n
+              assert (row["with_sire"],row["with_damsire"],row["with_both"],row["missing_any"])==(n,n,n,0)
+              print(f"REAL_2026_PEDIGREE_ALL_PRESENT {day} {n}/{n}",flush=True)
+          assert report["no_target_outcomes_evaluated"] is True
+          assert report["no_2026_predictions_or_model_training"] is True
+          print("ALL_786_ORIGINAL_7KING_STATIC_PEDIGREES_RESOLVED_NO_RESULTS_OR_MODEL_EXECUTION",flush=True)
+          PY
