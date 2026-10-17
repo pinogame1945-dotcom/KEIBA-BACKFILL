@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 230
     env:
-      KAGGLE_API_TOKEN: \${{ secrets.KAGGLE_API_TOKEN }}
-      REQUEST_DATE: \${{ inputs.race_date }}
-      REQUEST_SEED: \${{ inputs.official_seed_url }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      REQUEST_DATE: ${{ inputs.race_date }}
+      REQUEST_SEED: ${{ inputs.official_seed_url }}
       KEIBA_JRA_CARD_URL: ""
       OPENBLAS_NUM_THREADS: "1"
       OMP_NUM_THREADS: "2"
