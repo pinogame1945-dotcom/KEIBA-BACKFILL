@@ -1,0 +1,75 @@
+name: Frozen 7King pedigree source schema compatibility (free CPU)
+on:
+  push:
+    branches: [feature/7king-pedigree-schema-recovery-20261017]
+    paths:
+      - ml_features/research/audit_existing_pedigree_builder_v1.mjs
+      - .github/workflows/l1-seven-king-pedigree-schema-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KEIBA_ML_SNAPSHOTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate only pedigree column names via exact original BACKFILL generator
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ml_features/research/audit_existing_pedigree_builder_v1.mjs
+          node ml_features/research/audit_existing_pedigree_builder_v1.mjs \
+            "$RUNNER_TEMP/pedigree-original-generator-columns.json"
+      - name: Resolve genuine archived 2025 frozen bloodline king schemas (no model download)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KAGGLE_API_TOKEN"
+          python -m pip install --disable-pip-version-check --no-cache-dir kaggle
+          for alias in pedlegacy pedv1 condrc; do
+            dest="$RUNNER_TEMP/archived-king-schemas/$alias"
+            mkdir -p "$dest"
+            kaggle datasets download "pino1945/keiba-l15-7k-$alias-y2025-v1" \
+              -f schema.json -p "$dest" --unzip --quiet --force
+            test -s "$dest/schema.json"
+            test "$(wc -c < "$dest/schema.json")" -lt 2000000
+          done
+      - name: Require EXACT archived 2025 pedigree names from existing generator
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          check=json.loads((root/"pedigree-original-generator-columns.json").read_text())
+          assert check["contract"]=="KEIBA_EXISTING_PEDIGREE_FEATURE_BUILDER_SCHEMA_AUDIT_V1"
+          generated=set(check["names"])
+          assert len(generated)==check["pedigree_key_count"]
+          expected_counts={"pedlegacy":204,"pedv1":238,"condrc":34}
+          for alias,count in expected_counts.items():
+              schema=json.loads((root/"archived-king-schemas"/alias/"schema.json").read_text())
+              required=set(x for x in schema["feature_order"] if x.startswith("ped_"))
+              missing=required-generated
+              print("EXISTING_PEDIGREE_BUILDER_COVERAGE",json.dumps({
+                  "alias":alias,"required_original_pedigree_columns":len(required),
+                  "generated_by_existing_builder":len(required & generated),
+                  "missing_from_existing_builder":len(missing),
+                  "example_missing":sorted(missing)[:10],
+                  "is_exact_superset":not missing,
+                  "real_2026_pedigree_values_computed":False
+              },ensure_ascii=False,sort_keys=True),flush=True)
+              assert len(required)==count,(alias,len(required),count)
+              assert not missing,(alias,sorted(missing)[:10])
+          print("ALL_THREE_PEDIGREE_KING_COLUMN_SCHEMAS_SUPPORTED_BY_EXISTING_GENERATOR",flush=True)
+          print("2026_REAL_PEDIGREE_STATE_NOT_BUILT_NO_RESULTS_NO_FULL_690_PARITY",flush=True)
+          PY
