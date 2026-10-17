@@ -112,4 +112,43 @@ class AllJraTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,"JRA_MATRIX_ROW_ORDER"):
    x.parse_matrix(soup,"TRIFECTA",n,{k:k for k in range(1,n+1)})
 
+class NewDayJraOddsPairTests(unittest.TestCase):
+ def odds_cname(self,race_no=1):
+  import all_jra_dynamic_collect_v1 as d
+  return f"pw151ouS305{d.DAY[:4]}0407{race_no:02d}{d.TOKEN}Z/73"
+
+ def row(self,odds_cell):
+  return BeautifulSoup('<table><tr><td class="syutsuba"><a href="/JRADB/accessD.html?CNAME=official">出馬表</a></td>'+
+    '<td class="odds">'+odds_cell+'</td></tr></table>',"html.parser").select_one("td.syutsuba a")
+
+ def test_published_odds_link_must_be_in_same_race_row(self):
+  import all_jra_dynamic_collect_v1 as d
+  code=self.odds_cname()
+  anchor=self.row('<a onclick="doAction(\'/JRADB/accessO.html\',\''+code+'\')">オッズ</a>')
+  self.assertEqual(d.row_odds_cname(anchor,"05",4,7,1),code)
+
+ def test_unpublished_odds_does_not_fall_through_to_next_race(self):
+  import all_jra_dynamic_collect_v1 as d
+  next_odds='<a onclick="doAction(\'/JRADB/accessO.html\',\''+self.odds_cname(2)+'\')">オッズ</a>'
+  html='<table><tr><td class="syutsuba"><a>出馬表</a></td><td class="odds">未発表</td></tr>'+\
+       '<tr><td class="syutsuba"><a>出馬表</a></td><td class="odds">'+next_odds+'</td></tr></table>'
+  anchor=BeautifulSoup(html,"html.parser").select_one("td.syutsuba a")
+  with self.assertRaisesRegex(ValueError,"OFFICIAL_JRA_ODDS_UNPUBLISHED"):
+   d.row_odds_cname(anchor,"05",4,7,1)
+
+ def test_cross_race_odds_cname_rejected(self):
+  import all_jra_dynamic_collect_v1 as d
+  wrong=self.odds_cname(2)
+  anchor=self.row('<a onclick="doAction(\'/JRADB/accessO.html\',\''+wrong+'\')">オッズ</a>')
+  with self.assertRaisesRegex(ValueError,"JRA_ODDS_CNAME_RACE_IDENTITY_MISMATCH"):
+   d.row_odds_cname(anchor,"05",4,7,1)
+
+ def test_missing_and_duplicate_odds_links_rejected(self):
+  import all_jra_dynamic_collect_v1 as d
+  with self.assertRaisesRegex(ValueError,"OFFICIAL_JRA_ODDS_LINK_NOT_UNIQUE"):
+   d.row_odds_cname(self.row("発売前"),"05",4,7,1)
+  link='<a onclick="doAction(\'/JRADB/accessO.html\',\''+self.odds_cname()+'\')">オッズ</a>'
+  with self.assertRaisesRegex(ValueError,"OFFICIAL_JRA_ODDS_LINK_NOT_UNIQUE"):
+   d.row_odds_cname(self.row(link+link),"05",4,7,1)
+
 if __name__=="__main__":unittest.main()
