@@ -97,6 +97,14 @@ jobs:
           fi
           git commit -m "data: persist validated original V4 238 columns for 60 target races"
           git push origin "HEAD:refs/heads/$BRANCH"
+      - name: Assert cache hit skipped the historical computation and pack conversion
+        if: steps.cache.outputs.hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e "$RUNNER_TEMP/2026-10-17-pre-race.jsonl.gz"
+          test ! -e "$RUNNER_TEMP/pedigree-original-v4"
+          echo "PEDIGREE_V4_REUSED_NO_HISTORICAL_RECALCULATION"
       - name: Verify immutable cache and join original 690 + V4 238 without replay
         shell: bash
         run: |
