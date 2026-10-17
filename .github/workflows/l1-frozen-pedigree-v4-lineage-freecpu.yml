@@ -1,0 +1,58 @@
+name: SevenKing original pedigree V4 238 schema and 786 actual lineages (free CPU)
+on:
+  push:
+    branches: [feature/7king-original-pedigree-v4-20261017]
+    paths:
+      - ml_features/research/frozen_7king_eb13_v4/**
+      - ml_features/research/test_original_7king_pedigree_v4.mjs
+      - .github/workflows/l1-frozen-pedigree-v4-lineage-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ml_features
+            data/horses
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Exact original ML v4 files are byte-identical to originals
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object ml_features/research/frozen_7king_eb13_v4/pedigree-feature-builder.mjs)" = e22df9ec79f9c02c773e519f4dc6b187d2889f83
+          test "$(git hash-object ml_features/research/frozen_7king_eb13_v4/small-sample-feature-utils.mjs)" = da619515069d85e858877676643518808aedd319
+          node --check ml_features/research/test_original_7king_pedigree_v4.mjs
+          node ml_features/research/test_original_7king_pedigree_v4.mjs
+      - name: Verify all 60 original uns cored race lineages after 65 profile recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs . \
+            | tee "$RUNNER_TEMP/real-786-lineage.log"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          rows=(Path(os.environ["RUNNER_TEMP"])/"real-786-lineage.log").read_text().splitlines()
+          got=[json.loads(x.split("REAL_2026_PEDIGREE_LINEAGE_COVERAGE ",1)[1]) for x in rows
+               if "REAL_2026_PEDIGREE_LINEAGE_COVERAGE " in x]
+          assert len(got)==1
+          r=got[0]
+          assert r["horse_population"]==786 and r["race_population"]==60
+          assert r["no_target_results_read"] is True
+          assert r["no_pedigree_statistics_computed"] is True
+          assert r["no_2026_predictions_or_model_training"] is True
+          for date,target in (("2026-10-10",315),("2026-10-17",471)):
+              d=r["coverage"][date]
+              assert (d["with_sire"],d["with_damsire"],d["with_both"],
+                      d["missing_any"])==(target,target,target,0),(date,d)
+          print("FROZEN_V4_786_REAL_HORSE_PEDIGREE_LINEAGES_COMPLETE_NO_TARGET_OUTCOMES",flush=True)
+          PY
+          echo "RESEARCH_ONLY_ORIGINAL_V4_SCHEMAS_NO_BETTING_OR_PAID_STORAGE"
