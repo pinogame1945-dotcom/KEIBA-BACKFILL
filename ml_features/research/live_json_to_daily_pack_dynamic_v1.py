@@ -77,6 +77,7 @@ def convert(doc):
     for page in (odds.get("page_observations") or {}).values():
         observed_before_race(page.get("fetched_at_utc"), cutoff)
     observed_before_race((net.get("meta") or {}).get("fetched_at_utc"), cutoff)
+    observed_before_race((jra.get("meta") or {}).get("fetched_at_utc"), cutoff)
     require(net.get("runner_count") in range(3, 19) and
             isinstance(net.get("runners"), list) and
             len(net["runners"]) == net["runner_count"],
