@@ -153,12 +153,19 @@ def discover():
    if m.group("venue")!=venue or (int(m.group("meet")),int(m.group("day")))!=(MEETINGS[venue][1],MEETINGS[venue][2]):
     raise ValueError("RACE_LINK_CROSS_VENUE")
    if clean(a.get_text(" ",strip=True))!="出馬表":continue  # Other JRA navigation links may point at a racecard
+   row=a.find_parent("tr")
+   time_cell=row.select_one("td.time") if row else None
+   raw_time=clean(time_cell.get_text(" ",strip=True)) if time_cell else ""
+   t=re.fullmatch(r"(\\d{1,2})時([0-5]\\d)分",raw_time)
+   if not t or int(t.group(1))>23:raise ValueError("OFFICIAL_RACE_START_TIME_NOT_PUBLISHED:"+venue+":"+m.group("no"))
+   scheduled=f"{int(t.group(1)):02d}:{int(t.group(2)):02d}"
    odds_code=row_odds_cname(a,venue,m.group("meet"),m.group("day"),m.group("no"))
    rid=f"{DAY[:4]}{venue}{m.group('meet')}{m.group('day')}{m.group('no')}"
    selections.append({"race_id":rid,"venue_code":venue,"venue":MEETINGS[venue][0],
         "meeting":MEETINGS[venue][1],"meeting_day":MEETINGS[venue][2],
         "race_no":int(m.group("no")),"jra_card_url":urljoin("https://www.jra.go.jp",href),
-        "jra_odds_cname":odds_code,"race_date":DAY})
+        "jra_odds_cname":odds_code,"race_date":DAY,
+        "scheduled_start_time_jst":scheduled})
   if len(selections)!=12 or {x["race_no"] for x in selections}!=set(range(1,13)):
    raise ValueError("NOT_TWELVE_OFFICIAL_RACE_LINKS:"+venue+":"+str(len(selections)))
   records.extend(selections)
