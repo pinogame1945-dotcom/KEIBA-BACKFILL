@@ -142,7 +142,7 @@ def discover():
                     "href":str(candidate.get("href",""))[:180],
                     "onclick":str(candidate.get("onclick",""))[:180]})
     print("JRA_CARD_ODDS_DIAGNOSTIC:"+json.dumps({"venue":venue,
-      "race_card_href":href,"parent_html":str(a.parent)[:2500],
+      "race_card_href":href,"race_row_html":str(a.find_parent("tr"))[:6000],
       "nearby_links":nearby,
       "venue_odds_action_links":sum(bool(action_of(x,"/JRADB/accessO.html")) for x in soup.select("a"))},ensure_ascii=False),file=sys.stderr)
     raise ValueError("CARD_ODDS_PAIR_NOT_ADJACENT")
