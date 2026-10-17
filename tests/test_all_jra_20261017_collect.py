@@ -151,4 +151,68 @@ class NewDayJraOddsPairTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,"OFFICIAL_JRA_ODDS_LINK_NOT_UNIQUE"):
    d.row_odds_cname(self.row(link+link),"05",4,7,1)
 
+
+class JraFullVenueDiscoveryTests(unittest.TestCase):
+ def fixtures(self, faulty=None):
+  """All venue/date/CNAME values are synthetic, not invented market odds."""
+  import all_jra_dynamic_collect_v1 as d
+  day=d.DAY
+  token=d.TOKEN
+  meetings={"05":("東京",4,7),"08":("京都",4,7),"04":("新潟",4,2)}
+  index='<html><body>'
+  venues={}
+  for venue,(name,meet,meeting_day) in meetings.items():
+   selection=f"venue-{venue}-{token}"
+   index+=f'<a onclick="doAction('+"'"+'/JRADB/accessD.html'+"','"+selection+"'"+f')">{meet}回{name}{meeting_day}日</a>'
+   rows=[]
+   for no in range(1,13):
+    card=f"pw01dde01{venue}{day[:4]}{meet:02d}{meeting_day:02d}{no:02d}{token}/{no:02X}"
+    quoted_race=2 if faulty=="other_race" and venue=="05" and no==1 else no
+    odds=f"pw151ouS3{venue}{day[:4]}{meet:02d}{meeting_day:02d}{quoted_race:02d}{token}Z/{no:02X}"
+    cell=("未発表" if faulty=="unpublished" and venue=="05" and no==1
+          else '<a onclick="doAction('+"'"+'/JRADB/accessO.html'+"','"+odds+"'"+')">オッズ</a>')
+    rows.append('<tr><td class="syutsuba"><a href="/JRADB/accessD.html?CNAME='+card+'">出馬表</a></td>'
+                +'<td class="odds">'+cell+'</td></tr>')
+   venues[selection]='<table>'+"".join(rows)+'</table>'
+  index+='</body></html>'
+  choice=f"return-{token}"
+  root='<a onclick="doAction('+"'"+'/JRADB/accessD.html'+"','"+choice+"'"+')">レース選択へ戻る</a>'
+  def fake_fetch(url,cname=None):
+   if url==d.transport.CARD and cname is None:return root,{"sha256":"synthetic-root"}
+   if url==d.JRA_D and cname==choice:return index,{"sha256":"synthetic-index"}
+   if url==d.JRA_D and cname in venues:return venues[cname],{"sha256":"synthetic-venue"}
+   raise AssertionError("UNKNOWN_OFFICIAL_TEST_URL")
+  return d,fake_fetch
+
+ def test_discover_three_venues_36_unique_races_with_matching_odds(self):
+  d,fetch=self.fixtures()
+  old=d.MEETINGS
+  try:
+   with patch.object(d,"official_fetch",side_effect=fetch):
+    races,metadata=d.discover()
+   self.assertEqual(len(races),36)
+   self.assertEqual(len({r["race_id"] for r in races}),36)
+   self.assertEqual({r["venue_code"] for r in races},{"04","05","08"})
+   self.assertEqual({r["race_no"] for r in races},set(range(1,13)))
+   self.assertEqual(len(metadata["venues"]),3)
+   for r in races:
+    self.assertEqual(r["race_date"],d.DAY)
+    self.assertIn(d.TOKEN,r["jra_card_url"])
+    self.assertIn(d.TOKEN,r["jra_odds_cname"])
+  finally:
+   d.MEETINGS=old
+
+ def test_discover_aborts_unpublished_or_cross_race_odds(self):
+  for faulty,reason in (("unpublished","OFFICIAL_JRA_ODDS_UNPUBLISHED"),
+                        ("other_race","JRA_ODDS_CNAME_RACE_IDENTITY_MISMATCH")):
+   with self.subTest(faulty=faulty):
+    d,fetch=self.fixtures(faulty)
+    old=d.MEETINGS
+    try:
+     with patch.object(d,"official_fetch",side_effect=fetch):
+      with self.assertRaisesRegex(ValueError,reason):
+       d.discover()
+    finally:
+     d.MEETINGS=old
+
 if __name__=="__main__":unittest.main()
