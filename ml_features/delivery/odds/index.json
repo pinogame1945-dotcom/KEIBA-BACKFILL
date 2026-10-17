@@ -1,0 +1,226 @@
+{
+  "contract": "KEIBA_BACKFILL_TO_ML_ODDS_INDEX_V1",
+  "repository": "pinogame1945-dotcom/KEIBA-BACKFILL",
+  "branch": "handoff/690-feature-data-v1",
+  "total_races": 24,
+  "feature_index_path": "ml_features/delivery/690/index.json",
+  "feature_contract": "KEIBA_BACKFILL_TO_ML_690_INDEX_V1",
+  "races": {
+    "202605040301": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040301.json",
+      "sha256": "7fbf31cf040e01a6b31892aab0494b1f48e6ca3c556a19a930c10dd6159f7ddc",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "cbd1101018ee457afc66a546e59fa45be94bea03c854496d9b31498f9623fd56"
+    },
+    "202605040302": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040302.json",
+      "sha256": "62d89d1b056def692b54de25727c04b8147383a50b6ca35ffbf885a6b20c2c21",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "50e69d7ab16873526bbbf4d9aa23a1df90e5eb41274db704a09c7177dfe604f9"
+    },
+    "202605040303": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040303.json",
+      "sha256": "6aa9bfd93b59969c982a7b066cdee661249d4e7c1d6fc3cba27429b094e8f8ab",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "7590ce82d1e12738e204d1070bf24e73990abd1ceb14208b178611c3c9eb5cc1"
+    },
+    "202605040304": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040304.json",
+      "sha256": "2fb8ab6f8d66d5df8d27a7c43cf83dd99d5a7067c11f3823d87461fd543765a2",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "8caf1008c51032c7088a989f4c2ea40f4ad0133c4a1bd8a1a076d7808271cfef"
+    },
+    "202605040305": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040305.json",
+      "sha256": "019faa08e651a36be580468ab03b555418daf151486abcb5ad0b47bac343106d",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "ca734392818f1bb496f47a21a9d61914bbaccae1765d833fb68e612d277bb805"
+    },
+    "202605040306": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040306.json",
+      "sha256": "c0340a7f2511e1f6db7fe3cc08a31f33f90ff9f49b6a21081e134ac6aa58fd4f",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "f330b52bb3ac812f371695cf8cf0833ef37bb488c1a8261a20fb76c03d1f3e66"
+    },
+    "202605040307": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040307.json",
+      "sha256": "9996f54e7d96a7bcf09a3e44f805761caac2e6903fb962b6e18d8437a8b90396",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "6eed24a71869f4305469c0d772384fb74121f0dcce4720642f60d3b2b176819e"
+    },
+    "202605040308": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040308.json",
+      "sha256": "b2c03e9143d0922d627bd6a9dbdab4df44e5beb513e4823f2043997947376490",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "5d16ca83fb959481275380794dd25429bdf730f8c908551d55bc84ab8b02d850"
+    },
+    "202605040309": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040309.json",
+      "sha256": "7c3c78502a1e06e2c26b141251dab53611e5e62ec0a86726fb90ca027517738b",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "4c1e445042020c66b392099a8ad2d11aacf08787ca6e6f00a36424d376e0a004"
+    },
+    "202605040310": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040310.json",
+      "sha256": "7cb7345f45289253fb5c23f3e95ea76345dfe51b0af27aa2beda23a9145d5217",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "6b72286e874fa5422d69685a776cbed3b9d77b7d45dd300df5d571ecded2a04f"
+    },
+    "202605040311": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040311.json",
+      "sha256": "dcea5dc1b87215f13f9dd9068a049a42145164804fb40daa5bc00b44c202ef8d",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "d60809b66a2a1607eb2e3e8fe4d242154a4edd7eb70e0a46d29a8784e1dadfc3"
+    },
+    "202605040312": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202605040312.json",
+      "sha256": "f078ff96041223041c0c10558ce184a8c4d98e3c729698b04ef1f2a23e1cb196",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "6dd969e83e338d1e0c2ed3592e18f79407e398361e8410305c8d60e7553aed22"
+    },
+    "202608040301": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040301.json",
+      "sha256": "e7e97bc0828e0808f5f957458f9e50dd68dee48a39e54de5e6bc74fec14bda0b",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "cd5e6d208db05e3e2090e10421e716fb18c3db113f4be89594f2dd29e9672594"
+    },
+    "202608040302": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040302.json",
+      "sha256": "1d193391b35a3f7f9366783cfad5acaba221d3727b51cae3a2b6c0f3af3a7b97",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "9e47941510f4284bc5b815ffaa400a0e3b563bf5d181a03973f8d664098d48b8"
+    },
+    "202608040303": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040303.json",
+      "sha256": "a227e552c3c831aca33a5618cdcfeb5da9f2590ea8435dd0a22ce95c8f1cf598",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "e6b2e848c87e77a062ae3a348e5ce00876dacac641fc19343ffe3935607adcd6"
+    },
+    "202608040304": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040304.json",
+      "sha256": "c860c27e6ff7f13aaeb4368b9df6a36111755cbb65231b4c7378d890763deadf",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "27a012443965eb36c128a452ed7e4f120f16727df320a2ed52817bba8b4a805e"
+    },
+    "202608040305": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040305.json",
+      "sha256": "6bd0c5d5e423f3790e2fca1be0499705302d2bb9399d1a6f34f03b3044a84d6a",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "32e6ebb65993b8550a1f8a24b5d4180804c7c0b742b4676cc374bd740a961ddd"
+    },
+    "202608040306": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040306.json",
+      "sha256": "b2ccab0ff3fbad3553469ddf8bfb71e88c8ceae07692b3b18b0a9792bdd5eb71",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "6d8054469012ddb3e3c6facee1b84be3679dc9af64036542d37523f2b0191311"
+    },
+    "202608040307": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040307.json",
+      "sha256": "21a32e9d0310981df2deb539ecfbbd919de57ba8ba4fe2632e132a0a05c932f3",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "565dbab6970b2fa3317c58e0a43a994bcdb9112cf3e74c92b2667570a6f0cebc"
+    },
+    "202608040308": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040308.json",
+      "sha256": "00597c9da9db0166fa9c323e4ab1b0fe66e8ffac94a6c50d1b6efd12feb4dcca",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "06e89d17e5945bf6be4c593fe4dc18e4d8bd659c1139c279eece87162cd0f085"
+    },
+    "202608040309": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040309.json",
+      "sha256": "b17fc08b97aa38e136e612ff4a41072cc470ae808587010ebc0cc02909a4d9a1",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "3974a4917d9f6841ba74baab0e2eba91c0493985009d7a1da9e701f84ef4fdad"
+    },
+    "202608040310": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040310.json",
+      "sha256": "144b27c1f354b13044cfb513230551b0819ac64649b4d8c431342099e6644262",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "fcb298651ff56ea6aa2d675b744415cc9bfec1c223ecfae03ba3e22ba7782486"
+    },
+    "202608040311": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040311.json",
+      "sha256": "6ef9c6322419995b3e259db7d94ff8e5580299443d93e10c062ce31a124f1bba",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "a0b10739eb8b7a8b95c408e582afbdbb68f2d891e3aaebe0bf46b94649879ee9"
+    },
+    "202608040312": {
+      "date": "2026-10-10",
+      "path": "ml_features/delivery/odds/2026-10-10/202608040312.json",
+      "sha256": "af4fe25d18b48d2b6bd80aeb557c523dc39a377e1cf72e9a0f42f9f2ada89015",
+      "source": "NETKEIBA_FINAL",
+      "snapshot_type": "POST_RACE_FINAL",
+      "readiness": "FINAL_ODDS_NOT_PRE_RACE_ASOF",
+      "feature_sha256": "69b3d4d87f17388796dba02d5285723381c057644e286d55a5a81d2fe45e2db3"
+    }
+  }
+}
