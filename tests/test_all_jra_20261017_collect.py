@@ -171,7 +171,7 @@ class JraFullVenueDiscoveryTests(unittest.TestCase):
     odds=f"pw151ouS3{venue}{day[:4]}{meet:02d}{meeting_day:02d}{quoted_race:02d}{token}Z/{no:02X}"
     cell=("未発表" if faulty=="unpublished" and venue=="05" and no==1
           else '<a onclick="doAction('+"'"+'/JRADB/accessO.html'+"','"+odds+"'"+')">オッズ</a>')
-    rows.append('<tr><td class="syutsuba"><a href="/JRADB/accessD.html?CNAME='+card+'">出馬表</a></td>'
+    rows.append('<tr><td class="time">9時45分</td><td class="syutsuba"><a href="/JRADB/accessD.html?CNAME='+card+'">出馬表</a></td>'
                 +'<td class="odds">'+cell+'</td></tr>')
    venues[selection]='<table>'+"".join(rows)+'</table>'
   index+='</body></html>'
@@ -197,6 +197,7 @@ class JraFullVenueDiscoveryTests(unittest.TestCase):
    self.assertEqual(len(metadata["venues"]),3)
    for r in races:
     self.assertEqual(r["race_date"],d.DAY)
+    self.assertEqual(r["scheduled_start_time_jst"],"09:45")
     self.assertIn(d.TOKEN,r["jra_card_url"])
     self.assertIn(d.TOKEN,r["jra_odds_cname"])
   finally:
