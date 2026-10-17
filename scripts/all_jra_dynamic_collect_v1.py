@@ -109,7 +109,12 @@ def row_odds_cname(card_anchor,venue,meet,meeting_day,race_no):
   raise ValueError("JRA_ODDS_CNAME_RACE_IDENTITY_MISMATCH:"+rid)
  return odds_code
 
-def discover():
+def race_start_utc(race):
+ return datetime.fromisoformat(DAY+"T"+race["scheduled_start_time_jst"]+":00+09:00").astimezone(timezone.utc)
+def race_started(race):
+ return datetime.now(timezone.utc)>=race_start_utc(race)
+
+def discover(prior=None,reuse_started=False):
  root,root_meta=official_fetch(transport.CARD)
  parsed=BeautifulSoup(root,"html.parser")
  choices=[action_of(a,"/JRADB/accessD.html") for a in by_text(parsed,"レース選択へ戻る")]
@@ -159,8 +164,18 @@ def discover():
    t=re.fullmatch(r"(\d{1,2})時([0-5]\d)分",raw_time)
    if not t or int(t.group(1))>23:raise ValueError("OFFICIAL_RACE_START_TIME_NOT_PUBLISHED:"+venue+":"+m.group("no"))
    scheduled=f"{int(t.group(1)):02d}:{int(t.group(2)):02d}"
-   odds_code=row_odds_cname(a,venue,m.group("meet"),m.group("day"),m.group("no"))
    rid=f"{DAY[:4]}{venue}{m.group('meet')}{m.group('day')}{m.group('no')}"
+   if reuse_started and race_started({"scheduled_start_time_jst":scheduled}):
+    previous=(prior or {}).get(rid)
+    if not previous or previous.get("status")!="SOURCE_AND_ODDS_VERIFIED":
+     raise ValueError("NO_VERIFIED_PRE_RACE_SNAPSHOT_FOR_STARTED_RACE:"+rid)
+    prior_record=previous.get("source_discovery") or {}
+    if prior_record.get("race_id")!=rid or prior_record.get("race_date")!=DAY or prior_record.get("scheduled_start_time_jst")!=scheduled:
+     raise ValueError("JRA_PREVIOUS_START_TIME_OR_RACE_MISMATCH:"+rid)
+    odds_code=prior_record.get("jra_odds_cname")
+    if not odds_code:raise ValueError("JRA_PREVIOUS_ODDS_CNAME_MISSING:"+rid)
+   else:
+    odds_code=row_odds_cname(a,venue,m.group("meet"),m.group("day"),m.group("no"))
    selections.append({"race_id":rid,"venue_code":venue,"venue":MEETINGS[venue][0],
         "meeting":MEETINGS[venue][1],"meeting_day":MEETINGS[venue][2],
         "race_no":int(m.group("no")),"jra_card_url":urljoin("https://www.jra.go.jp",href),
@@ -464,7 +479,10 @@ def reusable_verified(path,race):
   if item.get("includes_results") is not False or item.get("includes_final_odds") is not False:return None
   if item.get("models_executed") is not False or item.get("backfill_history_features_computed") is not False:return None
   stamp=datetime.fromisoformat(item["captured_at_utc"])
-  if stamp.tzinfo is None or stamp.astimezone(timezone.utc)>=datetime.fromisoformat(DAY+"T00:00:00+09:00").astimezone(timezone.utc):return None
+  clock=race.get("scheduled_start_time_jst")
+  deadline=(race_start_utc(race) if isinstance(clock,str) and re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]",clock)
+            else datetime.fromisoformat(DAY+"T00:00:00+09:00").astimezone(timezone.utc))
+  if stamp.tzinfo is None or stamp.astimezone(timezone.utc)>=deadline:return None
   if item.get("jra_card",{}).get("identity_verified") is not True:return None
   if odds.get("combination_coverage_complete") is not True or odds.get("publisher_update_display_consistent") is not True:return None
   if odds.get("snapshot_type")!="PRE_RACE_LIVE_ODDS":return None
@@ -496,9 +514,17 @@ def main():
  p.add_argument("--out",type=Path,default=Path("data/live")/DAY)
  p.add_argument("--limit",type=int,default=36)
  p.add_argument("--resume-verified",action="store_true",help="Keep already validated pre-race race snapshots; retry blocked races only")
+ p.add_argument("--prior-dir",type=Path,help="Earlier verified complete day used when refreshing before races")
+ p.add_argument("--update-pre-race",action="store_true",help="Refresh future races, preserve only proven pre-start earlier snapshots")
  args=p.parse_args()
  if not 1<=args.limit<=36:raise ValueError("LIMIT")
- races,discovery=discover()
+ if args.update_pre_race and args.prior_dir is None:raise ValueError("PRIOR_DIR_REQUIRED_FOR_PERIODIC_REFRESH")
+ old={}
+ if args.update_pre_race and args.prior_dir.exists():
+  for src in args.prior_dir.glob("20??????????.json"):
+   item=json.loads(src.read_text("utf-8"))
+   if item.get("race_id")==src.stem:old[src.stem]=item
+ races,discovery=discover(old,reuse_started=args.update_pre_race)
  output=args.out
  output.mkdir(parents=True,exist_ok=True)
  manifest={"contract":"JRA_"+TOKEN+"_ALL_RACES_SOURCE_MANIFEST_V1","day":DAY,
@@ -507,9 +533,13 @@ def main():
            "discovery_meta":discovery,"races":[]}
  for i,race in enumerate(races[:args.limit]):
   dest=output/(race["race_id"]+".json")
-  cached=reusable_verified(dest,race) if args.resume_verified else None
+  prior_path=(args.prior_dir/(race["race_id"]+".json")) if args.prior_dir is not None else dest
+  started=args.update_pre_race and race_started(race)
+  cached=(reusable_verified(prior_path,race) if started else
+          reusable_verified(dest,race) if args.resume_verified else None)
+  if started and cached is None:raise ValueError("NO_SAFE_STARTED_RACE_SNAPSHOT:"+race["race_id"])
   item=cached if cached is not None else single(race)
-  if cached is None:dest.write_text(json.dumps(item,ensure_ascii=False,indent=2)+"\n","utf-8")
+  dest.write_text(json.dumps(item,ensure_ascii=False,indent=2)+"\n","utf-8")
   rec={"race_id":race["race_id"],"venue":race["venue"],"race_no":race["race_no"],
        "status":item["status"],"error":item["errors"],"reused_verified_snapshot":cached is not None,
        "runner_count":item.get("netkeiba",{}).get("runner_count"),
