@@ -87,8 +87,7 @@ jobs:
           REQUESTED_DATE: ${{ inputs.date }}
         run: |
           set -euo pipefail
-          python ml_features/research/export_odds_delivery_v1.py \\
-            --date "$REQUESTED_DATE" --source-root . --out-root "$PAIRED"
+          python ml_features/research/export_odds_delivery_v1.py --date "$REQUESTED_DATE" --source-root . --out-root "$PAIRED"
           git -C "$PAIRED" add ml_features/delivery/odds ml_features/fetch_features_and_odds_for_ml_v1.py
           if ! git -C "$PAIRED" diff --cached --quiet; then
             git -C "$PAIRED" commit -m "data(handoff): update requested date odds alongside 690 features"
