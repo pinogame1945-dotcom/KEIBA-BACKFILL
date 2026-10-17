@@ -1,0 +1,46 @@
+name: Verify unmodified original ML frozen pedigree V4 restore (free CPU)
+on:
+  push:
+    branches: [feature/restore-frozen-sevenking-pedigree-v4-20261017]
+    paths:
+      - ml_features/src/pedigree-feature-builder.mjs
+      - .github/workflows/frozen-sevenking-pedigree-v4-source-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check copied source exact Git blob and 238-column frozen V4
+        shell: bash
+        run: |
+          set -euo pipefail
+          path=ml_features/src/pedigree-feature-builder.mjs
+          node --check "$path"
+          test "$(git hash-object "$path")" = e22df9ec79f9c02c773e519f4dc6b187d2889f83
+          node --input-type=module <<'NODE'
+          import { createPedigreeFeatureState, PEDIGREE_FEATURE_BUILDER_VERSION } from "./ml_features/src/pedigree-feature-builder.mjs";
+          if(PEDIGREE_FEATURE_BUILDER_VERSION!==4)throw Error("ORIGINAL_VERSION_NOT_V4");
+          const state=createPedigreeFeatureState();
+          const lineage={sire_key:"id:sire-fixture",damsire_key:"id:damsire-fixture"};
+          const race={surface:"TURF",venue_code:"05",course_layout:"OUTER",track_condition:"良",distance_m:1800,race_class_normalized:"ALLOWANCE"};
+          const a=state.snapshot(lineage,race);
+          const keys=Object.keys(a);
+          if(keys.length!==238)throw Error("NOT_ORIGINAL_238_KEYS:"+keys.length);
+          if(keys.filter(x=>x.includes("_race_class_")).length!==34)throw Error("NOT_34_RACE_CLASS_COLS");
+          if(a.ped_sire_race_class_condition_known!==1 ||
+             a.ped_damsire_race_class_condition_known!==1)throw Error("RACE_CLASS_CONDITION_MISSING");
+          if(a.ped_sire_all_starts!==0 || a.ped_sire_race_class_starts!==0)throw Error("PRESTATE_POLLUTED");
+          state.add(lineage,race,{result_status:"FINISHED",official_finish_position:2,margin_type:"LENGTHS",margin_lengths:0.5});
+          const b=state.snapshot(lineage,race);
+          if(b.ped_sire_all_starts!==1 || b.ped_sire_race_class_starts!==1 ||
+             b.ped_damsire_race_class_starts!==1)throw Error("HISTORICAL_RACE_CLASS_STATE_DRIFT");
+          console.log("ORIGINAL_FROZEN_PEDIGREE_V4_238_SCHEMA_AND_34_RACECLASS_PASS");
+          console.log("NO_2026_TARGET_RESULTS_NO_NUMERICAL_PARITY_NO_MODEL_PREDICTIONS");
+          NODE
