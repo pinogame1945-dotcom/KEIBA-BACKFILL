@@ -40,6 +40,8 @@ def check(day, runner_temp):
             text=True))
         expected={rid:v for rid,v in index["races"].items() if v["date"]==day}
         require(len(expected)==36, "BENCHMARK_PUBLISHED_DAY_NOT_36")
+        require(sum(v["starters"] for v in expected.values())==471,
+                "BENCHMARK_PUBLISHED_2026_10_17_COHORT_NOT_471")
         outputs=exported/"ml_features"/"delivery"/"690"/day
         emitted={p.stem for p in outputs.glob("2026*.json")}
         require(set(expected)==emitted,"BENCHMARK_CHANGED_RACE_IDS")
