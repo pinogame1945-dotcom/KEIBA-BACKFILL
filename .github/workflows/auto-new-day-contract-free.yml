@@ -1,0 +1,48 @@
+name: New 2026 race-day source and 690 workflow contract free CPU
+on:
+  push:
+    branches: [feature/auto-new-race-day-handoff-20261017]
+    paths:
+      - ml_features/research/auto_new_day_handoff_2026_v1.py
+      - ml_features/research/export_690_delivery_dynamic_v1.py
+      - ml_features/research/live_json_to_daily_pack_dynamic_v1.py
+      - scripts/all_jra_dynamic_collect_v1.py
+      - scripts/discover_jra_official_seed_v1.py
+      - .github/workflows/auto-new-day-690-odds-free.yml
+      - .github/workflows/auto-new-day-contract-free.yml
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ml_features
+            scripts
+            tests
+            contracts
+            data/live/2026-10-17
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Original source contract and dynamic 2026 day read tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir beautifulsoup4==4.14.3 lightgbm==4.7.0 pandas==3.0.6 scikit-learn==1.9.1 'numpy>=2.0,<3'
+          python -m py_compile scripts/all_jra_dynamic_collect_v1.py scripts/discover_jra_official_seed_v1.py ml_features/research/auto_new_day_handoff_2026_v1.py ml_features/research/export_690_delivery_dynamic_v1.py ml_features/research/live_json_to_daily_pack_dynamic_v1.py
+          python -m unittest discover -s tests -p test_all_jra_20261017_collect.py -v
+          python -m unittest discover -s ml_features/tests -p test_live_official_seed_v1.py -v
+          python -m unittest discover -s ml_features/tests -p test_odds_handoff_v1.py -v
+          KEIBA_LIVE_DATE=2026-10-17 python ml_features/research/live_json_to_daily_pack_dynamic_v1.py --live-dir data/live/2026-10-17 --output "$RUNNER_TEMP/source-36.jsonl.gz"
+          python - <<'PY'
+          import gzip,json,os
+          with gzip.open(os.path.join(os.environ["RUNNER_TEMP"],"source-36.jsonl.gz"),"rt",encoding="utf-8") as f:
+              rows=[json.loads(l) for l in f if l.strip()]
+          assert len(rows)==36
+          assert all(not r["results"] and not r["payouts"] and not r["odds"] for r in rows)
+          print("PRE_RACE_36_DYNAMIC_DAYPACK_NO_OUTCOMES_CONFIRMED")
+          PY
