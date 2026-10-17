@@ -14,6 +14,8 @@ on:
       - ml_features/research/live_json_to_daily_pack_dynamic_v1.py
       - ml_features/tests/test_live_day_delta_v1.py
       - scripts/discover_jra_official_seed_v1.py
+      - scripts/resolve_weekly_jra_day_v1.py
+      - tests/test_weekly_jra_scheduler_v1.py
       - .github/workflows/auto-new-day-690-odds-free.yml
       - .github/workflows/auto-new-day-contract-free.yml
 permissions:
@@ -45,6 +47,7 @@ jobs:
           python -m unittest discover -s ml_features/tests -p test_odds_handoff_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_dynamic_day_paired_handoff_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_live_day_delta_v1.py -v
+          python -m unittest discover -s tests -p test_weekly_jra_scheduler_v1.py -v
           KEIBA_LIVE_DATE=2026-10-17 python ml_features/research/live_json_to_daily_pack_dynamic_v1.py --live-dir data/live/2026-10-17 --output "$RUNNER_TEMP/source-36.jsonl.gz"
           python - <<'PY'
           import gzip,json,os
