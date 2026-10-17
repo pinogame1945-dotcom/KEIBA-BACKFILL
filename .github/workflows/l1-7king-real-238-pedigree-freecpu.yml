@@ -1,26 +1,35 @@
-name: Original pedigree V4 238 actual 2026 features (free CPU, temporary output)
+name: Original pedigree V4 238 cached + 690 join (free CPU, no Actions artifact)
 on:
   push:
     branches: [feature/7king-pedigree-schema-recovery-20261017]
     paths:
       - ml_features/research/compute_real_2026_original_pedigree_v4_238_v1.mjs
+      - ml_features/research/pedigree_v4_cache_v1.py
+      - ml_features/research/join_690_original_pedigree_v4_238_v1.py
       - .github/workflows/l1-7king-real-238-pedigree-freecpu.yml
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: original-pedigree-v4-20261017
+  cancel-in-progress: false
 jobs:
-  actual-pedigree:
+  original-pedigree-and-merge:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: true
           sparse-checkout: |
             data/daily
             data/horses
             data/live/2026-10-17
             ml_features/delivery/690
+            ml_features/delivery/pedigree-v4
             ml_features/research/compute_real_2026_original_pedigree_v4_238_v1.mjs
+            ml_features/research/pedigree_v4_cache_v1.py
+            ml_features/research/join_690_original_pedigree_v4_238_v1.py
             ml_features/research/live_json_to_daily_pack_v1.py
             ml_features/research/audit_original_pedigree_v4_v1.mjs
             ml_features/src/pedigree-feature-builder-original-v4.mjs
@@ -30,52 +39,83 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Validate frozen original v4 source, schema and CLI syntax
+      - name: Validate original V4 unchanged and both adapters compile
         shell: bash
         run: |
           set -euo pipefail
           node --check ml_features/research/compute_real_2026_original_pedigree_v4_238_v1.mjs
           node ml_features/research/audit_original_pedigree_v4_v1.mjs
-      - name: Convert real observed 2026-10-17 live 149 to a temporary no-results daypack
+          python -m py_compile ml_features/research/pedigree_v4_cache_v1.py ml_features/research/join_690_original_pedigree_v4_238_v1.py
+      - name: Detect immutable saved V4 features (never silently invalidate)
+        id: cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f ml_features/delivery/pedigree-v4/manifest.json ]; then
+            python ml_features/research/pedigree_v4_cache_v1.py status
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            python ml_features/research/pedigree_v4_cache_v1.py status
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create no-results 2026-10-17 race pack only on cache miss
+        if: steps.cache.outputs.hit == 'false'
         shell: bash
         run: |
           set -euo pipefail
           python ml_features/research/live_json_to_daily_pack_v1.py \
             --live-dir data/live/2026-10-17 \
             --output "$RUNNER_TEMP/2026-10-17-pre-race.jsonl.gz"
-      - name: Compute real prior-only 238 features for all 60 races / 786 horses
+      - name: Calculate historical pedigree V4 once (cache miss only)
+        if: steps.cache.outputs.hit == 'false'
         shell: bash
         run: |
           set -euo pipefail
           node --max-old-space-size=5120 \
             ml_features/research/compute_real_2026_original_pedigree_v4_238_v1.mjs \
             . "$RUNNER_TEMP/pedigree-original-v4" "$RUNNER_TEMP/2026-10-17-pre-race.jsonl.gz"
-      - name: Assert all required real outputs without publishing private outcome data
+      - name: Compress V4 output, validate and persist through ordinary Git (cache miss only)
+        if: steps.cache.outputs.hit == 'false'
         shell: bash
         run: |
           set -euo pipefail
+          python ml_features/research/pedigree_v4_cache_v1.py pack \
+            --raw "$RUNNER_TEMP/pedigree-original-v4"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ml_features/delivery/pedigree-v4
+          if git diff --cached --quiet; then
+            echo "ERROR: cache miss produced no files" >&2
+            exit 1
+          fi
+          BRANCH="$GITHUB_REF_NAME"
+          CURRENT_HEAD="$(git rev-parse HEAD)"
+          REMOTE_HEAD="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          if [ "$CURRENT_HEAD" != "$REMOTE_HEAD" ]; then
+            echo "ERROR: branch advanced concurrently; refusing cache commit" >&2
+            exit 1
+          fi
+          git commit -m "data: persist validated original V4 238 columns for 60 target races"
+          git push origin "HEAD:refs/heads/$BRANCH"
+      - name: Verify immutable cache and join original 690 + V4 238 without replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ml_features/research/pedigree_v4_cache_v1.py verify
+          python ml_features/research/join_690_original_pedigree_v4_238_v1.py \
+            --output "$RUNNER_TEMP/joined-original-928"
           python - <<'PY'
-          import json,os
           from pathlib import Path
-          root=Path(os.environ['RUNNER_TEMP'])/'pedigree-original-v4'
-          report=json.loads((root/'report.json').read_text())
-          assert report['contract']=='KEIBA_ORIGINAL_V4_PEDIGREE_2026_REAL_RUN_V1'
-          assert report['target']['2026-10-10']=={'races':24,'horses':315}
-          assert report['target']['2026-10-17']=={'races':36,'horses':471}
-          assert report['feature_count']==238 and report['feature_cells']==238*786
-          assert report['historical_valid_lineage_updates']>0
-          assert report['target_2026_outcomes_used'] is False
-          assert report['original_v3_changed'] is False
-          assert report['output_destination']=='RUNNER_TEMP_ONLY'
-          for day,number in [('2026-10-10',24),('2026-10-17',36)]:
-              docs=sorted((root/day).glob('*.json'))
-              assert len(docs)==number
-              for f in docs:
-                  x=json.loads(f.read_text())
-                  assert x['feature_count']==238 and not x['target_results_used']
-                  for row in x['rows']:
-                      ped=[k for k in row if k.startswith('ped_')]
-                      assert len(ped)==238
-          print('REAL_2026_PEDIGREE_V4_238_VALIDATED_60_RACES_786_HORSES')
-          print(json.dumps(report,ensure_ascii=False,sort_keys=True))
+          import json, os
+          root=Path(os.environ["RUNNER_TEMP"])/"joined-original-928"
+          summary=json.loads((root/"join-report.json").read_text())
+          assert summary["source_cached_pedigree"] is True
+          assert summary["historical_recalculation"] is False
+          assert summary["target"]=={
+              "2026-10-10":{"races":24,"horses":315},
+              "2026-10-17":{"races":36,"horses":471}}
+          assert summary["feature_count"]==928
+          assert summary["model_executed"] is False
+          assert summary["approved_for_betting"] is False
+          print("ORIGINAL_928_CACHED_JOIN_SUCCESS_60_RACES_786_HORSE_ROWS")
           PY
