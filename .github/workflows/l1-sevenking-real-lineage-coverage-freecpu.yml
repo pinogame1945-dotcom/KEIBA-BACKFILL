@@ -1,0 +1,34 @@
+name: Read-only 2026 real 7King pedigree lineage coverage (free CPU)
+on:
+  push:
+    branches: [feature/7king-pedigree-schema-recovery-20261017]
+    paths:
+      - ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs
+      - .github/workflows/l1-sevenking-real-lineage-coverage-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            ml_features/delivery/690
+            ml_features/src
+            ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs
+            data/horses
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Inspect actual 786 pre-race horse pedigrees without feature or model changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs
+          node ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs .
+          echo "ONLY_PROFILE_COVERAGE_NO_TARGET_RESULTS_OR_PAID_STORAGE"
