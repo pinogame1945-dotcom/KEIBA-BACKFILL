@@ -87,6 +87,28 @@ def official_fetch(url,cname=None):
    time.sleep(1.5*(attempt+1))
  raise RuntimeError("UNREACHABLE_FETCH_RETRY")
 
+def row_odds_cname(card_anchor,venue,meet,meeting_day,race_no):
+ """Only accept the officially published odds link in the SAME race table row."""
+ rid=f"{DAY[:4]}{venue}{int(meet):02d}{int(meeting_day):02d}{int(race_no):02d}"
+ row=card_anchor.find_parent("tr")
+ if row is None:raise ValueError("JRA_RACE_ROW_NOT_FOUND:"+rid)
+ cells=row.select("td.odds")
+ if len(cells)!=1:raise ValueError("JRA_RACE_ODDS_CELL_NOT_UNIQUE:"+rid)
+ cell=cells[0]
+ if "未発表" in clean(cell.get_text(" ",strip=True)):
+  raise ValueError("OFFICIAL_JRA_ODDS_UNPUBLISHED:"+rid)
+ odds_links=[a for a in cell.select("a") if clean(a.get_text(" ",strip=True))=="オッズ"]
+ if len(odds_links)!=1:raise ValueError("OFFICIAL_JRA_ODDS_LINK_NOT_UNIQUE:"+rid)
+ odds_code=action_of(odds_links[0],"/JRADB/accessO.html")
+ if not odds_code:raise ValueError("OFFICIAL_JRA_ODDS_CNAME_MISSING:"+rid)
+ # Example actually published by JRA for 2026-10-17:
+ # pw151ouS305202604060120261017Z/73 = WIN/PLACE, Tokyo, YYYY, meeting, day, race, date.
+ race_code=f"{venue}{DAY[:4]}{int(meet):02d}{int(meeting_day):02d}{int(race_no):02d}{TOKEN}"
+ pattern=r"pw15[1-8]ouS3"+re.escape(race_code)+r"Z(?:\\d+)?/[0-9A-Fa-f]{2}"
+ if not re.fullmatch(pattern,odds_code):
+  raise ValueError("JRA_ODDS_CNAME_RACE_IDENTITY_MISMATCH:"+rid)
+ return odds_code
+
 def discover():
  root,root_meta=official_fetch(transport.CARD)
  parsed=BeautifulSoup(root,"html.parser")
@@ -131,23 +153,7 @@ def discover():
    if m.group("venue")!=venue or (int(m.group("meet")),int(m.group("day")))!=(MEETINGS[venue][1],MEETINGS[venue][2]):
     raise ValueError("RACE_LINK_CROSS_VENUE")
    if clean(a.get_text(" ",strip=True))!="出馬表":continue  # Other JRA navigation links may point at a racecard
-   next_link=a.find_next("a")
-   if next_link is None or clean(next_link.get_text(" ",strip=True))!="オッズ":
-    nearby=[]
-    candidate=a
-    for _ in range(8):
-     candidate=candidate.find_next("a")
-     if candidate is None:break
-     nearby.append({"label":clean(candidate.get_text(" ",strip=True))[:45],
-                    "href":str(candidate.get("href",""))[:180],
-                    "onclick":str(candidate.get("onclick",""))[:180]})
-    print("JRA_CARD_ODDS_DIAGNOSTIC:"+json.dumps({"venue":venue,
-      "race_card_href":href,"race_row_html":str(a.find_parent("tr"))[:6000],
-      "nearby_links":nearby,
-      "venue_odds_action_links":sum(bool(action_of(x,"/JRADB/accessO.html")) for x in soup.select("a"))},ensure_ascii=False),file=sys.stderr)
-    raise ValueError("CARD_ODDS_PAIR_NOT_ADJACENT")
-   odds_code=action_of(next_link,"/JRADB/accessO.html")
-   if not odds_code or TOKEN not in odds_code:raise ValueError("ODDS_LINK_INVALID")
+   odds_code=row_odds_cname(a,venue,m.group("meet"),m.group("day"),m.group("no"))
    rid=f"{DAY[:4]}{venue}{m.group('meet')}{m.group('day')}{m.group('no')}"
    selections.append({"race_id":rid,"venue_code":venue,"venue":MEETINGS[venue][0],
         "meeting":MEETINGS[venue][1],"meeting_day":MEETINGS[venue][2],
