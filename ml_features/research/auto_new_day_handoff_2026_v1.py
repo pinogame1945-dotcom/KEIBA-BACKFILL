@@ -23,6 +23,7 @@ ML=ROOT/"ml_features"/"research"
 sys.path.insert(0,str(ML))
 from export_690_delivery_dynamic_v1 import load_core4
 from verify_2026_original_690_extra_values_v1 import compact_one_year,source_rows
+from runner_history_cache_v1 import RunnerHistoryCache, digest
 
 
 def require(ok,reason):
@@ -41,11 +42,13 @@ def find_one(directory):
     return paths[0]
 
 
-def build(date_text, output):
+def build(date_text, output, history_cache_dir=None):
     d=date.fromisoformat(date_text)
     require(d.year==2026,"OUTSIDE_FROZEN_2026_FEATURE_HISTORY")
     parent=Path(output)
     parent.mkdir(parents=True,exist_ok=True)
+    cache=(RunnerHistoryCache(ROOT,date_text,history_cache_dir)
+           if history_cache_dir is not None else None)
     overlay=parent/"overlay"/"data"/"daily"
     overlay.mkdir(parents=True,exist_ok=True)
     horses=parent/"overlay"/"data"/"horses"
@@ -65,14 +68,20 @@ def build(date_text, output):
            "--source-sha","03950cfe132abeca15ef17dbc7c6885ceb1591b7",
            "--ml-source-sha","c782a7e0c6e2f09b2d0603b23336eab31ad5bc77"]
     builder=ML/"build-yearly-superset-snapshots.mjs"
-    command("node",builder,"--source-root",ROOT,"--out-dir",parent/"prior",
-            "--source-end",prior_day,"--emit-start","2026-01-01",
-            "--emit-end",prior_day,*fixed)
+    prior_root=cache.path("prior") if cache else parent/"prior"
+    if cache and cache.valid(prior_root):
+        print("RUNNER_PRIOR_2026_HISTORY_CACHE_HIT",flush=True)
+    else:
+        if cache:cache.discard(prior_root)
+        command("node",builder,"--source-root",ROOT,"--out-dir",prior_root,
+                "--source-end",prior_day,"--emit-start","2026-01-01",
+                "--emit-end",prior_day,*fixed)
+        if cache:cache.seal(prior_root,[find_one(prior_root)])
     command("node",builder,"--source-root",parent/"overlay",
             "--out-dir",parent/"live","--source-end",date_text,
             "--emit-start",date_text,"--emit-end",date_text,
             "--allow-unresulted-targets",*fixed)
-    old,new=find_one(parent/"prior"),find_one(parent/"live")
+    old,new=find_one(prior_root),find_one(parent/"live")
     combined=parent/"combined-2026.jsonl.gz"
     numbers=Counter()
     with gzip.open(combined,"wt",encoding="utf-8") as dest:
@@ -104,29 +113,42 @@ def build(date_text, output):
     rows=[r for race in ids for r in load_core4(new,race)["rows"]]
     require(3*len(ids)<=len(rows)<=18*len(ids),"NEW_DAY_STARTERS_OUTSIDE_RANGE")
     doc={"race_id":"day-cohort","race_date":date_text,"rows":rows}
-    compact=parent/"compact"
-    compact.mkdir(exist_ok=True)
-    compact_one_year(combined,2026,doc,
-                     compact/"prior-full-race-context-2026.pkl")
+    ids_for_cache=sorted({str(x["_horse_id"]) for x in rows})
+    cohort_hash=digest({"date":date_text,"horse_ids":ids_for_cache})
+    compact=cache.path("compact",cohort_hash) if cache else parent/"compact"
+    compacts_ready=bool(cache and cache.valid(compact))
+    if compacts_ready:
+        require(all((compact/f"prior-full-race-context-{y}.pkl").is_file()
+                    for y in range(2019,2027)),"CACHE_INCOMPLETE_HISTORY")
+        print("RUNNER_PRIOR_2019_2026_COMPACT_CACHE_HIT",flush=True)
+    else:
+        if cache:cache.discard(compact)
+        compact.mkdir(exist_ok=True)
+        compact_one_year(combined,2026,doc,
+                         compact/"prior-full-race-context-2026.pkl")
     (parent/"cohort.json").write_text(json.dumps(doc),encoding="utf-8")
     print("AUTO_DAY_LIVE_COHORT",len(ids),len(rows),flush=True)
 
-    remote=parent/"pinned-original"
-    remote.mkdir(exist_ok=True)
-    for year in range(2019,2026):
-        cmd=subprocess.run(
-            ["bash","scripts/fetch_original_state_history_snapshot.sh",
-             str(year),str(remote)],cwd=ROOT/"ml_features",check=True,
-            stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
-        print("ORIGINAL_YEAR_FETCH_COMPLETED",year,flush=True)
-        lines=[line.strip() for line in cmd.stdout.splitlines() if line.strip()]
-        require(lines,"ORIGINAL_YEAR_NO_OUTPUT")
-        raw=Path(lines[-1])
-        require(raw.is_file() and raw.stat().st_size>0,
-                "ORIGINAL_YEAR_SOURCE_NOT_DOWNLOADED")
-        compact_one_year(raw,year,doc,
-                         compact/f"prior-full-race-context-{year}.pkl")
-        raw.unlink()
+    if not compacts_ready:
+        remote=parent/"pinned-original"
+        remote.mkdir(exist_ok=True)
+        for year in range(2019,2026):
+            cmd=subprocess.run(
+                ["bash","scripts/fetch_original_state_history_snapshot.sh",
+                 str(year),str(remote)],cwd=ROOT/"ml_features",check=True,
+                stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+            print("ORIGINAL_YEAR_FETCH_COMPLETED",year,flush=True)
+            lines=[line.strip() for line in cmd.stdout.splitlines() if line.strip()]
+            require(lines,"ORIGINAL_YEAR_NO_OUTPUT")
+            raw=Path(lines[-1])
+            require(raw.is_file() and raw.stat().st_size>0,
+                    "ORIGINAL_YEAR_SOURCE_NOT_DOWNLOADED")
+            compact_one_year(raw,year,doc,
+                             compact/f"prior-full-race-context-{year}.pkl")
+            raw.unlink()
+        if cache:
+            cache.seal(compact,[compact/f"prior-full-race-context-{y}.pkl"
+                                for y in range(2019,2027)])
     print("AUTO_DAY_ALL_ORIGINAL_2019_2025_STATE_READY",flush=True)
     return combined,compact,new
 
