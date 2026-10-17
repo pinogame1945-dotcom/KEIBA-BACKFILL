@@ -7,6 +7,7 @@ on:
       - ml_features/research/export_690_delivery_dynamic_v1.py
       - ml_features/research/live_json_to_daily_pack_dynamic_v1.py
       - scripts/all_jra_dynamic_collect_v1.py
+      - tests/test_all_jra_20261017_collect.py
       - scripts/discover_jra_official_seed_v1.py
       - .github/workflows/auto-new-day-690-odds-free.yml
       - .github/workflows/auto-new-day-contract-free.yml
