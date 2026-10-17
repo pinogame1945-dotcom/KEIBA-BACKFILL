@@ -1,0 +1,160 @@
+name: Weekly JRA race day 690 plus eight odds free
+on:
+  # UTC 00:20-08:20 + 10:20-14:20 = JST 09:20-17:20 and 19:20-23:20. JRA source decides race day,
+  # never Saturday/Sunday date guesses; holidays are supported.
+  schedule:
+    - cron: "20 0-8,10-14 * * *"
+  push:
+    branches: [feature/auto-new-race-day-handoff-20261017]
+    paths: [ml_features/new-date-request.json]
+  workflow_dispatch:
+    inputs:
+      race_date:
+        required: false
+        type: string
+      official_seed_url:
+        required: false
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: keiba-auto-day-690-eight-odds-handoff
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 230
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      REQUEST_DATE: ${{ inputs.race_date }}
+      REQUEST_SEED: ${{ inputs.official_seed_url }}
+      KEIBA_JRA_CARD_URL: ""
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "1"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Scheduled workflow lives on default branch; implementation stays
+          # isolated on the approved feature branch until reviewed.
+          ref: feature/auto-new-race-day-handoff-20261017
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Resolve recurring published JRA meeting date (including holidays)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-cache-dir beautifulsoup4==4.14.3
+          if [ "${{ github.event_name }}" = "push" ]; then
+            REQUEST_DATE="$(python -c 'import json;print(json.load(open("ml_features/new-date-request.json"))["race_date"])')"
+            REQUEST_SEED="$(python -c 'import json;print(json.load(open("ml_features/new-date-request.json")).get("official_seed_url",""))')"
+          fi
+          if [ -n "$REQUEST_DATE" ]; then
+            python scripts/resolve_weekly_jra_day_v1.py --date "$REQUEST_DATE" --seed "$REQUEST_SEED" --github-env "$GITHUB_ENV"
+          else
+            python scripts/resolve_weekly_jra_day_v1.py --github-env "$GITHUB_ENV"
+          fi
+      - name: Validate upcoming 2026 date, free capacity and source credentials
+        if: env.JRA_RACE_DAY_ACTIVE == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KAGGLE_API_TOKEN"
+          test "$(du -sm .git | awk 'NR==1{print $1}')" -lt 3500
+          test "$(df -Pk "$RUNNER_TEMP" | awk 'NR==2{print $4}')" -gt 18000000
+          python - <<'PY'
+          import os
+          from datetime import date,datetime
+          from zoneinfo import ZoneInfo
+          day=os.environ["TARGET_DATE"]
+          d=date.fromisoformat(day)
+          assert d.isoformat()==day and d.year==2026,"OUTSIDE_2026_FROZEN_HISTORY"
+          delta=(d-datetime.now(ZoneInfo("Asia/Tokyo")).date()).days
+          assert 0<=delta<=2,"TARGET_MUST_BE_UPCOMING"
+          assert os.environ["KEIBA_JRA_CARD_URL"].startswith("https://www.jra.go.jp/JRADB/accessD.html?CNAME=pw01dde01"),"UNVERIFIED_JRA_SEED"
+          print("OFFICIAL_MEETING_DATE_ACCEPTED",day)
+          PY
+          echo "FREE_PUBLIC_STANDARD_CPU_NO_ARTIFACT_CACHE_OR_PAID_STORAGE"
+      - name: Install existing JRA and frozen ML feature dependencies
+        if: env.JRA_RACE_DAY_ACTIVE == 'true'
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir beautifulsoup4==4.14.3 lightgbm==4.7.0 pandas==3.0.6 scikit-learn==1.9.1 'numpy>=2.0,<3' kaggle
+          python -m py_compile scripts/all_jra_dynamic_collect_v1.py ml_features/research/auto_new_day_handoff_2026_v1.py ml_features/research/export_690_delivery_dynamic_v1.py
+          python -m unittest discover -s tests -p test_all_jra_20261017_collect.py -v
+          python -m unittest discover -s ml_features/tests -p test_odds_handoff_v1.py -v
+      - name: Locate published official JRA source URL
+        if: env.JRA_RACE_DAY_ACTIVE == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$KEIBA_JRA_CARD_URL" ]; then
+            KEIBA_JRA_CARD_URL="$(python scripts/discover_jra_official_seed_v1.py --date "$TARGET_DATE")"
+            echo "KEIBA_JRA_CARD_URL=$KEIBA_JRA_CARD_URL" >> "$GITHUB_ENV"
+          fi
+      - name: Capture fresh pre-race candidates and classify source/odds deltas
+        if: env.JRA_RACE_DAY_ACTIVE == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/all_jra_dynamic_collect_v1.py --limit 36 \
+            --update-pre-race --prior-dir "data/live/$TARGET_DATE" \
+            --out "$RUNNER_TEMP/new-race-day"
+          python ml_features/research/detect_live_day_delta_v1.py \
+            --prior-dir "data/live/$TARGET_DATE" \
+            --current-dir "$RUNNER_TEMP/new-race-day" \
+            --out "$RUNNER_TEMP/new-race-day-delta.json"
+          python - <<'PY'
+          import json,os,shutil
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"new-race-day-delta.json").read_text())
+          source=Path(os.environ["RUNNER_TEMP"])/"new-race-day"
+          root=Path("data/live")/os.environ["TARGET_DATE"]
+          if not d["noop"]:
+              root.mkdir(parents=True,exist_ok=True)
+              for rid in d["new"]+d["feature_changed"]+d["odds_only_changed"]:
+                  shutil.copyfile(source/(rid+".json"),root/(rid+".json"))
+              manifest=json.loads((source/"manifest.json").read_text("utf-8"))
+              for rec in manifest["races"]:
+                  rec["file"]=str(root/(rec["race_id"]+".json"))
+              (root/"manifest.json").write_text(
+                  json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          with open(os.environ["GITHUB_ENV"],"a") as e:
+              e.write(f'DO_ORIGINAL_690={"true" if d["recompute_original_690"] else "false"}\n')
+              e.write(f'DO_PUBLISH_ODDS={"true" if d["publish_new_odds"] else "false"}\n')
+          print("LIVE_PRE_RACE_DELTA",d)
+          PY
+          if [ -d "data/live/$TARGET_DATE" ]; then
+            test "$(du -sm "data/live/$TARGET_DATE" | awk '{print $1}')" -lt 120
+          fi
+      - name: Preserve changed verified source separately in isolated branch
+        if: env.JRA_RACE_DAY_ACTIVE == 'true' && env.DO_PUBLISH_ODDS == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions-bot
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f "data/live/$TARGET_DATE"
+          if ! git diff --cached --quiet; then
+            git commit -m "data: JRA new day verified pre-race source"
+            git push origin HEAD:refs/heads/feature/auto-new-race-day-handoff-20261017
+          fi
+      - name: Publish exact original 690 with verified current 8-ticket odds
+        if: env.JRA_RACE_DAY_ACTIVE == 'true' && env.DO_ORIGINAL_690 == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ml_features/research/auto_new_day_handoff_2026_v1.py --date "$TARGET_DATE" --runner-temp "$RUNNER_TEMP"
+          echo "AUTO_RACE_ID_690_AND_EIGHT_ODDS_HANDOFF_COMPLETE"
+      - name: Update odds only without rebuilding the unchanged 690 horse features
+        if: env.JRA_RACE_DAY_ACTIVE == 'true' && env.DO_PUBLISH_ODDS == 'true' && env.DO_ORIGINAL_690 == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ml_features/research/auto_new_day_handoff_2026_v1.py \
+            --date "$TARGET_DATE" --runner-temp "$RUNNER_TEMP" --odds-only
+          echo "AUTO_RACE_ID_ODDS_ONLY_HANDOFF_COMPLETE"
