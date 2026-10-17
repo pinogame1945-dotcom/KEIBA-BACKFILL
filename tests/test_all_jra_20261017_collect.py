@@ -142,6 +142,42 @@ class NewDayJraOddsPairTests(unittest.TestCase):
   doc["jra_odds"]["page_observations"]["WIN_PLACE"]["fetched_at_utc"]=d.DAY+"T09:45:00+09:00"
   self.assertFalse(d.verified_pre_start_timestamps(race,doc))
 
+ def test_legacy_verified_pre_midnight_snapshot_can_be_reused_today(self):
+  import all_jra_dynamic_collect_v1 as d
+  safe=d.DAY[:4]+"-10-16T13:00:00+00:00"
+  race={"race_id":"202605040701","venue_code":"05","venue":"東京",
+        "meeting":4,"meeting_day":7,"race_no":1,
+        "jra_card_url":"https://www.jra.go.jp/JRADB/accessD.html?CNAME=pw01dde0105202604070120261017/00",
+        "jra_odds_cname":"pw151ouS305202604070120261017Z/00",
+        "race_date":d.DAY,"scheduled_start_time_jst":"09:45"}
+  observed=dict(race)
+  observed.pop("scheduled_start_time_jst")
+  doc={"contract":"JRA_"+d.TOKEN+"_ALL_RACES_PRE_RACE_AUDIT_V1",
+       "race_id":race["race_id"],"race_date":d.DAY,
+       "source_discovery":observed,"status":"SOURCE_AND_ODDS_VERIFIED",
+       "includes_results":False,"includes_final_odds":False,
+       "models_executed":False,"backfill_history_features_computed":False,
+       "captured_at_utc":safe,
+       "netkeiba":{"meta":{"fetched_at_utc":safe}},
+       "jra_card":{"identity_verified":True,"meta":{"fetched_at_utc":safe}},
+       "jra_odds":{"combination_coverage_complete":True,
+                   "publisher_update_display_consistent":True,
+                   "snapshot_type":"PRE_RACE_LIVE_ODDS",
+                   "expected_combination_count":1,
+                   "quotes":[{"odds":1.2}],"no_votes":[],
+                   "scratched_combinations":[],
+                   "page_observations":{"WIN_PLACE":{"fetched_at_utc":safe}}}}
+  with TemporaryDirectory() as temp:
+   path=Path(temp)/"race.json"
+   path.write_text(d.json.dumps(doc),encoding="utf-8")
+   self.assertIsNotNone(d.reusable_verified(path,race))
+   race["race_no"]=2
+   self.assertIsNone(d.reusable_verified(path,race))
+   race["race_no"]=1
+   doc["jra_card"]["meta"]["fetched_at_utc"]=d.DAY+"T10:00:00+09:00"
+   path.write_text(d.json.dumps(doc),encoding="utf-8")
+   self.assertIsNone(d.reusable_verified(path,race))
+
  def test_unpublished_odds_does_not_fall_through_to_next_race(self):
   import all_jra_dynamic_collect_v1 as d
   next_odds='<a onclick="doAction(\'/JRADB/accessO.html\',\''+self.odds_cname(2)+'\')">オッズ</a>'
