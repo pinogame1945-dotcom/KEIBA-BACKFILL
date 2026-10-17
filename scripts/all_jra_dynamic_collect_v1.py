@@ -466,6 +466,26 @@ def atomic_official_odds(race,ncard,official):
    time.sleep(2*(attempt+1))
  raise RuntimeError("ODDS_ATOMIC_RETRY_EXHAUSTED")
 
+def verified_pre_start_timestamps(race,item):
+ """All independently fetched material must precede the official race start."""
+ clock=race.get("scheduled_start_time_jst")
+ cutoff=(race_start_utc(race) if isinstance(clock,str) and
+         re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]",clock) else
+         datetime.fromisoformat(DAY+"T00:00:00+09:00").astimezone(timezone.utc))
+ values=[item.get("captured_at_utc"),
+         (item.get("netkeiba") or {}).get("meta",{}).get("fetched_at_utc"),
+         (item.get("jra_card") or {}).get("meta",{}).get("fetched_at_utc")]
+ pages=(item.get("jra_odds") or {}).get("page_observations") or {}
+ if not isinstance(pages,dict) or not pages:return False
+ values += [v.get("fetched_at_utc") for v in pages.values()]
+ try:
+  for value in values:
+   when=datetime.fromisoformat(value.replace("Z","+00:00"))
+   if when.tzinfo is None or when.astimezone(timezone.utc)>=cutoff:return False
+ except (AttributeError,ValueError,TypeError):
+  return False
+ return True
+
 def reusable_verified(path,race):
  """Reuse only an already verified, explicitly PRE-RACE snapshot for the exact race."""
  if not path.exists():return None
@@ -483,6 +503,7 @@ def reusable_verified(path,race):
   deadline=(race_start_utc(race) if isinstance(clock,str) and re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]",clock)
             else datetime.fromisoformat(DAY+"T00:00:00+09:00").astimezone(timezone.utc))
   if stamp.tzinfo is None or stamp.astimezone(timezone.utc)>=deadline:return None
+  if not verified_pre_start_timestamps(race,item):return None
   if item.get("jra_card",{}).get("identity_verified") is not True:return None
   if odds.get("combination_coverage_complete") is not True or odds.get("publisher_update_display_consistent") is not True:return None
   if odds.get("snapshot_type")!="PRE_RACE_LIVE_ODDS":return None
@@ -504,6 +525,8 @@ def single(race):
   out["jra_card"]=official
   odds=atomic_official_odds(race,ncard,official)
   out["jra_odds"]=odds
+  if not verified_pre_start_timestamps(race,out):
+   raise ValueError("OFFICIAL_RACE_PRE_START_CAPTURE_NOT_VERIFIED")
   out["status"]="SOURCE_AND_ODDS_VERIFIED"
  except Exception as exc:
   out["errors"].append(type(exc).__name__+":"+str(exc))
