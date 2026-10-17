@@ -51,11 +51,59 @@ def load_history(folder, date):
     return merged
 
 
-def export_day(date, snapshot, history_dir, root):
+def verify_current_day_view(history_snapshot, target_snapshot, target_date):
+    """Exact per-record equality: target-day view must match full source, in order.
+
+    The original CORE4 reader unions feature names across the source; therefore
+    reject views missing that full union instead of silently changing missingness.
+    No historical rows are used by bias19 (which filters strictly by target day).
+    """
+    from audit_2026_generated_core4_v1 import selected_columns, CORE4_SHA, EXPECTED, digest
+
+    def fingerprint(path, allow_prior):
+        signature = hashlib.sha256()
+        selected_names = set()
+        count = 0
+        for item in source_rows(path):
+            day = str((item.get("features") or {}).get("race_date") or "")
+            if day != target_date:
+                require(allow_prior and day < target_date,
+                        "TARGET_VIEW_CONTAINS_OTHER_DATE_OR_HISTORY_LOOKAHEAD")
+                selected_names.update(selected_columns(item.get("features") or {}))
+                continue
+            require(item.get("target") is None and
+                    item.get("market_outcome") is None,
+                    "TARGET_DAY_RESULTS_OR_MARKET_NOT_ALLOWED")
+            selected_names.update(selected_columns(item.get("features") or {}))
+            signature.update(json.dumps(item, sort_keys=True,
+                                         ensure_ascii=False,
+                                         separators=(",", ":")).encode("utf-8"))
+            signature.update(b"\n")
+            count += 1
+        return signature.digest(), count, selected_names
+
+    full_sha, full_count, full_schema = fingerprint(history_snapshot, True)
+    live_sha, live_count, live_schema = fingerprint(target_snapshot, False)
+    require(full_count > 0 and full_count == live_count and full_sha == live_sha,
+            "CURRENT_DAY_VIEW_NOT_BYTE_EQUIVALENT_TO_FULL_TARGET_ROWS")
+    require(len(full_schema) == EXPECTED and
+            digest(sorted(full_schema)) == CORE4_SHA,
+            "FULL_SOURCE_CORE4_SCHEMA_DRIFT")
+    require(live_schema == full_schema,
+            "CURRENT_DAY_VIEW_MISSING_ORIGINAL_CORE4_SCHEMA")
+    print("AUTO_DAY_FAST_VIEW_PARITY", json.dumps(
+        {"rows": live_count, "feature_names": len(live_schema),
+         "same_target_record_sequence": True}, sort_keys=True), flush=True)
+
+
+def export_day(date, snapshot, history_dir, root, target_snapshot=None):
     require(Date.fromisoformat(date).isoformat()==date and date.startswith("2026-"),
             "TARGET_DATE_OUTSIDE_APPROVED_2026_YEAR")
+    view = target_snapshot if target_snapshot is not None else snapshot
+    if target_snapshot is not None:
+        verify_current_day_view(snapshot, target_snapshot, date)
     discovered=defaultdict(set)
-    for record in source_rows(snapshot):
+    for record in source_rows(view):
         if (record.get("features") or {}).get("race_date") != date:
             continue
         race_id=str(record.get("race_id") or "")
@@ -68,7 +116,7 @@ def export_day(date, snapshot, history_dir, root):
     races=sorted(set.union(*discovered.values()))
     if date in RACES:
         require(set(races)==RACES[date],"FROZEN_EXISTING_RACE_SET_DRIFT")
-    targets = [load_core4(snapshot, race) for race in races]
+    targets = [load_core4(view, race) for race in races]
     require(all(t["race_date"] == date for t in targets),
             "WRONG_FEATURE_TARGET_DATE")
     starters = sum(len(t["rows"]) for t in targets)
@@ -90,7 +138,7 @@ def export_day(date, snapshot, history_dir, root):
     nulls = Counter()
     for target in targets:
         rid = target["race_id"]
-        bias = bias19(snapshot, target)
+        bias = bias19(view, target)
         joined_rows = []
         for row in target["rows"]:
             hid = str(row["_horse_id"])
@@ -213,6 +261,7 @@ if __name__=="__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--date")
     p.add_argument("--snapshot")
+    p.add_argument("--target-snapshot", help="Verified exact target-date view of the full snapshot")
     p.add_argument("--compact-dir")
     p.add_argument("--out-root",required=True)
     p.add_argument("--index-only",action="store_true")
@@ -220,5 +269,5 @@ if __name__=="__main__":
     if not a.index_only:
         require(bool(a.date and a.snapshot and a.compact_dir),
                 "EXPORT_DATE_SNAPSHOT_COMPACT_REQUIRED")
-        export_day(a.date,a.snapshot,a.compact_dir,a.out_root)
+        export_day(a.date,a.snapshot,a.compact_dir,a.out_root,a.target_snapshot)
     build_index(a.out_root)
