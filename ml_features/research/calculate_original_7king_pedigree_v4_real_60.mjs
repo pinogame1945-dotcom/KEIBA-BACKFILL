@@ -103,7 +103,7 @@ async function emit(day,meta){
 const dated=path.join(root,"data/daily");
 const files=(await readdir(dated)).filter(n=>/^\d{4}-\d{2}-\d{2}\.jsonl\.gz$/.test(n) &&
   n.slice(0,10)>="2018-01-01" && n.slice(0,10)<"2026-10-17").sort();
-need(files.length>=1000,"HISTORY_FROM_2018_MISSING");
+need(files.length>=500 && files[0].slice(0,10).startsWith("2018-") && files.at(-1).slice(0,10)>="2026-10-10","HISTORY_FROM_2018_MISSING");
 for(const file of files){
   const day=file.slice(0,10);
   const daily=await zip(path.join(dated,file));
