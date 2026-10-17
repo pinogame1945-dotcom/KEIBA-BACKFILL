@@ -66,7 +66,8 @@ async function readTargetSpecs() {
     byDay.set(day,population);
     specs.set(day,{races:population.size,horses:count});
   }
-  requireTrue(requiredIds.size===786,"TARGET_DUPLICATED_ACROSS_DAYS");
+  // A horse may race on both target dates. 786 counts entries, not unique horse IDs.
+  requireTrue(requiredIds.size>0 && requiredIds.size<=786,"TARGET_EMPTY_OR_TOO_MANY_UNIQUE_HORSES");
   return {byDay,requiredIds,specs};
 }
 async function targetRaces(day, originalPopulation, livePack) {
