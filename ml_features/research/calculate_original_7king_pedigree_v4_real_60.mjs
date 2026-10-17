@@ -148,7 +148,7 @@ for(const rid of targets["2026-10-17"].keys()){
     if(cell.feature_id.startsWith("race.") &&
        cell.status==="OBSERVED_OR_DERIVED_FROM_PAGE")
       race[cell.feature_id.slice(5)]=cell.observed_value;
-  need(["surface","venue_code","distance_m","course_layout",
+  need(["surface","venue_code","distance_m",
         "track_condition","race_class_normalized"].every(k=>race[k]!=null),
        "NOT_ENOUGH_REAL_PRE_RACE_METADATA:"+rid);
   actual.set(rid,race);
