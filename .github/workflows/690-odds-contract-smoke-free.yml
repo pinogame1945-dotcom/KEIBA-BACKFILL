@@ -1,0 +1,37 @@
+name: BACKFILL 690 plus odds handoff unit smoke
+on:
+  push:
+    branches: [test/690-20261010-24-20261017-36]
+    paths:
+      - .github/workflows/690-odds-contract-smoke-free.yml
+      - .github/workflows/690-handoff-git-free.yml
+      - ml_features/research/export_odds_delivery_v1.py
+      - ml_features/tests/test_odds_handoff_v1.py
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ml_features
+            .github/workflows/690-handoff-git-free.yml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test odds parity and paired workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile ml_features/research/export_odds_delivery_v1.py ml_features/research/fetch_features_and_odds_for_ml_v1.py
+          python -m unittest discover -s ml_features/tests -p 'test_odds_handoff_v1.py' -v
+          python - <<'PY'
+          from pathlib import Path
+          s=Path(".github/workflows/690-handoff-git-free.yml").read_text()
+          assert s.count("python ml_features/research/export_odds_delivery_v1.py --date")==2
+          assert "--date 2026-10-10" in s and "--date 2026-10-17" in s
+          print("PAIRED_ODDS_PER_DATE_WORKFLOW_READY")
+          PY
