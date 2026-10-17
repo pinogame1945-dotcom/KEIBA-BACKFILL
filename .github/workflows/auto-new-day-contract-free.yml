@@ -4,6 +4,8 @@ on:
     branches: [feature/auto-new-race-day-handoff-20261017]
     paths:
       - ml_features/research/auto_new_day_handoff_2026_v1.py
+      - ml_features/research/runner_history_cache_v1.py
+      - ml_features/tests/test_runner_history_cache_v1.py
       - ml_features/research/export_690_delivery_dynamic_v1.py
       - ml_features/tests/test_fast_690_target_view_v1.py
       - ml_features/tests/test_fast_690_value_parity_v1.py
@@ -49,6 +51,7 @@ jobs:
           python -m unittest discover -s ml_features/tests -p test_odds_handoff_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_dynamic_day_paired_handoff_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_live_day_delta_v1.py -v
+          python -m unittest discover -s ml_features/tests -p test_runner_history_cache_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_fast_690_target_view_v1.py -v
           python -m unittest discover -s ml_features/tests -p test_fast_690_value_parity_v1.py -v
           python -m unittest discover -s tests -p test_weekly_jra_scheduler_v1.py -v
