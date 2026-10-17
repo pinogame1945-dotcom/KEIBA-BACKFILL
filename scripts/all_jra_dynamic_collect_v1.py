@@ -156,7 +156,7 @@ def discover():
    row=a.find_parent("tr")
    time_cell=row.select_one("td.time") if row else None
    raw_time=clean(time_cell.get_text(" ",strip=True)) if time_cell else ""
-   t=re.fullmatch(r"(\\d{1,2})時([0-5]\\d)分",raw_time)
+   t=re.fullmatch(r"(\d{1,2})時([0-5]\d)分",raw_time)
    if not t or int(t.group(1))>23:raise ValueError("OFFICIAL_RACE_START_TIME_NOT_PUBLISHED:"+venue+":"+m.group("no"))
    scheduled=f"{int(t.group(1)):02d}:{int(t.group(2)):02d}"
    odds_code=row_odds_cname(a,venue,m.group("meet"),m.group("day"),m.group("no"))
