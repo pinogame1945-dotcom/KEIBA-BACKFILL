@@ -1,0 +1,113 @@
+name: Auto next JRA race day 690 plus eight odds free
+on:
+  push:
+    branches: [feature/auto-new-race-day-handoff-20261017]
+    paths: [ml_features/new-date-request.json]
+  workflow_dispatch:
+    inputs:
+      race_date:
+        required: true
+        type: string
+      official_seed_url:
+        required: false
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: keiba-auto-day-690-eight-odds-handoff
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 230
+    env:
+      KAGGLE_API_TOKEN: \${{ secrets.KAGGLE_API_TOKEN }}
+      REQUEST_DATE: \${{ inputs.race_date }}
+      REQUEST_SEED: \${{ inputs.official_seed_url }}
+      KEIBA_JRA_CARD_URL: ""
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "1"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate upcoming 2026 date, free capacity and source credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KAGGLE_API_TOKEN"
+          test "$(du -sm .git | awk 'NR==1{print $1}')" -lt 3500
+          test "$(df -Pk "$RUNNER_TEMP" | awk 'NR==2{print $4}')" -gt 18000000
+          python - <<'PY'
+          import json,os
+          from datetime import date,datetime
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+          day=os.environ.get("REQUEST_DATE","")
+          seed=os.environ.get("REQUEST_SEED","")
+          if not day:
+              request=json.loads(Path("ml_features/new-date-request.json").read_text())
+              day=request["race_date"]
+              seed=request.get("official_seed_url","")
+          d=date.fromisoformat(day)
+          assert d.isoformat()==day and d.year==2026,"OUTSIDE_2026_FROZEN_HISTORY"
+          delta=(d-datetime.now(ZoneInfo("Asia/Tokyo")).date()).days
+          assert 0<=delta<=2,"TARGET_MUST_BE_UPCOMING"
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("TARGET_DATE="+day+"\nKEIBA_LIVE_DATE="+day+"\n")
+              if seed:f.write("KEIBA_JRA_CARD_URL="+seed+"\n")
+          print("OFFICIAL_NEXT_DATE_ACCEPTED",day)
+          PY
+          echo "FREE_PUBLIC_STANDARD_CPU_NO_ARTIFACT_CACHE_OR_PAID_STORAGE"
+      - name: Install existing JRA and frozen ML feature dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir beautifulsoup4==4.14.3 lightgbm==4.7.0 pandas==3.0.6 scikit-learn==1.9.1 'numpy>=2.0,<3' kaggle
+          python -m py_compile scripts/all_jra_dynamic_collect_v1.py ml_features/research/auto_new_day_handoff_2026_v1.py ml_features/research/export_690_delivery_dynamic_v1.py
+          python -m unittest discover -s tests -p test_all_jra_20261017_collect.py -v
+          python -m unittest discover -s ml_features/tests -p test_odds_handoff_v1.py -v
+      - name: Locate published official JRA source URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$KEIBA_JRA_CARD_URL" ]; then
+            KEIBA_JRA_CARD_URL="$(python scripts/discover_jra_official_seed_v1.py --date "$TARGET_DATE")"
+            echo "KEIBA_JRA_CARD_URL=$KEIBA_JRA_CARD_URL" >> "$GITHUB_ENV"
+          fi
+      - name: Collect complete meeting day from verified official JRA links
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/all_jra_dynamic_collect_v1.py --limit 36 --out "data/live/$TARGET_DATE" --resume-verified
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          data=json.loads((Path("data/live")/os.environ["TARGET_DATE"]/"manifest.json").read_text())
+          n=data["race_count_expected"]
+          assert n in (12,24,36) and data["actual_races_processed"]==n
+          assert data["full_source_and_odds_verified"]==n and data["blocked"]==0
+          print("ALL_OFFICIAL_EIGHT_ODDS_SOURCE_READY",n)
+          PY
+          test "$(du -sm "data/live/$TARGET_DATE" | awk '{print $1}')" -lt 120
+      - name: Preserve original source separately in isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions-bot
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f "data/live/$TARGET_DATE"
+          if ! git diff --cached --quiet; then
+            git commit -m "data: JRA new day verified pre-race source"
+            git push origin HEAD:refs/heads/feature/auto-new-race-day-handoff-20261017
+          fi
+      - name: Produce original 690 and current JRA odds in ONE Git handoff checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ml_features/research/auto_new_day_handoff_2026_v1.py --date "$TARGET_DATE" --runner-temp "$RUNNER_TEMP"
+          echo "AUTO_RACE_ID_690_AND_EIGHT_ODDS_HANDOFF_COMPLETE"
