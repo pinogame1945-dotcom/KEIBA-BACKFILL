@@ -73,7 +73,11 @@ def fetch(rid,base=ROOT):
     if odata["snapshot_type"]=="POST_RACE_FINAL":
         require(odata["source"]=="NETKEIBA_FINAL" and
                 set(odata["group_code_to_bet_type"].values())==BET_TYPES and
-                set(odata["raw_group_odds"])==set(odata["group_code_to_bet_type"]),
+                set(odata["raw_group_odds"]).issubset(odata["group_code_to_bet_type"]) and
+                set(odata["present_bet_types"]) ==
+                {odata["group_code_to_bet_type"][k] for k in odata["raw_group_odds"]} and
+                set(odata["source_absent_bet_types"]) ==
+                BET_TYPES-set(odata["present_bet_types"]),
                 "HISTORICAL_8_BET_TYPE_DRIFT")
     elif odata["snapshot_type"]=="PRE_RACE_LIVE_ODDS":
         require(odata["source"]=="JRA_OFFICIAL_POST" and
