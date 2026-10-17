@@ -85,8 +85,10 @@ class AllJraTests(unittest.TestCase):
    "race_date":x.DAY,"source_discovery":race,"status":"SOURCE_AND_ODDS_VERIFIED",
    "includes_results":False,"includes_final_odds":False,"models_executed":False,
    "backfill_history_features_computed":False,"captured_at_utc":"2026-10-16T12:00:00+00:00",
-   "jra_card":{"identity_verified":True},
+   "netkeiba":{"meta":{"fetched_at_utc":"2026-10-16T12:00:00+00:00"}},
+   "jra_card":{"identity_verified":True,"meta":{"fetched_at_utc":"2026-10-16T12:00:00+00:00"}},
    "jra_odds":{"combination_coverage_complete":True,"publisher_update_display_consistent":True,
+     "page_observations":{"WIN_PLACE":{"fetched_at_utc":"2026-10-16T12:00:00+00:00"}},
      "snapshot_type":"PRE_RACE_LIVE_ODDS","expected_combination_count":2,
      "quotes":[{"odds":1.2}],"no_votes":[{"odds":None}],"scratched_combinations":[]}}
   with TemporaryDirectory() as d:
@@ -98,6 +100,10 @@ class AllJraTests(unittest.TestCase):
    self.assertIsNone(x.reusable_verified(p,race))
    item["includes_results"]=False
    item["jra_odds"]["expected_combination_count"]=3
+   p.write_text(x.json.dumps(item,ensure_ascii=False),"utf-8")
+   self.assertIsNone(x.reusable_verified(p,race))
+   item["jra_odds"]["expected_combination_count"]=2
+   item["jra_odds"]["page_observations"]["WIN_PLACE"]["fetched_at_utc"]="2026-10-18T12:00:00+00:00"
    p.write_text(x.json.dumps(item,ensure_ascii=False),"utf-8")
    self.assertIsNone(x.reusable_verified(p,race))
  def test_transport_timeout_retry_is_bounded(self):
