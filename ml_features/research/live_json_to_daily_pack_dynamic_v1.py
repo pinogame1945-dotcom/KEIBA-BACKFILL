@@ -10,6 +10,7 @@ import os
 from collections import Counter
 import gzip
 import json
+import re
 from pathlib import Path
 
 DAY = os.environ.get("KEIBA_LIVE_DATE", "2026-10-17")
@@ -31,11 +32,23 @@ def require(cond, reason):
         raise ValueError(reason)
 
 
-def observed_before_race(value):
+def observed_before_race(value, cutoff=CUT_OFF):
     require(isinstance(value, str), "SOURCE_CAPTURE_TIME_ABSENT")
     at = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    require(at.tzinfo is not None and at.astimezone(timezone.utc) < CUT_OFF,
+    require(at.tzinfo is not None and at.astimezone(timezone.utc) < cutoff,
             "SOURCE_NOT_PROVEN_CAPTURED_BEFORE_RACE")
+
+
+def official_race_cutoff(source):
+    # Previously captured days without an official scheduled time retain the
+    # strict pre-midnight rule; never fabricate a race's starting time.
+    start = source.get("scheduled_start_time_jst")
+    if start is None:
+        return CUT_OFF
+    require(isinstance(start, str) and
+            re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]", start),
+            "OFFICIAL_SCHEDULED_START_TIME_INVALID")
+    return datetime.fromisoformat(DAY + "T" + start + ":00+09:00").astimezone(timezone.utc)
 
 
 def convert(doc):
@@ -48,7 +61,9 @@ def convert(doc):
             doc.get("models_executed") is False and
             doc.get("backfill_history_features_computed") is False,
             "LIVE_SOURCE_NOT_PRE_RACE")
-    observed_before_race(doc.get("captured_at_utc"))
+    source = doc.get("source_discovery") or {}
+    cutoff = official_race_cutoff(source)
+    observed_before_race(doc.get("captured_at_utc"), cutoff)
     net = doc.get("netkeiba") or {}
     jra = doc.get("jra_card") or {}
     odds = doc.get("jra_odds") or {}
@@ -60,8 +75,8 @@ def convert(doc):
     require(set(odds.get("by_bet_type") or {}) == BET_TYPES,
             "EIGHT_BET_TYPES_NOT_COVERED")
     for page in (odds.get("page_observations") or {}).values():
-        observed_before_race(page.get("fetched_at_utc"))
-    observed_before_race((net.get("meta") or {}).get("fetched_at_utc"))
+        observed_before_race(page.get("fetched_at_utc"), cutoff)
+    observed_before_race((net.get("meta") or {}).get("fetched_at_utc"), cutoff)
     require(net.get("runner_count") in range(3, 19) and
             isinstance(net.get("runners"), list) and
             len(net["runners"]) == net["runner_count"],
