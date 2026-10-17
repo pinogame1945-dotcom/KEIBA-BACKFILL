@@ -184,10 +184,7 @@ def discover(prior=None,reuse_started=False):
         "meeting":MEETINGS[venue][1],"meeting_day":MEETINGS[venue][2],
         "race_no":int(m.group("no")),"jra_card_url":urljoin("https://www.jra.go.jp",href),
         "jra_odds_cname":odds_code,"race_date":DAY,
-        "scheduled_start_time_jst":scheduled} if not (
-          reuse_started and race_started({"scheduled_start_time_jst":scheduled})
-          and (prior or {}).get(rid,{}).get("source_discovery",{}).get("scheduled_start_time_jst") is None
-         ) else (prior[rid]["source_discovery"]))
+        "scheduled_start_time_jst":scheduled})
   if len(selections)!=12 or {x["race_no"] for x in selections}!=set(range(1,13)):
    raise ValueError("NOT_TWELVE_OFFICIAL_RACE_LINKS:"+venue+":"+str(len(selections)))
   records.extend(selections)
@@ -501,7 +498,14 @@ def reusable_verified(path,race):
   odds=item.get("jra_odds",{})
   if item.get("contract")!="JRA_"+TOKEN+"_ALL_RACES_PRE_RACE_AUDIT_V1":return None
   if item.get("race_id")!=race["race_id"] or item.get("race_date")!=DAY:return None
-  if item.get("source_discovery")!=race:return None
+  observed_source=item.get("source_discovery")
+  if not isinstance(observed_source,dict):return None
+  matching=dict(race)
+  if "scheduled_start_time_jst" not in observed_source:
+   # Legacy card: the snapshot is still required to predate midnight.
+   # The new JRA scheduled time is independently observed, never inferred.
+   matching.pop("scheduled_start_time_jst",None)
+  if observed_source!=matching:return None
   if item.get("status")!="SOURCE_AND_ODDS_VERIFIED":return None
   if item.get("includes_results") is not False or item.get("includes_final_odds") is not False:return None
   if item.get("models_executed") is not False or item.get("backfill_history_features_computed") is not False:return None
