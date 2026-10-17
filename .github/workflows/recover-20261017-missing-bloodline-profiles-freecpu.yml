@@ -1,0 +1,129 @@
+name: Recover 65 missing 2026 bloodline profiles with original collector (free CPU)
+on:
+  push:
+    branches: [feature/7king-pedigree-schema-recovery-20261017]
+    paths:
+      - .github/workflows/recover-20261017-missing-bloodline-profiles-freecpu.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: missing-20261017-profile-original-collector
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      REQUEST_DELAY_MS: '1500'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            package.json
+            src
+            ml_features/delivery/690
+            ml_features/src
+            ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs
+            data/horses
+            data/manifest.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Derive EXACT 65 missing lineage IDs from published 60 race entries
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$(git rev-parse HEAD)"
+          node ml_features/research/audit_target_pedigree_lineage_2026_v1.mjs . \
+            | tee "$RUNNER_TEMP/lineage-audit.jsonl"
+          python - <<'PY'
+          import gzip,json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          lines=(root/"lineage-audit.jsonl").read_text().splitlines()
+          output=[x for x in lines if x.startswith("REAL_2026_PEDIGREE_LINEAGE_COVERAGE ")]
+          assert len(output)==1
+          doc=json.loads(output[0].split(" ",1)[1])
+          days=doc["coverage"]
+          assert days["2026-10-10"]["with_both"]==315
+          assert days["2026-10-17"]["target_horses"]==471
+          assert days["2026-10-17"]["with_both"]==406
+          missing=sorted(set(days["2026-10-17"]["missing_horse_ids"]))
+          assert len(missing)==65 and len(missing)==days["2026-10-17"]["missing_any"]
+          assert all(x.isdigit() and len(x)>7 for x in missing)
+          (root/"missing-65.json").write_text(json.dumps(missing)+"\n")
+          target=Path("data/daily/2026-10-17.jsonl.gz")
+          assert not target.exists()
+          target.parent.mkdir(parents=True,exist_ok=True)
+          synthetic_day={"race":{"race_id":"202604040101","race_date":"2026-10-17"},
+                         "entries":[{"horse_id":h} for h in missing],
+                         "results":[],"payouts":[]}
+          with gzip.open(target,"wt",encoding="utf8") as f:
+              f.write(json.dumps(synthetic_day,ensure_ascii=False)+"\n")
+          print("ONLY_MISSING_65_HORSES_STAGED_NO_TARGET_RESULTS",len(missing),flush=True)
+          PY
+      - name: Run existing production horse and pedigree collection unchanged, on missing IDs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          node src/collect-horses.mjs \
+            --source-date 2026-10-17 \
+            --limit 65 \
+            --skip-existing 0 \
+            --pack-name horse-2026-10-17-001
+      - name: Verify exact 65 source IDs and pedigree slots without reading 2026 race results
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import gzip,json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          expected=json.loads((root/"missing-65.json").read_text())
+          dest=Path("data/horses/horse-2026-10-17-001.jsonl.gz")
+          assert dest.is_file() and 100<dest.stat().st_size<500000
+          with gzip.open(dest,"rt",encoding="utf8") as f:
+              records=[json.loads(s) for s in f if s.strip()]
+          assert len(records)==len(expected)==65
+          assert sorted(r["horse_id"] for r in records)==expected
+          for row in records:
+              nodes={(z["generation"],z["slot"]) for z in row["pedigree"]}
+              assert len(nodes)==62
+              assert (1,0) in nodes and (2,2) in nodes
+              assert row["pedigree_parser_version"]==2
+              assert row["horse_pack_version"]==2
+          index={
+            "contract":"KEIBA_BACKFILL_20261017_RECOVERED_STATIC_PEDIGREE_V1",
+            "source_collector":"src/collect-horses.mjs",
+            "original_collector_modified":False,
+            "source_date":"2026-10-17",
+            "file":"data/horses/horse-2026-10-17-001.jsonl.gz",
+            "new_horses":len(expected),
+            "new_horse_ids":expected,
+            "results_or_target_payouts_used":False,
+            "target_prestart_asof_independently_verified":False,
+            "original_7king_pedigree_features_calculated":False,
+            "2026_models_scored":False,
+          }
+          out=Path("ml_features/delivery/pedigree/2026-10-17")
+          out.mkdir(parents=True,exist_ok=True)
+          (out/"index.json").write_text(json.dumps(index,ensure_ascii=False,indent=2)+"\n")
+          print("REAL_2026_MISSING_STATIC_PEDIGREES_RECOVERED",len(expected),flush=True)
+          PY
+      - name: Commit verified small profile pack and standalone index ONLY (no manifest or daily target)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/daily/2026-10-17.jsonl.gz
+          test "$(du -sk data/horses/horse-2026-10-17-001.jsonl.gz | cut -f1)" -lt 512
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/horses/horse-2026-10-17-001.jsonl.gz \
+            ml_features/delivery/pedigree/2026-10-17/index.json
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git commit -m "data: restore only 65 missing Oct17 static horse bloodlines using original collector"
+          git push origin HEAD:refs/heads/feature/7king-pedigree-schema-recovery-20261017
+          echo "SAVED_65_REAL_STATIC_PEDIGREE_RECORDS_NO_MODEL_OR_TARGET_RESULTS"

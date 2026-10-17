@@ -78,7 +78,7 @@ for(const [date,ids] of byDate){
   }
   coverage[date]={target_horses:ids.size,with_sire:withSire,
     with_damsire:withDamsire,with_both:both,missing_any:absent.length,
-    missing_example:absent.slice(0,15)};
+    missing_example:absent.slice(0,15),missing_horse_ids:absent};
 }
 console.log("REAL_2026_PEDIGREE_LINEAGE_COVERAGE "+JSON.stringify({
   contract:"KEIBA_REAL_2026_PEDIGREE_LINEAGE_COVERAGE_AUDIT_V1",
