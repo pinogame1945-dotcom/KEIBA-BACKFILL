@@ -148,6 +148,13 @@ for(const rid of targets["2026-10-17"].keys()){
     if(cell.feature_id.startsWith("race.") &&
        cell.status==="OBSERVED_OR_DERIVED_FROM_PAGE")
       race[cell.feature_id.slice(5)]=cell.observed_value;
+  // Obstacle mixed-surface races are intentionally unobserved in live HTML.
+  // Reuse the already delivered original 690 race fact; never infer a surface.
+  if(race.surface==null){
+    const values=new Set(targets["2026-10-17"].get(rid).rows.map(x=>x.surface));
+    need(values.size===1,"TARGET_CORE4_SURFACE_NOT_UNIFORM:"+rid);
+    race.surface=[...values][0];
+  }
   need(["surface","venue_code","distance_m",
         "track_condition","race_class_normalized"].every(k=>race[k]!=null),
        "NOT_ENOUGH_REAL_PRE_RACE_METADATA:"+rid);
