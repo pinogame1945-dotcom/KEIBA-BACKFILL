@@ -133,6 +133,18 @@ def discover():
    if clean(a.get_text(" ",strip=True))!="出馬表":continue  # Other JRA navigation links may point at a racecard
    next_link=a.find_next("a")
    if next_link is None or clean(next_link.get_text(" ",strip=True))!="オッズ":
+    nearby=[]
+    candidate=a
+    for _ in range(8):
+     candidate=candidate.find_next("a")
+     if candidate is None:break
+     nearby.append({"label":clean(candidate.get_text(" ",strip=True))[:45],
+                    "href":str(candidate.get("href",""))[:180],
+                    "onclick":str(candidate.get("onclick",""))[:180]})
+    print("JRA_CARD_ODDS_DIAGNOSTIC:"+json.dumps({"venue":venue,
+      "race_card_href":href,"parent_html":str(a.parent)[:2500],
+      "nearby_links":nearby,
+      "venue_odds_action_links":sum(bool(action_of(x,"/JRADB/accessO.html")) for x in soup.select("a"))},ensure_ascii=False),file=sys.stderr)
     raise ValueError("CARD_ODDS_PAIR_NOT_ADJACENT")
    odds_code=action_of(next_link,"/JRADB/accessO.html")
    if not odds_code or TOKEN not in odds_code:raise ValueError("ODDS_LINK_INVALID")
